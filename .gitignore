@@ -1,0 +1,14 @@
+# macOS & System
+.DS_Store
+Thumbs.db
+
+# Logs & Temporary
+*.log
+*.part
+
+# Local Data Storage
+data/
+
+# Environment
+.env
+*.env
