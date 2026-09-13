@@ -23,8 +23,7 @@
  *              GET  /api/artist/:id/related?limit=
  *              GET  /api/artist/:id/info
  * 
- * Auth:        POST /api/auth/pin         { username, pin }
- *              POST /api/auth/phone       { phone, code }
+ * Auth:        POST /api/auth/phone       { phone, code }
  * 
  * User:        POST /api/user/onboard     { user_id, username, languages, favoriteArtists }
  *              GET  /api/user/profile     ?user_id=
@@ -48,7 +47,7 @@
  *              POST /api/referral/claim    { user_id, code }
  *              GET  /api/referral/stats   ?user_id=
  * 
- * YouTube:     POST /api/youtube/import   { url }
+ * Spotify:     POST /api/spotify/import   { url }
  */
 
 // CORS
@@ -210,9 +209,7 @@ try {
         // ==================== AUTH ====================
         case 'auth':
             require_once __DIR__ . '/routes/auth.php';
-            if ($subresource === 'pin') {
-                AuthRoutes::handle('pin', $method);
-            } elseif ($subresource === 'phone') {
+            if ($subresource === 'phone') {
                 AuthRoutes::handle('phone', $method);
             } else {
                 sendError('Unknown auth endpoint', 404);
@@ -309,8 +306,7 @@ try {
             }
             break;
         
-        // ==================== YOUTUBE / SPOTIFY IMPORT ====================
-        case 'youtube':
+        // ==================== SPOTIFY IMPORT ====================
         case 'spotify':
         case 'import':
             require_once __DIR__ . '/routes/import.php';

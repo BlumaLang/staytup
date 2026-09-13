@@ -1,6 +1,6 @@
 # 🎵 Staytup Music Backend API Documentation
 
-Welcome to the **Staytup Music Backend API** documentation. This RESTful API powers the Staytup Music client, offering high-fidelity music streaming, smart search with field operators, curated artist feeds, LRCLIB synchronized lyrics, 4-digit PIN authentication, playlist management, listening analytics, and multi-platform playlist importers (YouTube and Spotify).
+Welcome to the **Staytup Music Backend API** documentation. This RESTful API powers the Staytup Music client, offering high-fidelity music streaming, smart search with field operators, curated artist feeds, LRCLIB synchronized lyrics, playlist management, listening analytics, and Spotify playlist import.
 
 ---
 
@@ -21,7 +21,7 @@ Welcome to the **Staytup Music Backend API** documentation. This RESTful API pow
    - [Playlists & Community](#playlists--community)
    - [Referral Program](#referral-program)
    - [Premium & Subscriptions](#premium--subscriptions)
-   - [Playlist Importers (YouTube & Spotify)](#playlist-importers-youtube--spotify)
+   - [Spotify Playlist Import](#spotify-playlist-import)
 6. [Error Handling](#-error-handling)
 7. [Storage Architecture & Production Migration](#-storage-architecture--production-migration)
 8. [Configuration & Environment](#-configuration--environment)
@@ -35,7 +35,6 @@ Welcome to the **Staytup Music Backend API** documentation. This RESTful API pow
 - **External Providers**:
   - **JioSaavn API v4 (`web6dot0`)**: Primary catalog for music, tracks, albums, playlists, and artists.
   - **LRCLIB API**: Synchronized timestamped `.lrc` and plain-text lyrics provider.
-  - **YouTube Innertube Web Scraper**: Extracts YouTube playlists using continuation commands (handles 5,000+ tracks without 100-song limits).
   - **Spotify Embed & oEmbed Engine**: Scrapes and extracts tracklists from public Spotify playlists.
 - **Storage Layer**: Modular local JSON storage (`Storage` class under `data/`) with a drop-in architecture for Firebase Admin SDK or MySQL.
 
@@ -548,41 +547,7 @@ Fetches time-synced lyrics from LRCLIB. If exact match fails, it falls back to f
 
 ### Authentication
 
-#### 1. PIN Authentication & Auto-Registration
-Authenticate existing users or automatically register a new user profile with a 4-digit PIN.
-- **Method**: `POST`
-- **Path**: `/api/auth/pin`
-- **Request Body**:
-```json
-{
-  "username": "alex",
-  "pin": "1234"
-}
-```
-- **Response (New User)**:
-```json
-{
-  "success": true,
-  "user": {
-    "uid": "pin_alex_l9x1z8a",
-    "displayName": "Alex"
-  },
-  "isNewUser": true
-}
-```
-- **Response (Existing User)**:
-```json
-{
-  "success": true,
-  "user": {
-    "uid": "pin_alex_l9x1z8a",
-    "displayName": "Alex"
-  },
-  "isNewUser": false
-}
-```
-
-#### 2. Phone Authentication
+#### 1. Phone Authentication
 Placeholder endpoint for SMS-based phone OTP authentication.
 - **Method**: `POST`
 - **Path**: `/api/auth/phone`
@@ -882,52 +847,37 @@ Records active subscription status and payment gateway metadata (e.g. Razorpay).
 { "success": true }
 ```
 
----
+### Spotify Playlist Import
 
-### Playlist Importers (YouTube & Spotify)
+Import entire playlists from public Spotify links into Staytup.
 
-Import entire playlists from YouTube or Spotify links into Staytup.
-
-#### 1. Unified / Platform Import
+#### 1. Import Spotify Playlist
 - **Method**: `POST`
 - **Paths**:
-  - `/api/youtube/import`
   - `/api/spotify/import`
   - `/api/import`
 - **Request Body**:
-```json
-{
-  "url": "https://www.youtube.com/playlist?list=PL4fGSIFgk54Gq2f-9vH4Z2nQY9mN4o-9g"
-}
-```
-*or*
 ```json
 {
   "url": "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
 }
 ```
 
-##### ⚡ YouTube Importer Capabilities
-- Parses both modern YouTube lockup models (`lockupViewModel`) and legacy renderers (`playlistVideoRenderer`).
-- Automatically extracts `INNERTUBE_API_KEY` and continuation tokens to iterate through pagination batches with HTTP keep-alive, importing playlists up to **5,000+ tracks** (bypasses default 100-song limit).
-- Cleans and strips UI artifacts (e.g., keyboard shortcuts, descriptions).
-
-##### ⚡ Spotify Importer Capabilities
+##### ⚡ Features
 - Queries oEmbed metadata and inspects Next.js embedded hydration state (`__NEXT_DATA__` and `data-initial-page-data`).
-- Resolves track titles and artist names for seamless in-app search mapping.
+- Automatically extracts full track titles and artist names for in-app search mapping and playback.
 
 - **Response**:
 ```json
 {
   "success": true,
-  "source": "youtube",
+  "source": "spotify",
   "playlist": {
-    "name": "Global Top Hits",
+    "name": "Today's Top Hits",
     "tracks": [
       {
         "title": "Blinding Lights",
-        "artist": "The Weeknd",
-        "videoId": "4NRXx6U8ABQ"
+        "artist": "The Weeknd"
       }
     ],
     "track_count": 1
@@ -953,12 +903,12 @@ The API returns standard HTTP status codes and structured JSON errors:
 | **`200 OK`** | Success | Request succeeded and JSON payload returned. |
 | **`204 No Content`** | Preflight Success | Returned for `OPTIONS` CORS preflights. |
 | **`400 Bad Request`** | Validation Error | Missing required fields, invalid parameters, or bad format. |
-| **`401 Unauthorized`** | Authentication Required | Missing credentials or invalid PIN. |
+| **`401 Unauthorized`** | Authentication Required | Missing credentials. |
 | **`404 Not Found`** | Resource Not Found | Endpoint, track, album, or playlist not found. |
 | **`405 Method Not Allowed`** | Verb Mismatch | Request method (GET/POST/PUT/DELETE) is disallowed. |
 | **`500 Internal Server Error`** | Server Error | Uncaught server exception (logged to PHP `error_log`). |
 | **`501 Not Implemented`** | Feature Pending | Endpoint requires third-party credentials (SMS provider). |
-| **`502 Bad Gateway`** | Upstream Error | Third-party upstream service (JioSaavn/YouTube/Spotify) was unreachable or returned invalid response. |
+| **`502 Bad Gateway`** | Upstream Error | Third-party upstream service (JioSaavn/Spotify) was unreachable or returned invalid response. |
 
 ---
 
@@ -967,7 +917,6 @@ The API returns standard HTTP status codes and structured JSON errors:
 By default, the backend stores state in local JSON files inside `data/`:
 ```
 data/
-├── pin_users/          # PIN auth users: <cleanUsername>.json
 ├── referrals/          # Referral mappings: code_<CODE>.json & user_<UID>.json
 ├── public/             # Public & community generated playlists
 └── users/
