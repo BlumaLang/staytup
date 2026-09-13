@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../utils/http.php';
+require_once __DIR__ . '/../utils/storage.php';
 
 class JioSaavnService {
     
@@ -59,12 +60,83 @@ class JioSaavnService {
     }
     
     public static function getSuggestions($query) {
-        $data = self::callApi('search.getSuggestions', [
-            'q' => $query,
-            'n' => 10,
+        $result = self::callApi('autocomplete.get', [
+            'query' => $query,
         ]);
-        
-        return ['suggestions' => $data['results'] ?? []];
+
+        $suggestions = [];
+        $seen = [];
+
+        // 1. Extract artists from topquery and artists array
+        $candidateArtists = [];
+        if (!empty($result['topquery']['data'])) {
+            foreach ($result['topquery']['data'] as $item) {
+                if (($item['type'] ?? '') === 'artist') {
+                    $candidateArtists[] = $item;
+                }
+            }
+        }
+        if (!empty($result['artists']['data'])) {
+            foreach ($result['artists']['data'] as $item) {
+                $candidateArtists[] = $item;
+            }
+        }
+
+        foreach ($candidateArtists as $item) {
+            $name = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if (empty($name) || isset($seen[strtolower($name)])) continue;
+            $seen[strtolower($name)] = true;
+
+            $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
+            if (empty($image) || str_contains($image, 'default')) {
+                $cached = Storage::getCachedArtistImage($name);
+                if ($cached && !empty($cached['image'])) {
+                    $image = $cached['image'];
+                }
+            }
+
+            $suggestions[] = [
+                'title' => $name,
+                'type'  => 'artist',
+                'id'    => $item['id'] ?? '',
+                'image' => $image,
+                'extra' => $item['description'] ?? 'Artist',
+            ];
+        }
+
+        // 2. Extract songs and albums
+        if (!empty($result['songs']['data'])) {
+            foreach ($result['songs']['data'] as $item) {
+                $title = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (empty($title) || isset($seen[strtolower($title)])) continue;
+                $seen[strtolower($title)] = true;
+                $suggestions[] = [
+                    'title' => $title,
+                    'type'  => 'song',
+                    'id'    => $item['id'] ?? '',
+                    'image' => !empty($item['image']) ? self::getBestImage($item['image']) : '',
+                    'extra' => html_entity_decode($item['description'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                ];
+                if (count($suggestions) >= 10) break;
+            }
+        }
+
+        // 3. Fallback: simple text suggestions
+        if (empty($suggestions)) {
+            $fallback = self::callApi('search.getSuggestions', ['q' => $query, 'n' => 8]);
+            foreach ($fallback['results'] ?? [] as $text) {
+                $cleanText = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (!isset($seen[strtolower($cleanText)])) {
+                    $seen[strtolower($cleanText)] = true;
+                    $suggestions[] = [
+                        'title' => $cleanText,
+                        'type'  => 'text',
+                    ];
+                }
+            }
+        }
+
+        return ['suggestions' => $suggestions];
     }
     
     public static function searchArtists($query, $limit = 10) {
@@ -76,7 +148,27 @@ class JioSaavnService {
         
         $artists = [];
         foreach ($data['results'] ?? [] as $artist) {
-            $artists[] = self::normalizeArtist($artist);
+            $normalized = self::normalizeArtist($artist);
+            $name = $normalized['name'] ?? '';
+            $id = $normalized['id'] ?? '';
+
+            // Check if image exists in database cache
+            $cached = !empty($name) ? Storage::getCachedArtistImage($name) : null;
+            if (!$cached && !empty($id)) {
+                $cached = Storage::getCachedArtistImage($id);
+            }
+
+            if (!empty($normalized['image']) && !str_contains($normalized['image'], 'default')) {
+                // Save to database cache
+                if (!empty($name)) Storage::setCachedArtistImage($name, ['image' => $normalized['image'], 'id' => $id]);
+                if (!empty($id)) Storage::setCachedArtistImage($id, ['image' => $normalized['image'], 'id' => $id]);
+            } elseif ($cached && !empty($cached['image'])) {
+                // Restore from database cache
+                $normalized['image'] = $cached['image'];
+                $normalized['thumbnail'] = $cached['image'];
+            }
+
+            $artists[] = $normalized;
         }
         
         return ['artists' => $artists, 'results' => $artists];
@@ -234,13 +326,18 @@ class JioSaavnService {
         if (!empty($data['new_albums'])) {
             $items = [];
             foreach ($data['new_albums'] as $item) {
-                $items[] = self::normalizeTrack($item);
+                $isSong = ($item['type'] ?? '') === 'song' || !empty($item['more_info']['encrypted_media_url']);
+                if ($isSong) {
+                    $items[] = self::normalizeTrack($item);
+                } else {
+                    $items[] = self::normalizeAlbum($item);
+                }
             }
             if (!empty($items)) {
                 $sections[] = [
                     'id'    => 'new_releases',
                     'title' => 'New Releases',
-                    'type'  => 'songs',
+                    'type'  => 'albums',
                     'items' => $items,
                 ];
             }
@@ -292,7 +389,19 @@ class JioSaavnService {
             }
         }
 
-        return ['sections' => $sections];
+        $newReleases = [];
+        $trendingArtists = [];
+        foreach ($sections as $s) {
+            if ($s['id'] === 'new_releases') $newReleases = $s['items'];
+            if ($s['id'] === 'trending_artists') $trendingArtists = $s['items'];
+        }
+
+        return [
+            'sections'        => $sections,
+            'trending'        => $trendingItems ?? [],
+            'newReleases'     => $newReleases,
+            'trendingArtists' => $trendingArtists,
+        ];
     }
     
     // ==================== TRACK DETAILS ====================
@@ -331,6 +440,8 @@ class JioSaavnService {
         
         return [
             'stream_url' => $decryptedUrl,
+            'url'        => $decryptedUrl,
+            'streamUrl'  => $decryptedUrl,
             'videoId'    => $videoId,
             'id'         => $videoId,
             'duration'   => (int)($song['more_info']['duration'] ?? 0),
@@ -574,6 +685,12 @@ class JioSaavnService {
     }
     
     public static function getArtistImage($artistId) {
+        $cleanKey = (string)$artistId;
+        $cached = Storage::getCachedArtistImage($cleanKey);
+        if ($cached && !empty($cached['image']) && !str_contains($cached['image'], 'default') && !str_contains($cached['image'], 'share-image')) {
+            return $cached;
+        }
+
         // If not numeric, search first to get real ID and 500x500 image
         if (!ctype_digit((string)$artistId)) {
             $search = self::searchArtists((string)$artistId, 1);
@@ -581,33 +698,51 @@ class JioSaavnService {
                 $found = $search['artists'][0];
                 $img = $found['image'] ?? '';
                 if (!empty($img) && !str_contains($img, 'default') && !str_contains($img, 'share-image')) {
-                    return [
+                    $res = [
                         'image' => self::getBestImage($img),
                         'id'    => $found['id'],
                     ];
+                    Storage::setCachedArtistImage($cleanKey, $res);
+                    Storage::setCachedArtistImage($found['id'], $res);
+                    return $res;
                 }
                 $artistId = $found['id'];
             }
         }
         
+        $bestImage = null;
         $data = self::callApi('artist.getArtistPageDetails', [
             'artistId' => $artistId,
             'n'        => 1,
         ]);
         
-        if (!$data) return null;
+        if ($data && !empty($data['image'])) {
+            $candidate = self::getBestImage($data['image']);
+            if (!empty($candidate) && !str_contains($candidate, 'default') && !str_contains($candidate, 'share-image')) {
+                $bestImage = $candidate;
+            }
+        }
         
-        // Image is at top level in the response
-        $image = $data['image'] ?? null;
-        if (!$image) return null;
+        // Fallback: get artwork from artist's top hit song
+        if (!$bestImage) {
+            $cleanName = !ctype_digit((string)$cleanKey) ? $cleanKey : ($data['name'] ?? '');
+            if (!empty($cleanName)) {
+                $searchSong = self::searchSongs("{$cleanName} hits", 1, 1);
+                if (!empty($searchSong['results'][0]['image'])) {
+                    $bestImage = self::getBestImage($searchSong['results'][0]['image']);
+                }
+            }
+        }
         
-        // Get best quality image
-        $bestImage = self::getBestImage($image);
+        if (!$bestImage) return null;
         
-        return [
+        $res = [
             'image' => $bestImage,
             'id'    => $artistId,
         ];
+        Storage::setCachedArtistImage($cleanKey, $res);
+        Storage::setCachedArtistImage($artistId, $res);
+        return $res;
     }
     
     public static function getRelatedArtists($artistId, $limit = 10) {
@@ -713,18 +848,66 @@ class JioSaavnService {
     }
     
     public static function getPopularArtists($language = 'hindi', $limit = 20) {
-        $data = self::callApi('search.getArtistResults', [
-            'q'   => '',
-            'p'   => 1,
-            'n'   => $limit,
-            'lang' => $language,
-        ]);
-        
-        $artists = [];
-        foreach ($data['results'] ?? [] as $artist) {
-            $artists[] = self::normalizeArtist($artist);
+        $pools = [
+            'hindi' => [
+                'Arijit Singh', 'Shreya Ghoshal', 'Pritam', 'Atif Aslam', 'Badshah',
+                'Neha Kakkar', 'Jubin Nautiyal', 'Sachin-Jigar', 'Armaan Malik', 'King',
+                'Vishal-Shekhar', 'Darshan Raval', 'Yo Yo Honey Singh', 'Vishal Mishra', 'Anuv Jain'
+            ],
+            'punjabi' => [
+                'Diljit Dosanjh', 'Karan Aujla', 'Sidhu Moose Wala', 'AP Dhillon', 'Shubh',
+                'Guru Randhawa', 'B Praak', 'Amrit Maan', 'Jassie Gill', 'Harrdy Sandhu'
+            ],
+            'english' => [
+                'The Weeknd', 'Taylor Swift', 'Billie Eilish', 'Drake', 'Post Malone',
+                'Ed Sheeran', 'Bruno Mars', 'Dua Lipa', 'Justin Bieber', 'Eminem'
+            ],
+            'tamil' => [
+                'Anirudh Ravichander', 'A.R. Rahman', 'Sid Sriram', 'Yuvan Shankar Raja',
+                'Harris Jayaraj', 'Santhosh Narayanan', 'D. Imman', 'Ilaiyaraaja'
+            ],
+            'telugu' => [
+                'Sid Sriram', 'Thaman S', 'Devi Sri Prasad', 'Anurag Kulkarni',
+                'Ram Miriyala', 'Mickey J Meyer', 'M.M. Keeravaani'
+            ],
+            'bhojpuri' => [
+                'Pawan Singh', 'Khesari Lal Yadav', 'Shilpi Raj', 'Manoj Tiwari'
+            ],
+            'bengali' => [
+                'Arijit Singh', 'Shreya Ghoshal', 'Anupam Roy', 'Somlata Acharyya', 'Rupankar Bagchi'
+            ]
+        ];
+
+        $langs = array_map('trim', explode(',', strtolower($language)));
+        $names = [];
+        foreach ($langs as $lang) {
+            if (isset($pools[$lang])) {
+                $names = array_merge($names, $pools[$lang]);
+            }
         }
-        
+        if (empty($names)) {
+            $names = array_merge($pools['hindi'], $pools['punjabi'], $pools['english'], $pools['tamil']);
+        }
+        $names = array_values(array_unique($names));
+        $slice = array_slice($names, 0, $limit);
+
+        $batch = self::batchGetArtistImages($slice);
+        $images = $batch['images'] ?? [];
+
+        $artists = [];
+        foreach ($slice as $name) {
+            $img = $images[$name] ?? '';
+            $artists[] = [
+                'id' => $name,
+                'name' => $name,
+                'title' => $name,
+                'image' => $img,
+                'thumbnail' => $img,
+                'type' => 'artist',
+                'role' => 'Singer / Music Director',
+            ];
+        }
+
         return ['artists' => $artists, 'results' => $artists];
     }
     

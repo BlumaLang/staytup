@@ -153,6 +153,38 @@ class MusicRoutes {
 
         $cleanId = preg_replace('/^saavn_/', '', $id);
         $album = JioSaavnService::getAlbumDetails($cleanId);
+        
+        // If not found directly, it may be a track/single ID (e.g. saavn_ziZfvFza)
+        if (!$album) {
+            $track = JioSaavnService::getTrackDetails($cleanId);
+            if ($track) {
+                $query = !empty($track['album']) ? $track['album'] : (!empty($track['title']) ? $track['title'] : '');
+                if (!empty($query)) {
+                    $search = JioSaavnService::searchAlbums($query, 1, 1);
+                    if (!empty($search['albums'][0]['id'])) {
+                        $album = JioSaavnService::getAlbumDetails($search['albums'][0]['id']);
+                    }
+                }
+                // If still no multi-track album, construct a single-track album
+                if (!$album) {
+                    $album = [
+                        'id'          => 'saavn_' . ($track['videoId'] ?? $cleanId),
+                        'title'       => $track['album'] ?: $track['title'],
+                        'name'        => $track['album'] ?: $track['title'],
+                        'artist'      => $track['artist'] ?? '',
+                        'image'       => $track['image'] ?? $track['thumbnail'] ?? '',
+                        'thumbnail'   => $track['thumbnail'] ?? $track['image'] ?? '',
+                        'artwork_url' => $track['artwork_url'] ?? $track['thumbnail'] ?? '',
+                        'year'        => $track['year'] ?? '',
+                        'song_count'  => 1,
+                        'track_count' => 1,
+                        'type'        => 'album',
+                        'tracks'      => [$track],
+                    ];
+                }
+            }
+        }
+
         if (!$album) sendError('Album not found', 404);
         
         $response = $album;

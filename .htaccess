@@ -1,0 +1,18 @@
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /staytup/
+
+    # Allow direct access to existing files in dist and assets
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^(dist|assets|public)/(.*)$ - [L]
+
+    # Route API calls
+    RewriteRule ^api/(.*)$ api/index.php [L,QSA]
+    RewriteRule ^api$ api/index.php [L,QSA]
+
+    # All other routes go to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php [L,QSA]
+</IfModule>

@@ -60,21 +60,51 @@ class Storage {
         $path = $dir . '/recently_played.json';
         $recent = self::readJson($path) ?? [];
         
-        // Remove duplicate if exists
-        $recent = array_filter($recent, fn($t) => $t['videoId'] ?? $t['id'] ?? '' !== $track['videoId'] ?? '');
+        $targetId = $track['videoId'] ?? $track['video_id'] ?? $track['id'] ?? '';
+        
+        // Remove duplicate if exists (merge by videoId / id)
+        if (!empty($targetId)) {
+            $recent = array_filter($recent, function($t) use ($targetId) {
+                $tid = $t['videoId'] ?? $t['video_id'] ?? $t['id'] ?? '';
+                return $tid !== $targetId;
+            });
+        }
         
         // Add to front
         array_unshift($recent, $track);
         
-        // Keep only 50 items
-        $recent = array_slice($recent, 0, 50);
+        // Deduplicate any remaining items by videoId/id
+        $unique = [];
+        $seen = [];
+        foreach ($recent as $t) {
+            $id = $t['videoId'] ?? $t['video_id'] ?? $t['id'] ?? '';
+            if ($id && !isset($seen[$id])) {
+                $seen[$id] = true;
+                $unique[] = $t;
+            }
+        }
         
-        self::writeJson($path, array_values($recent));
+        // Keep only 50 items
+        $unique = array_slice($unique, 0, 50);
+        
+        self::writeJson($path, array_values($unique));
     }
     
     public static function getRecentlyPlayed($userId) {
         $dir = self::getUserDir($userId);
-        return self::readJson($dir . '/recently_played.json') ?? [];
+        $recent = self::readJson($dir . '/recently_played.json') ?? [];
+        
+        // Ensure deduplication when returning history
+        $unique = [];
+        $seen = [];
+        foreach ($recent as $t) {
+            $id = $t['videoId'] ?? $t['video_id'] ?? $t['id'] ?? '';
+            if ($id && !isset($seen[$id])) {
+                $seen[$id] = true;
+                $unique[] = $t;
+            }
+        }
+        return $unique;
     }
     
     // ==================== STREAM COUNT ====================
@@ -404,5 +434,22 @@ class Storage {
 
         self::writeJson($publicPath, $result);
         return $result;
+    }
+
+    // ==================== ARTIST IMAGE CACHE (DATABASE) ====================
+
+    public static function getCachedArtistImage($artistKey) {
+        $cleanKey = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '_', $artistKey)));
+        $cachePath = self::getDataDir() . '/artists_cache.json';
+        $cache = self::readJson($cachePath) ?? [];
+        return $cache[$cleanKey] ?? null;
+    }
+
+    public static function setCachedArtistImage($artistKey, $imageData) {
+        $cleanKey = strtolower(trim(preg_replace('/[^a-zA-Z0-9_-]/', '_', $artistKey)));
+        $cachePath = self::getDataDir() . '/artists_cache.json';
+        $cache = self::readJson($cachePath) ?? [];
+        $cache[$cleanKey] = $imageData;
+        self::writeJson($cachePath, $cache);
     }
 }
