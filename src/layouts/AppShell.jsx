@@ -87,24 +87,35 @@ export const AppShell = () => {
     <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex flex-col font-sans select-none">
       {/* Mobile Top Header (< 1024px) — Clean Header with Profile Button */}
       <header className="flex lg:hidden items-center justify-between px-4 py-2.5 bg-black border-b border-white/5 z-40 flex-shrink-0 select-none">
-        <div
-          className="flex items-center cursor-pointer select-none"
-          onClick={() => navigate('/')}
-        >
-          <span className="font-black text-xl tracking-tight text-white">
-            {location.pathname.startsWith('/library')
-              ? 'My Library'
-              : location.pathname.startsWith('/search')
-              ? 'Search'
-              : location.pathname.startsWith('/blend')
-              ? 'Blend'
-              : location.pathname.startsWith('/settings')
-              ? 'Settings'
-              : location.pathname.startsWith('/profile')
-              ? 'Profile'
-              : 'Staytup'}
-          </span>
-        </div>
+        {location.pathname.startsWith('/settings') ? (
+          /* Settings: back button + title */
+          <div className="flex items-center gap-2 select-none">
+            <button
+              onClick={() => navigate('/profile')}
+              className="w-8 h-8 rounded-full bg-[#121214] border border-[#222226] flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer flex-shrink-0"
+            >
+              <ChevronLeft className="w-4.5 h-4.5 stroke-[2.5]" />
+            </button>
+            <span className="font-black text-xl tracking-tight text-white">Settings</span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center cursor-pointer select-none"
+            onClick={() => navigate('/')}
+          >
+            <span className="font-black text-xl tracking-tight text-white">
+              {location.pathname.startsWith('/library')
+                ? 'My Library'
+                : location.pathname.startsWith('/search')
+                ? 'Search'
+                : location.pathname.startsWith('/blend')
+                ? 'Blend'
+                : location.pathname.startsWith('/profile')
+                ? 'Profile'
+                : 'Staytup'}
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <button
