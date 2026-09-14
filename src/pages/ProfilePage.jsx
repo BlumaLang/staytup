@@ -15,8 +15,12 @@ import {
   Code2,
   ExternalLink,
   X,
+  RefreshCw,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 import { LoginModal } from '../components/LoginModal';
+import { updateService, CURRENT_BUILD } from '../services/updateService';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -30,6 +34,27 @@ export default function ProfilePage() {
   );
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeSubModal, setActiveSubModal] = useState(null); // 'terms' | 'privacy'
+  const [updateStatus, setUpdateStatus] = useState(null); // 'checking' | 'available' | 'latest' | null
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
+  const handleCheckUpdate = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatus('checking');
+    try {
+      const result = await updateService.checkForUpdates();
+      if (result && result.hasUpdate) {
+        setUpdateStatus('available');
+      } else {
+        setUpdateStatus('latest');
+        setTimeout(() => setUpdateStatus(null), 4000);
+      }
+    } catch (e) {
+      setUpdateStatus('latest');
+      setTimeout(() => setUpdateStatus(null), 3000);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   const handleWifiToggle = () => {
     const next = !streamWifiOnly;
@@ -155,6 +180,69 @@ export default function ProfilePage() {
                     socialListening ? 'translate-x-5 bg-black' : 'translate-x-0 bg-white'
                   }`}
                 />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* App Version & Updates */}
+        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
+          <div className="px-4 pt-3.5 pb-1 flex items-center justify-between">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
+              App Version &amp; Updates
+            </h4>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              v{CURRENT_BUILD.version}
+            </span>
+          </div>
+          <div className="divide-y divide-[#222226]">
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Build Release</p>
+                  <p className="text-xs text-[#8E8E93] font-mono truncate max-w-[170px] sm:max-w-xs">
+                    {CURRENT_BUILD.buildId}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={
+                  updateStatus === 'available'
+                    ? () => updateService.applyUpdate()
+                    : handleCheckUpdate
+                }
+                disabled={isCheckingUpdate}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 ${
+                  updateStatus === 'available'
+                    ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20 active:scale-95'
+                    : updateStatus === 'latest'
+                    ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-white/5 hover:bg-white/10 text-white border border-[#26262A] active:scale-95'
+                }`}
+              >
+                {isCheckingUpdate ? (
+                  <>
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Checking...</span>
+                  </>
+                ) : updateStatus === 'available' ? (
+                  <>
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Update Now</span>
+                  </>
+                ) : updateStatus === 'latest' ? (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>Up to Date</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Check for Updates</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

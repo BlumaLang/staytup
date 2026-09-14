@@ -72,9 +72,35 @@ foreach ($candidates as $filePath) {
     }
 }
 
+// Version endpoint for zero-latency push & update detection
+if ($route === '/version.json') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    $verFile = file_exists(__DIR__ . '/dist/version.json') 
+        ? __DIR__ . '/dist/version.json' 
+        : __DIR__ . '/public/version.json';
+    if (file_exists($verFile)) {
+        readfile($verFile);
+    } else {
+        $mtime = filemtime(__FILE__);
+        echo json_encode([
+            'version' => '1.0.0',
+            'buildId' => 'build_' . $mtime,
+            'buildTime' => $mtime * 1000,
+            'builtAt' => date('c', $mtime)
+        ]);
+    }
+    exit;
+}
+
 // Manifest handler
 if ($route === '/manifest.json' || $route === '/manifest.webmanifest') {
     header('Content-Type: application/manifest+json');
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     $manifestFile = file_exists(__DIR__ . '/dist/manifest.webmanifest') 
         ? __DIR__ . '/dist/manifest.webmanifest' 
         : __DIR__ . '/public/manifest.json';
@@ -87,11 +113,14 @@ if ($route === '/manifest.json' || $route === '/manifest.webmanifest') {
 // Service worker handler
 if (in_array($route, ['/sw.js', '/service-worker.js', '/registerSW.js'])) {
     header('Content-Type: application/javascript');
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    header('Service-Worker-Allowed: /');
     $swFile = file_exists(__DIR__ . '/dist' . $route) 
         ? __DIR__ . '/dist' . $route 
         : __DIR__ . '/public/sw.js';
     if (file_exists($swFile)) {
-        header('Service-Worker-Allowed: /');
         readfile($swFile);
         exit;
     }
@@ -101,6 +130,9 @@ if (in_array($route, ['/sw.js', '/service-worker.js', '/registerSW.js'])) {
 $indexHtml = __DIR__ . '/dist/index.html';
 if (file_exists($indexHtml)) {
     header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     $content = file_get_contents($indexHtml);
     $baseHref = ($basePath ?: '') . '/';
 

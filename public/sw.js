@@ -1,4 +1,10 @@
-const CACHE_NAME = 'staytup-v2';
+// Staytup Music — High Performance Progressive Web App Service Worker
+// Automatically stamped with unique build ID on every build/push
+
+const BUILD_ID = '__BUILD_ID__';
+const BUILD_TIME = '__BUILD_TIME__';
+const CACHE_NAME = 'staytup-' + BUILD_ID;
+
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -7,6 +13,7 @@ const STATIC_ASSETS = [
   './manifest.webmanifest'
 ];
 
+// ==================== INSTALL LIFECYCLE ====================
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -15,63 +22,115 @@ self.addEventListener('install', (event) => {
       });
     })
   );
+  // Activate the new worker without waiting for user to close all tabs
   self.skipWaiting();
 });
 
+// ==================== ACTIVATE LIFECYCLE ====================
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys
+          .filter((key) => key.startsWith('staytup-') && key !== CACHE_NAME)
+          .map((key) => {
+            console.log('[SW] Purging outdated cache:', key);
+            return caches.delete(key);
+          })
       );
+    }).then(() => {
+      return self.clients.claim();
+    }).then(() => {
+      // Notify all open client windows that a new version is active
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: 'SW_UPDATED',
+            buildId: BUILD_ID,
+            buildTime: BUILD_TIME,
+          });
+        });
+      });
     })
   );
-  self.clients.claim();
 });
 
+// ==================== MESSAGE LISTENER ====================
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// ==================== FETCH STRATEGY ====================
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Skip caching audio streaming requests, range requests, external media streams, and non-GET requests
+  // 1. Bypass Service Worker cache entirely for:
+  // - Non-GET requests
+  // - Backend API requests (/api/*)
+  // - Audio streams & media CDNs
+  // - Range requests
+  // - Version check file (/version.json)
+  // - Service worker script itself (/sw.js)
   if (
     event.request.method !== 'GET' ||
     url.pathname.includes('/api/') ||
+    url.pathname.endsWith('/version.json') ||
+    url.pathname.endsWith('/sw.js') ||
     url.searchParams.has('audio') ||
     event.request.headers.get('range') ||
     url.hostname.includes('saavncdn') ||
-    url.hostname.includes('googlevideo')
+    url.hostname.includes('googlevideo') ||
+    url.hostname.includes('firebaseio.com')
   ) {
     return;
   }
 
-  // Network-first with cache fallback for HTML pages and deep-link navigations
+  // 2. Network-First strategy for HTML navigation requests (ensures fresh index.html with offline fallback)
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('./') || caches.match('./index.html');
-      })
+      fetch(event.request, { cache: 'no-store' })
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put('./index.html', copy);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('./index.html') || caches.match('./');
+        })
     );
     return;
   }
 
-  // Cache-first strategy for static assets (js, css, images, fonts)
+  // 3. Cache-First with network fallback & auto-caching for static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (
+            !networkResponse ||
+            networkResponse.status !== 200 ||
+            networkResponse.type !== 'basic'
+          ) {
+            return networkResponse;
+          }
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
           return networkResponse;
-        }
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+        })
+        .catch(() => {
+          // Offline and not cached
         });
-        return networkResponse;
-      }).catch(() => {
-        // Offline and not cached
-      });
     })
   );
 });
@@ -93,19 +152,15 @@ self.addEventListener('notificationclick', (event) => {
 
       // 1. Look for an existing application window/tab
       for (const client of clientList) {
-        // Check if window is from the same origin
         if (client.url && 'focus' in client) {
-          // If already on the destination URL, simply focus it
           if (client.url === destinationUrl) {
             return client.focus();
           }
 
-          // If client supports navigate, navigate directly and focus
           if ('navigate' in client) {
             return client.navigate(destinationUrl).then(() => client.focus());
           }
 
-          // Otherwise notify the client via postMessage to change route and focus
           client.postMessage({
             type: 'NAVIGATE',
             url: destinationUrl,
