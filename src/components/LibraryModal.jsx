@@ -783,7 +783,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
                     >
                       <div className="flex items-center gap-3 min-w-0 pr-3">
                         <span
-                          className={`w-4 text-center text-xs font-bold font-mono flex-shrink-0 ${
+                          className={`w-4 text-center text-xs font-bold tabular-nums flex-shrink-0 ${
                             idx === 0
                               ? 'text-amber-400'
                               : idx === 1

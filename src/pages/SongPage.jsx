@@ -395,7 +395,7 @@ export default function SongPage() {
                         }`}
                       />
                     </button>
-                    <span className="font-mono text-[11px]">
+                    <span className="text-[11px] font-medium tabular-nums">
                       {formatDuration(item.duration || item.duration_seconds)}
                     </span>
                   </div>

@@ -246,7 +246,7 @@ export const FriendsModal = ({ isOpen, onClose }) => {
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-[#8E8E93] hidden sm:inline">
+                          <span className="text-[10px] font-medium text-[#8E8E93] hidden sm:inline">
                             {friend.status}
                           </span>
                           <button

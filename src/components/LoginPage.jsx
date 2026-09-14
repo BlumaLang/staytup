@@ -170,7 +170,7 @@ export const LoginPage = ({ onComplete }) => {
                     onChange={(e) => setContactNo(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="98765 43210"
                     autoFocus
-                    className="w-full pl-14 pr-4 py-3.5 bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl text-white placeholder-[#8E8E93] text-sm focus:outline-none focus:border-white font-mono tracking-wider transition-colors"
+                    className="w-full pl-14 pr-4 py-3.5 bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl text-white placeholder-[#8E8E93] text-sm focus:outline-none focus:border-white font-medium tracking-wide transition-colors"
                   />
                 </div>
               </div>

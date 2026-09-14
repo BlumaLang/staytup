@@ -109,7 +109,7 @@ export const RankedTrackList = ({
               {/* Left Zone: Rank Number + Artwork + Titles */}
               <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 pr-2">
                 <span
-                  className={`w-5 text-center text-xs font-mono font-bold flex-shrink-0 ${
+                  className={`w-5 text-center text-xs font-semibold tabular-nums flex-shrink-0 ${
                     isCurrent ? 'text-[#22C55E]' : 'text-[#8E8E93] group-hover:text-white'
                   }`}
                 >
@@ -181,7 +181,7 @@ export const RankedTrackList = ({
                     />
                   </button>
                 )}
-                <span className="font-mono text-[11px] text-[#8E8E93] hidden sm:inline">
+                <span className="font-medium tabular-nums text-[11px] text-[#8E8E93] hidden sm:inline">
                   {formatDuration(track.duration || track.duration_formatted || track.duration_seconds)}
                 </span>
               </div>

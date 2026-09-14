@@ -219,7 +219,7 @@ export default function AlbumPage() {
                     className="flex items-center justify-between py-3 px-3 hover:bg-[#141416] rounded-xl cursor-pointer transition-colors group"
                   >
                     <div className="flex items-center gap-4 min-w-0 pr-3">
-                      <span className="w-5 text-center text-xs font-mono text-[#8E8E93] group-hover:hidden">
+                      <span className="w-5 text-center text-xs font-medium tabular-nums text-[#8E8E93] group-hover:hidden">
                         {isCurrent && isPlaying ? (
                           <span className="w-2 h-2 rounded-full bg-[#22C55E] inline-block animate-pulse" />
                         ) : (
@@ -246,7 +246,7 @@ export default function AlbumPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs font-mono text-[#8E8E93]">
+                    <div className="flex items-center gap-4 text-xs font-medium tabular-nums text-[#8E8E93]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

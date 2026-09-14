@@ -162,7 +162,7 @@ export const QueueModal = () => {
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 {nowPlaying.duration > 0 && (
-                  <span className="text-xs text-[#8E8E93] font-mono hidden sm:inline-block mr-1">
+                  <span className="text-xs text-[#8E8E93] font-medium tabular-nums hidden sm:inline-block mr-1">
                     {formatDuration(nowPlaying.duration)}
                   </span>
                 )}
@@ -252,7 +252,7 @@ export const QueueModal = () => {
 
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {track.duration > 0 && (
-                        <span className="text-xs text-[#8E8E93] font-mono hidden sm:inline-block mr-2">
+                        <span className="text-xs text-[#8E8E93] font-medium tabular-nums hidden sm:inline-block mr-2">
                           {formatDuration(track.duration)}
                         </span>
                       )}

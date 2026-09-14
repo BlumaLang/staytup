@@ -173,7 +173,7 @@ export const LyricsDrawer = () => {
 
       {/* Bottom Floating Scrubber & Playback Dock */}
       <div className="relative z-10 px-6 py-4 bg-black/80 backdrop-blur-xl border-t border-white/10 max-w-2xl mx-auto w-full mb-4 rounded-3xl shadow-2xl">
-        <div className="w-full flex items-center gap-3 text-xs font-mono text-[#8E8E93] mb-2">
+        <div className="w-full flex items-center gap-3 text-xs font-medium tabular-nums text-[#8E8E93] mb-2">
           <span>{formatTime(currentTime)}</span>
           <div
             onClick={(e) => {

@@ -279,7 +279,7 @@ export const AlbumSheet = ({ albumId, albumName, initialData, isPlaylist = false
                           }`}
                         />
                       </button>
-                      <span className="text-xs font-mono text-[#8E8E93] min-w-[36px] text-right">
+                      <span className="text-xs font-medium tabular-nums text-[#8E8E93] min-w-[36px] text-right">
                         {formatDuration(track.duration || track.duration_seconds)}
                       </span>
                     </div>

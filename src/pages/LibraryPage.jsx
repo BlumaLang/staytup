@@ -336,7 +336,7 @@ export default function LibraryPage() {
                         className="flex items-center justify-between py-2 px-3 hover:bg-white/[0.08] rounded-xl cursor-pointer transition-colors group"
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                          <span className="w-5 text-center text-xs font-mono text-[#8E8E93] group-hover:hidden">
+                          <span className="w-5 text-center text-xs font-medium tabular-nums text-[#8E8E93] group-hover:hidden">
                             {i + 1}
                           </span>
                           <Play className="w-4 h-4 text-white hidden group-hover:block ml-0.5" />
@@ -359,7 +359,7 @@ export default function LibraryPage() {
                             </div>
                           </div>
                         </div>
-                        <span className="text-xs font-mono text-[#8E8E93]">
+                        <span className="text-xs font-medium tabular-nums text-[#8E8E93]">
                           {track.duration_formatted || ''}
                         </span>
                       </div>
@@ -505,7 +505,7 @@ export default function LibraryPage() {
                         className="flex items-center justify-between py-2 px-3 hover:bg-[#141416] rounded-xl cursor-pointer transition-colors group"
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                          <span className="w-5 text-center text-xs font-mono text-[#8E8E93]">
+                          <span className="w-5 text-center text-xs font-medium tabular-nums text-[#8E8E93]">
                             {i + 1}
                           </span>
                           <img
@@ -590,7 +590,7 @@ export default function LibraryPage() {
                             </div>
                           </div>
                         </div>
-                        <span className="text-xs font-mono text-[#8E8E93]">
+                        <span className="text-xs font-medium tabular-nums text-[#8E8E93]">
                           {track.duration_formatted || ''}
                         </span>
                       </div>

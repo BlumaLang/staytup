@@ -407,7 +407,7 @@ export default function ArtistPage() {
                             ) : (
                               <>
                                 <span
-                                  className={`text-sm font-mono group-hover:hidden ${
+                                  className={`text-sm font-medium tabular-nums group-hover:hidden ${
                                     isTrackCurrent ? 'text-[#1ED760] font-bold' : 'text-[#B3B3B3]'
                                   }`}
                                 >
@@ -441,7 +441,7 @@ export default function ArtistPage() {
                         </div>
 
                         {/* Stream / Plays Count (Hidden on mobile) */}
-                        <div className="hidden md:block w-36 text-right text-xs text-[#B3B3B3] font-mono pr-6">
+                        <div className="hidden md:block w-36 text-right text-xs text-[#B3B3B3] tabular-nums pr-6">
                           {plays}
                         </div>
 
@@ -461,7 +461,7 @@ export default function ArtistPage() {
                               }`}
                             />
                           </button>
-                          <span className="font-mono w-10 text-right">
+                          <span className="text-xs font-medium tabular-nums w-10 text-right">
                             {formatDuration(track.duration || track.duration_formatted)}
                           </span>
                         </div>

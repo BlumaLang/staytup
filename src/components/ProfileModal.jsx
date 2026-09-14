@@ -191,7 +191,7 @@ export const ProfileModal = ({ isOpen, onClose, onOpenEdit }) => {
                 href="https://instagram.com/animikh.04"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-mono font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1 flex-shrink-0"
+                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1 flex-shrink-0"
               >
                 @animikh.04
                 <ExternalLink className="w-3 h-3" />
@@ -210,7 +210,7 @@ export const ProfileModal = ({ isOpen, onClose, onOpenEdit }) => {
                 href="https://instagram.com/staytup.india"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-mono font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1 flex-shrink-0"
+                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1 flex-shrink-0"
               >
                 @staytup.india
                 <ExternalLink className="w-3 h-3" />
@@ -226,7 +226,7 @@ export const ProfileModal = ({ isOpen, onClose, onOpenEdit }) => {
               </div>
               <a
                 href="mailto:staytup.india@gmail.com"
-                className="text-[11px] font-mono text-[#8E8E93] hover:text-white transition-colors flex-shrink-0"
+                className="text-[11px] font-medium text-[#8E8E93] hover:text-white transition-colors flex-shrink-0"
               >
                 staytup.india@gmail.com
               </a>
@@ -342,7 +342,7 @@ export const ProfileModal = ({ isOpen, onClose, onOpenEdit }) => {
 
                 <h4 className="font-bold text-base text-white">4. Contact Us</h4>
                 <p>
-                  For privacy inquiries or account data removal requests, contact the developer at <span className="text-white font-mono">staytup.india@gmail.com</span> or via Instagram <span className="text-white font-mono">@staytup.india</span>.
+                  For privacy inquiries or account data removal requests, contact the developer at <span className="text-white font-semibold">staytup.india@gmail.com</span> or via Instagram <span className="text-white font-semibold">@staytup.india</span>.
                 </p>
               </>
             )}

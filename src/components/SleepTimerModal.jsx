@@ -77,7 +77,7 @@ export const SleepTimerModal = () => {
                   {sleepTimerMode === 'end_of_track' ? 'Stopping at end of track' : 'Time remaining'}
                 </p>
                 {sleepTimerMode === 'time' && (
-                  <p className="text-sm font-extrabold text-white font-mono mt-0.5">
+                  <p className="text-sm font-extrabold text-white tabular-nums mt-0.5">
                     {formatRemaining(sleepTimerRemaining)}
                   </p>
                 )}

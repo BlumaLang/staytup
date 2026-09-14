@@ -190,7 +190,7 @@ export default function ProfilePage() {
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
               App Version &amp; Updates
             </h4>
-            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
               v{CURRENT_BUILD.version}
             </span>
           </div>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-white">Build Release</p>
-                  <p className="text-xs text-[#8E8E93] font-mono truncate max-w-[170px] sm:max-w-xs">
+                  <p className="text-xs text-[#8E8E93] font-medium truncate max-w-[170px] sm:max-w-xs">
                     {CURRENT_BUILD.buildId}
                   </p>
                 </div>
@@ -267,7 +267,7 @@ export default function ProfilePage() {
                 href="https://instagram.com/animikh.04"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-mono font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
+                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
               >
                 @animikh.04
                 <ExternalLink className="w-3 h-3" />
@@ -286,7 +286,7 @@ export default function ProfilePage() {
                 href="https://instagram.com/staytup.india"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs font-mono font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
+                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
               >
                 @staytup.india
                 <ExternalLink className="w-3 h-3" />
@@ -302,7 +302,7 @@ export default function ProfilePage() {
               </div>
               <a
                 href="mailto:staytup.india@gmail.com"
-                className="text-xs font-mono text-[#8E8E93] hover:text-white transition-colors"
+                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors"
               >
                 staytup.india@gmail.com
               </a>

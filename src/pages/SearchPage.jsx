@@ -586,7 +586,7 @@ export default function SearchPage() {
                                   }`}
                                 />
                               </button>
-                              <span className="font-mono text-xs">
+                              <span className="text-xs font-medium tabular-nums">
                                 {formatDuration(track.duration || track.duration_seconds)}
                               </span>
                             </div>
@@ -776,7 +776,7 @@ export default function SearchPage() {
                       className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18181B] transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                        <span className="w-6 text-center text-xs font-mono text-[#8E8E93] group-hover:hidden">
+                        <span className="w-6 text-center text-xs font-medium tabular-nums text-[#8E8E93] group-hover:hidden">
                           {i + 1}
                         </span>
                         <Play className="w-4 h-4 text-white fill-white hidden group-hover:block ml-1 mr-1" />
@@ -816,7 +816,7 @@ export default function SearchPage() {
                             }`}
                           />
                         </button>
-                        <span className="font-mono text-xs">
+                        <span className="text-xs font-medium tabular-nums">
                           {formatDuration(track.duration || track.duration_seconds)}
                         </span>
                       </div>

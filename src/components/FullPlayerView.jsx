@@ -263,7 +263,7 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
               }}
             />
           </div>
-          <div className="flex justify-between text-xs font-mono text-[#8E8E93]">
+          <div className="flex justify-between text-xs font-medium tabular-nums text-[#8E8E93]">
             <span>{formatTime(activeTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>

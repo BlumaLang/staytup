@@ -296,7 +296,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
           </div>
 
           {/* Scrubber timeline */}
-          <div className="w-full flex items-center gap-2.5 text-[11px] font-mono text-[#8E8E93]">
+          <div className="w-full flex items-center gap-2.5 text-[11px] tabular-nums font-medium text-[#8E8E93]">
             <span className="w-8 text-right select-none">{formatTime(activeTime)}</span>
             <div className="flex-1 relative flex items-center group py-1">
               <input
