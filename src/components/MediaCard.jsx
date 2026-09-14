@@ -1,0 +1,72 @@
+import React from 'react';
+import { Play } from 'lucide-react';
+import { get500x500Image } from '../utils/media';
+
+export const MediaCard = ({
+  image,
+  title,
+  subtitle,
+  isRound = false,
+  onPlay,
+  onClick,
+  badge,
+}) => {
+  const imgSrc = get500x500Image(image);
+
+  return (
+    <div
+      onClick={onClick || onPlay}
+      className="group p-3 sm:p-3.5 bg-[#121214] hover:bg-[#18181C] border border-[#222226] hover:border-white/20 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between select-none relative"
+    >
+      {/* Artwork Container */}
+      <div
+        className={`relative w-full aspect-square overflow-hidden bg-black mb-3 ${
+          isRound ? 'rounded-full' : 'rounded-xl'
+        }`}
+      >
+        <img
+          src={imgSrc}
+          alt={title}
+          onError={(e) => {
+            e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+          }}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+
+        {/* Hover Play Button (for tracks/albums) */}
+        {onPlay && !isRound && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlay();
+            }}
+            className="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
+            title="Play"
+          >
+            <Play className="w-4 h-4 fill-black ml-0.5" />
+          </button>
+        )}
+
+        {badge && (
+          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-white">
+            {badge}
+          </span>
+        )}
+      </div>
+
+      {/* Info Container */}
+      <div className={`min-w-0 ${isRound ? 'text-center' : 'text-left'}`}>
+        <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-white tracking-tight">
+          {title}
+        </p>
+        {subtitle && (
+          <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MediaCard;
