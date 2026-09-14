@@ -163,7 +163,7 @@ export const RankedTrackList = ({
                         navigate(`/artist/${encodeURIComponent(track.artist)}`);
                       }
                     }}
-                    className="text-[11px] text-[#8E8E93] hover:text-white hover:underline truncate mt-0.5"
+                    className="text-[11px] text-[#8E8E93] hover:text-white transition-colors cursor-pointer truncate mt-0.5"
                   >
                     {track.artist || 'Unknown Artist'}
                   </p>

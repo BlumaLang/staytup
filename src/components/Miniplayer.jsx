@@ -205,11 +205,11 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
           <div className="min-w-0 flex-1">
             <p
               onClick={onExpand}
-              className="text-sm font-semibold text-white hover:underline cursor-pointer line-clamp-1 tracking-tight"
+              className="text-sm font-semibold text-white hover:text-gray-200 transition-colors cursor-pointer line-clamp-1 tracking-tight"
             >
               {currentTrack.title}
             </p>
-            <p className="text-xs text-[#8E8E93] hover:underline hover:text-white cursor-pointer line-clamp-1 mt-0.5">
+            <p className="text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer line-clamp-1 mt-0.5">
               {currentTrack.artist || 'Unknown Artist'}
             </p>
           </div>

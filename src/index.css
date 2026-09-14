@@ -3,10 +3,16 @@
 @tailwind utilities;
 
 @layer base {
-  * {
+  *, *::before, *::after {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
     box-shadow: none !important;
+    text-decoration: none !important;
+  }
+
+  *:hover, a:hover, button:hover, p:hover, span:hover, h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
+    text-decoration: none !important;
+    text-decoration-line: none !important;
   }
   
   html, body, #root {

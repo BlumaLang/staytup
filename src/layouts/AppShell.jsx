@@ -214,7 +214,7 @@ export const AppShell = () => {
                   onClick={() =>
                     navigate(`/artist/${encodeURIComponent(currentTrack.artist || '')}`)
                   }
-                  className="text-xs text-[#8E8E93] hover:underline cursor-pointer line-clamp-1 mt-0.5"
+                  className="text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer line-clamp-1 mt-0.5"
                 >
                   {currentTrack.artist || 'Unknown Artist'}
                 </p>
@@ -242,7 +242,7 @@ export const AppShell = () => {
                 }
                 className="cursor-pointer group"
               >
-                <p className="text-sm font-bold text-white group-hover:underline">
+                <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
                   {currentTrack.artist}
                 </p>
                 <p className="text-xs text-[#8E8E93] line-clamp-3 mt-1 leading-relaxed">

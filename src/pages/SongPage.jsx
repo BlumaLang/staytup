@@ -258,7 +258,7 @@ export default function SongPage() {
             <p className="text-sm sm:text-base text-[#8E8E93]">
               <Link
                 to={`/artist/${encodeURIComponent(track.artist || '')}`}
-                className="font-bold text-white hover:underline"
+                className="font-bold text-white hover:text-gray-300 transition-colors"
               >
                 {track.artist || 'Unknown Artist'}
               </Link>

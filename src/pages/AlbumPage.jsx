@@ -159,7 +159,7 @@ export default function AlbumPage() {
               <p className="text-sm text-[#8E8E93]">
                 <Link
                   to={`/artist/${encodeURIComponent(albumArtist)}`}
-                  className="font-bold text-white hover:underline"
+                  className="font-bold text-white hover:text-gray-300 transition-colors"
                 >
                   {albumArtist}
                 </Link>
