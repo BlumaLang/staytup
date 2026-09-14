@@ -293,7 +293,12 @@ export const PlayerProvider = ({ children }) => {
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio.src) return;
+    if (!audio.src) {
+      if (currentTrack) {
+        loadAndPlayTrack(currentTrack, true);
+      }
+      return;
+    }
 
     if (isPlaying) {
       audio.pause();
@@ -305,7 +310,7 @@ export const PlayerProvider = ({ children }) => {
         console.warn('Playback resume blocked:', err);
       });
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentTrack, loadAndPlayTrack]);
 
   const prevTrack = useCallback(() => {
     if (currentIndex > 0) {

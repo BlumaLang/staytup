@@ -113,9 +113,9 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
       {/* ========================================================================= */}
       <div
         onClick={onExpand}
-        className="lg:hidden fixed bottom-[56px] left-0 right-0 z-40 bg-[#121214] border-t border-white/[0.08] cursor-pointer select-none"
+        className="lg:hidden fixed bottom-[58px] sm:bottom-[60px] left-0 right-0 z-40 bg-[#121214] border-t border-white/[0.08] cursor-pointer select-none"
       >
-        <div className="flex items-center justify-between px-3.5 py-2 gap-3 max-w-md mx-auto">
+        <div className="flex items-center justify-between px-3.5 pt-2 pb-2 gap-3 max-w-md mx-auto">
           {/* Left: Artwork + Title & Artist */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/10 shadow-sm">
@@ -180,7 +180,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
         </div>
 
         {/* Bottom Progress Line (Positioned at the BOTTOM of the miniplayer) */}
-        <div className="w-full h-[2px] bg-white/[0.08] relative overflow-hidden">
+        <div className="w-full h-[2.5px] bg-white/[0.08] relative overflow-hidden">
           <div
             className="h-full bg-[#22C55E] transition-all duration-150"
             style={{ width: `${progressPercent}%` }}
