@@ -133,18 +133,22 @@ export const AppShell = () => {
         {/* Left: History navigation */}
         <div className="flex items-center gap-2 w-[220px]">
           <button
-            onClick={() => window.history.back()}
-            className="w-8 h-8 rounded-full bg-black/60 hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-8 h-8 rounded-full bg-[#141416] border border-white/15 hover:border-white/35 hover:bg-[#222226] flex items-center justify-center text-[#B3B3B3] hover:text-white transition-all cursor-pointer active:scale-95 shadow-sm"
             title="Go back"
+            aria-label="Go back"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4.5 h-4.5 stroke-[2.2]" />
           </button>
           <button
-            onClick={() => window.history.forward()}
-            className="w-8 h-8 rounded-full bg-black/60 hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+            type="button"
+            onClick={() => navigate(1)}
+            className="w-8 h-8 rounded-full bg-[#141416] border border-white/15 hover:border-white/35 hover:bg-[#222226] flex items-center justify-center text-[#B3B3B3] hover:text-white transition-all cursor-pointer active:scale-95 shadow-sm"
             title="Go forward"
+            aria-label="Go forward"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4.5 h-4.5 stroke-[2.2]" />
           </button>
         </div>
 

@@ -39,18 +39,78 @@ const TRENDING_TAGS = [
 ];
 
 const BROWSE_CATEGORIES = [
-  { label: 'Bollywood Hits', query: 'bollywood hits', color: 'from-[#E13300] to-[#FF6B00]' },
-  { label: 'Punjabi Hits', query: 'punjabi hits', color: 'from-[#1E3264] to-[#4A90E2]' },
-  { label: 'Romantic Hits', query: 'romantic hindi songs', color: 'from-[#E91429] to-[#F472B6]' },
-  { label: 'Chill Lo-Fi', query: 'chill lofi hindi', color: 'from-[#503750] to-[#8B5CF6]' },
-  { label: 'Party & Dance', query: 'party hindi songs', color: 'from-[#8D67AB] to-[#C084FC]' },
-  { label: 'Indie Pop', query: 'indian indie pop', color: 'from-[#BA5D07] to-[#F59E0B]' },
-  { label: 'Devotional', query: 'devotional songs hindi', color: 'from-[#D84000] to-[#F97316]' },
-  { label: 'Hip-Hop & Rap', query: 'indian hip hop rap', color: 'from-[#BC5900] to-[#D97706]' },
-  { label: 'Workout Energy', query: 'workout gym hindi songs', color: 'from-[#283EA7] to-[#10B981]' },
-  { label: '90s Nostalgia', query: '90s bollywood superhits', color: 'from-[#0D73EC] to-[#38BDF8]' },
-  { label: 'Soulful Ghazals', query: 'ghazals jagjit singh', color: 'from-[#477D95] to-[#06B6D4]' },
-  { label: 'Acoustic Unplugged', query: 'acoustic unplugged hindi', color: 'from-[#148A08] to-[#22C55E]' },
+  {
+    label: 'Bollywood Hits',
+    query: 'bollywood hits',
+    color: 'from-[#E13300] to-[#8C1F00]',
+    image: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Punjabi Hits',
+    query: 'punjabi hits',
+    color: 'from-[#1E3264] to-[#121F3E]',
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Romantic Hits',
+    query: 'romantic hindi songs',
+    color: 'from-[#E91429] to-[#8F0D19]',
+    image: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Chill Lo-Fi',
+    query: 'chill lofi hindi',
+    color: 'from-[#503750] to-[#2E1F2E]',
+    image: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Party & Dance',
+    query: 'party hindi songs',
+    color: 'from-[#8D67AB] to-[#553C68]',
+    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Indie Pop',
+    query: 'indian indie pop',
+    color: 'from-[#BA5D07] to-[#6E3604]',
+    image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Devotional',
+    query: 'devotional songs hindi',
+    color: 'from-[#D84000] to-[#7E2500]',
+    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Hip-Hop & Rap',
+    query: 'indian hip hop rap',
+    color: 'from-[#BC5900] to-[#6D3400]',
+    image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Workout Energy',
+    query: 'workout gym hindi songs',
+    color: 'from-[#283EA7] to-[#16225C]',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: '90s Nostalgia',
+    query: '90s bollywood superhits',
+    color: 'from-[#0D73EC] to-[#074288]',
+    image: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Soulful Ghazals',
+    query: 'ghazals jagjit singh',
+    color: 'from-[#477D95] to-[#294856]',
+    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80',
+  },
+  {
+    label: 'Acoustic Unplugged',
+    query: 'acoustic unplugged hindi',
+    color: 'from-[#148A08] to-[#0B4E04]',
+    image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=300&auto=format&fit=crop&q=80',
+  },
 ];
 
 const formatDuration = (sec) => {
@@ -1037,19 +1097,28 @@ export default function SearchPage() {
               <h2 className="text-2xl font-extrabold text-white mb-4 tracking-tight">
                 Browse all
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-3.5 sm:gap-4">
                 {BROWSE_CATEGORIES.map((cat, i) => (
                   <div
                     key={i}
                     onClick={() => handleQueryChange(cat.query)}
-                    className={`relative h-32 sm:h-36 rounded-2xl p-4 bg-gradient-to-br ${cat.color} overflow-hidden cursor-pointer shadow-lg hover:scale-[1.03] transition-transform group flex flex-col justify-between`}
+                    className={`relative aspect-[16/10] min-h-[96px] sm:min-h-[112px] rounded-xl p-3 sm:p-3.5 bg-gradient-to-br ${cat.color} overflow-hidden cursor-pointer shadow-md hover:shadow-xl hover:brightness-105 active:scale-[0.98] transition-all duration-200 group select-none flex flex-col justify-between`}
                   >
-                    <h3 className="text-lg font-extrabold text-white leading-tight tracking-tight">
+                    <h3 className="relative z-10 text-sm sm:text-base font-extrabold text-white leading-snug tracking-tight max-w-[65%] break-words">
                       {cat.label}
                     </h3>
-                    <div className="self-end opacity-40 group-hover:opacity-80 transition-opacity">
-                      <Music2 className="w-6 h-6 text-white" />
-                    </div>
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.label}
+                        loading="lazy"
+                        className="absolute -right-2 -bottom-2 w-16 h-16 sm:w-18 sm:h-18 rounded-md object-cover shadow-[-2px_4px_12px_rgba(0,0,0,0.45)] rotate-[25deg] group-hover:rotate-[20deg] group-hover:scale-105 transition-transform duration-300 pointer-events-none select-none"
+                      />
+                    ) : (
+                      <div className="absolute -right-1 -bottom-1 w-12 h-12 rounded-md bg-black/20 flex items-center justify-center rotate-[25deg] opacity-60">
+                        <Music2 className="w-6 h-6 text-white" />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
