@@ -304,7 +304,7 @@ export default function HomePage() {
               <div
                 key={artist.id || idx}
                 onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                className="w-36 sm:w-44 flex-shrink-0 p-3.5 rounded-xl bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer flex flex-col items-center text-center select-none"
+                className="w-36 sm:w-44 flex-shrink-0 p-3.5 rounded-xl hover:bg-white/[0.06] transition-all duration-300 group cursor-pointer flex flex-col items-center text-center select-none"
               >
                 <div className="relative mb-3">
                   <ArtistAvatar

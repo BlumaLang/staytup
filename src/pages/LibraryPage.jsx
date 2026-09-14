@@ -20,6 +20,7 @@ import {
   getUserHistoryFromFirebase,
 } from '../services/firebase';
 import { ArtistLinks } from '../components/ArtistLinks';
+import { ArtistAvatar } from '../components/ArtistAvatar';
 
 export default function LibraryPage() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ export default function LibraryPage() {
   const [historyStats, setHistoryStats] = useState(null);
   const [followedArtists, setFollowedArtists] = useState([]);
   const [suggestedArtists, setSuggestedArtists] = useState([]);
+  const [popularArtists, setPopularArtists] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showNewPlaylistModal, setShowNewPlaylistModal] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
@@ -195,17 +197,82 @@ export default function LibraryPage() {
 
       loadHistory();
     } else if (activeTab === 'artists') {
-      api
-        .getPopularArtists('hindi,punjabi,english,tamil', 24)
-        .then((res) => {
+      const loadArtistsData = async () => {
+        try {
+          // 1. Set of followed artists to avoid repeating them
+          const followedSet = new Set(
+            followedArtists
+              .map((a) => (typeof a === 'string' ? a : a.name)?.toLowerCase().trim())
+              .filter(Boolean)
+          );
+
+          // 2. Extract played / listened artists from recent activity, history, and favorites
+          const playedMap = new Map();
+          try {
+            const recent = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
+            recent.forEach((t) => {
+              const artistStr = t?.artist || t?.author || '';
+              if (artistStr) {
+                artistStr.split(/[,&/]/).forEach((part) => {
+                  const clean = part.trim();
+                  const low = clean.toLowerCase();
+                  if (clean && !followedSet.has(low) && !playedMap.has(low)) {
+                    playedMap.set(low, {
+                      name: clean,
+                      image: t.thumbnail || t.image || '',
+                      id: clean,
+                    });
+                  }
+                });
+              }
+            });
+          } catch (e) {}
+
+          try {
+            const favRes = await api.getFavorites(userId).catch(() => []);
+            const favList = Array.isArray(favRes) ? favRes : favRes?.favorites || [];
+            favList.forEach((t) => {
+              const artistStr = t?.artist || t?.author || '';
+              if (artistStr) {
+                artistStr.split(/[,&/]/).forEach((part) => {
+                  const clean = part.trim();
+                  const low = clean.toLowerCase();
+                  if (clean && !followedSet.has(low) && !playedMap.has(low)) {
+                    playedMap.set(low, {
+                      name: clean,
+                      image: t.thumbnail || t.image || '',
+                      id: clean,
+                    });
+                  }
+                });
+              }
+            });
+          } catch (e) {}
+
+          const playedList = Array.from(playedMap.values()).slice(0, 12);
           if (isMounted) {
-            setSuggestedArtists(res?.artists || res?.results || []);
+            setSuggestedArtists(playedList);
           }
-        })
-        .catch((e) => console.warn(e))
-        .finally(() => {
+
+          // 3. Fetch app popular artists (based on all user activity)
+          const popRes = await api.getPopularArtists('hindi,punjabi,english,tamil', 36).catch(() => ({}));
+          const allPop = popRes?.artists || popRes?.results || [];
+          const uniquePop = allPop.filter((a) => {
+            const low = a.name?.toLowerCase().trim();
+            return !followedSet.has(low) && !playedMap.has(low);
+          });
+
+          if (isMounted) {
+            setPopularArtists(uniquePop.slice(0, 18));
+          }
+        } catch (e) {
+          console.warn(e);
+        } finally {
           if (isMounted) setIsLoading(false);
-        });
+        }
+      };
+
+      loadArtistsData();
     }
 
     return () => {
@@ -441,17 +508,23 @@ export default function LibraryPage() {
                           <div
                             key={idx}
                             onClick={() => navigate(`/artist/${encodeURIComponent(name)}`)}
-                            className="p-4 rounded-2xl bg-[#121214] hover:bg-[#1A1A1E] border border-[#222226] hover:border-white/20 transition-all cursor-pointer text-center group"
+                            className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer text-center group flex flex-col items-center select-none"
                           >
-                            <img
-                              src={get500x500Image(img)}
-                              alt={name}
-                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto object-cover mb-3 group-hover:scale-105 transition-transform"
-                            />
-                            <p className="font-bold text-xs sm:text-sm text-white truncate">
+                            <div className="relative mb-3">
+                              <ArtistAvatar
+                                name={name}
+                                image={img}
+                                size="xl"
+                                className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                                <Play className="w-4 h-4 fill-black ml-0.5" />
+                              </div>
+                            </div>
+                            <p className="font-bold text-xs sm:text-sm text-white truncate w-full group-hover:underline">
                               {name}
                             </p>
-                            <p className="text-[11px] text-[#8E8E93] mt-0.5">Artist</p>
+                            <p className="text-[11px] text-[#8E8E93] mt-0.5 font-medium">Artist</p>
                           </div>
                         );
                       })}
@@ -459,9 +532,13 @@ export default function LibraryPage() {
                   </div>
                 )}
 
+                {/* SUGGESTED FOR YOU (BASED ON PLAYED & SIMILAR ARTISTS) */}
                 {suggestedArtists.length > 0 && (
                   <div>
-                    <h2 className="text-lg font-bold text-white mb-4">Popular Artists</h2>
+                    <div className="mb-4">
+                      <h2 className="text-lg font-bold text-white">Suggested for You</h2>
+                      <p className="text-xs text-[#8E8E93] mt-0.5">Based on artists you've listened to and loved</p>
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                       {suggestedArtists.map((artist, idx) => (
                         <div
@@ -469,17 +546,60 @@ export default function LibraryPage() {
                           onClick={() =>
                             navigate(`/artist/${encodeURIComponent(artist.id || artist.name)}`)
                           }
-                          className="p-4 rounded-2xl bg-[#121214] hover:bg-[#1A1A1E] border border-[#222226] hover:border-white/20 transition-all cursor-pointer text-center group"
+                          className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer text-center group flex flex-col items-center select-none"
                         >
-                          <img
-                            src={get500x500Image(artist.image || artist.thumbnail)}
-                            alt={artist.name}
-                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto object-cover mb-3 group-hover:scale-105 transition-transform"
-                          />
-                          <p className="font-bold text-xs sm:text-sm text-white truncate">
+                          <div className="relative mb-3">
+                            <ArtistAvatar
+                              name={artist.name}
+                              image={artist.image || artist.thumbnail}
+                              size="xl"
+                              className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                              <Play className="w-4 h-4 fill-black ml-0.5" />
+                            </div>
+                          </div>
+                          <p className="font-bold text-xs sm:text-sm text-white truncate w-full group-hover:underline">
                             {artist.name}
                           </p>
-                          <p className="text-[11px] text-[#8E8E93] mt-0.5">Artist</p>
+                          <p className="text-[11px] text-[#8E8E93] mt-0.5 font-medium">Artist</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* POPULAR ARTISTS (GLOBAL / APP TRENDING, ZERO DUPLICATES) */}
+                {popularArtists.length > 0 && (
+                  <div>
+                    <div className="mb-4">
+                      <h2 className="text-lg font-bold text-white">Popular Artists</h2>
+                      <p className="text-xs text-[#8E8E93] mt-0.5">Top trending artists across Staytup</p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {popularArtists.map((artist, idx) => (
+                        <div
+                          key={artist.id || idx}
+                          onClick={() =>
+                            navigate(`/artist/${encodeURIComponent(artist.id || artist.name)}`)
+                          }
+                          className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer text-center group flex flex-col items-center select-none"
+                        >
+                          <div className="relative mb-3">
+                            <ArtistAvatar
+                              name={artist.name}
+                              image={artist.image || artist.thumbnail}
+                              size="xl"
+                              className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                              <Play className="w-4 h-4 fill-black ml-0.5" />
+                            </div>
+                          </div>
+                          <p className="font-bold text-xs sm:text-sm text-white truncate w-full group-hover:underline">
+                            {artist.name}
+                          </p>
+                          <p className="text-[11px] text-[#8E8E93] mt-0.5 font-medium">Artist</p>
                         </div>
                       ))}
                     </div>

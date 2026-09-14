@@ -455,7 +455,7 @@ export default function SearchPage() {
                           });
                           playTrack(topResult, [topResult, ...otherTracks]);
                         }}
-                        className="flex-1 bg-[#18181B] hover:bg-[#222226] p-5 rounded-2xl transition-all group relative cursor-pointer flex flex-col justify-between shadow-xl border border-white/5"
+                        className="flex-1 bg-[#181818]/80 hover:bg-[#242424] p-5 rounded-2xl transition-all group relative cursor-pointer flex flex-col justify-between shadow-xl"
                       >
                         <div className="relative">
                           <img
@@ -608,16 +608,21 @@ export default function SearchPage() {
                           <div
                             key={artist.id || idx}
                             onClick={() => navigate(`/artist/${encodeURIComponent(name)}`)}
-                            className="bg-[#121214] hover:bg-[#18181C] p-4 rounded-2xl transition-all cursor-pointer group flex flex-col items-center text-center border border-white/5"
+                            className="p-3.5 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col items-center text-center select-none"
                           >
-                            <ArtistAvatar
-                              name={name}
-                              image={artist.image}
-                              size="2xl"
-                              className="w-28 h-28 sm:w-32 sm:h-32 mb-3 shadow-lg group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <h4 className="text-sm font-bold text-white truncate w-full">{name}</h4>
-                            <p className="text-xs text-[#8E8E93] mt-0.5">Artist</p>
+                            <div className="relative mb-3">
+                              <ArtistAvatar
+                                name={name}
+                                image={artist.image}
+                                size="2xl"
+                                className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                                <Play className="w-4 h-4 fill-black ml-0.5" />
+                              </div>
+                            </div>
+                            <h4 className="text-sm font-bold text-white truncate w-full group-hover:underline">{name}</h4>
+                            <p className="text-xs text-[#8E8E93] mt-0.5 font-medium">Artist</p>
                           </div>
                         );
                       })}
@@ -637,17 +642,24 @@ export default function SearchPage() {
                           <div
                             key={album.id || idx}
                             onClick={() => navigate(`/album/${encodeURIComponent(album.id)}`)}
-                            className="bg-[#121214] hover:bg-[#18181C] p-3.5 rounded-2xl transition-all cursor-pointer group border border-white/5"
+                            className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group select-none"
                           >
-                            <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-black shadow-md">
+                            <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-[#1C1C1E] shadow-md flex items-center justify-center">
                               <img
                                 src={get500x500Image(album.image || album.thumbnail)}
                                 alt={title}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80';
+                                }}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
+                              <div className="absolute right-2 bottom-2 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                                <Play className="w-4 h-4 fill-black ml-0.5" />
+                              </div>
                             </div>
                             <h4 className="text-sm font-bold text-white truncate">{title}</h4>
-                            <p className="text-xs text-[#8E8E93] truncate mt-0.5">
+                            <p className="text-xs text-[#8E8E93] truncate mt-0.5 font-medium">
                               {album.year ? `${album.year} • ` : ''}
                               {artist || 'Album'}
                             </p>
@@ -678,17 +690,24 @@ export default function SearchPage() {
                               });
                               navigate(`/playlist/${encodeURIComponent(pl.id)}`);
                             }}
-                            className="bg-[#121214] hover:bg-[#18181C] p-3.5 rounded-2xl transition-all cursor-pointer group border border-white/5"
+                            className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group select-none"
                           >
-                            <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-black shadow-md">
+                            <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-[#1C1C1E] shadow-md flex items-center justify-center">
                               <img
                                 src={get500x500Image(pl.image)}
                                 alt={title}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80';
+                                }}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
+                              <div className="absolute right-2 bottom-2 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                                <Play className="w-4 h-4 fill-black ml-0.5" />
+                              </div>
                             </div>
                             <h4 className="text-sm font-bold text-white truncate">{title}</h4>
-                            <p className="text-xs text-[#8E8E93] truncate mt-0.5">
+                            <p className="text-xs text-[#8E8E93] truncate mt-0.5 font-medium">
                               By Staytup
                             </p>
                           </div>
@@ -728,7 +747,7 @@ export default function SearchPage() {
                               });
                               navigate(`/user/${encodeURIComponent(person.id)}`);
                             }}
-                            className="bg-[#121214] hover:bg-[#18181C] p-4 rounded-2xl transition-all cursor-pointer group flex flex-col items-center text-center border border-white/5"
+                            className="p-3.5 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col items-center text-center select-none"
                           >
                             <UserAvatar
                               user={person}
@@ -844,16 +863,21 @@ export default function SearchPage() {
                         });
                         navigate(`/artist/${encodeURIComponent(name)}`);
                       }}
-                      className="bg-[#121214] hover:bg-[#18181C] p-4 rounded-2xl transition-all cursor-pointer group flex flex-col items-center text-center border border-white/5"
+                      className="p-3.5 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col items-center text-center select-none"
                     >
-                      <ArtistAvatar
-                        name={name}
-                        image={artist.image}
-                        size="2xl"
-                        className="w-28 h-28 sm:w-32 sm:h-32 mb-3 shadow-lg group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <h4 className="text-sm font-bold text-white truncate w-full">{name}</h4>
-                      <p className="text-xs text-[#8E8E93] mt-0.5">Artist</p>
+                      <div className="relative mb-3">
+                        <ArtistAvatar
+                          name={name}
+                          image={artist.image}
+                          size="2xl"
+                          className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                          <Play className="w-4 h-4 fill-black ml-0.5" />
+                        </div>
+                      </div>
+                      <h4 className="text-sm font-bold text-white truncate w-full group-hover:underline">{name}</h4>
+                      <p className="text-xs text-[#8E8E93] mt-0.5 font-medium">Artist</p>
                     </div>
                   );
                 })}
@@ -879,17 +903,24 @@ export default function SearchPage() {
                         });
                         navigate(`/album/${encodeURIComponent(album.id)}`);
                       }}
-                      className="bg-[#121214] hover:bg-[#18181C] p-3.5 rounded-2xl transition-all cursor-pointer group border border-white/5"
+                      className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group select-none"
                     >
-                      <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-black shadow-md">
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-[#1C1C1E] shadow-md flex items-center justify-center">
                         <img
                           src={get500x500Image(album.image || album.thumbnail)}
                           alt={title}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80';
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        <div className="absolute right-2 bottom-2 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                          <Play className="w-4 h-4 fill-black ml-0.5" />
+                        </div>
                       </div>
                       <h4 className="text-sm font-bold text-white truncate">{title}</h4>
-                      <p className="text-xs text-[#8E8E93] truncate mt-0.5">
+                      <p className="text-xs text-[#8E8E93] truncate mt-0.5 font-medium">
                         {album.year ? `${album.year} • ` : ''}
                         {artist || 'Album'}
                       </p>
@@ -917,17 +948,24 @@ export default function SearchPage() {
                         });
                         navigate(`/playlist/${encodeURIComponent(pl.id)}`);
                       }}
-                      className="bg-[#121214] hover:bg-[#18181C] p-3.5 rounded-2xl transition-all cursor-pointer group border border-white/5"
+                      className="p-3 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group select-none"
                     >
-                      <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-black shadow-md">
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-[#1C1C1E] shadow-md flex items-center justify-center">
                         <img
                           src={get500x500Image(pl.image)}
                           alt={title}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80';
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        <div className="absolute right-2 bottom-2 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                          <Play className="w-4 h-4 fill-black ml-0.5" />
+                        </div>
                       </div>
                       <h4 className="text-sm font-bold text-white truncate">{title}</h4>
-                      <p className="text-xs text-[#8E8E93] truncate mt-0.5">By Staytup</p>
+                      <p className="text-xs text-[#8E8E93] truncate mt-0.5 font-medium">By Staytup</p>
                     </div>
                   );
                 })}
@@ -952,7 +990,7 @@ export default function SearchPage() {
                         });
                         navigate(`/user/${encodeURIComponent(person.id)}`);
                       }}
-                      className="bg-[#121214] hover:bg-[#18181C] p-4 rounded-2xl transition-all cursor-pointer group flex flex-col items-center text-center border border-white/5"
+                      className="p-3.5 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col items-center text-center select-none"
                     >
                       <UserAvatar
                         user={person}
