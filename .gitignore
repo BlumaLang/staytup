@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 dist/
+.vite/
 
 # macOS & System
 .DS_Store
