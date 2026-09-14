@@ -9,6 +9,7 @@ import {
   Share2,
   Clock,
   Music2,
+  ListMusic,
   ChevronRight,
   Play,
   Disc3,
@@ -102,6 +103,7 @@ export default function ProfilePage() {
 
   const [likedTracks, setLikedTracks] = useState([]);
   const [history, setHistory] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [blends, setBlends] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -129,9 +131,10 @@ export default function ProfilePage() {
       setLoading(true);
       try {
         if (user?.id || user?.uid) {
-          const [favs, hist] = await Promise.allSettled([
+          const [favs, hist, pls] = await Promise.allSettled([
             api.getFavorites(user.id || user.uid),
             api.getHistory(user.id || user.uid),
+            api.getPlaylists(user.id || user.uid),
           ]);
           if (alive) {
             // getFavorites returns { favorites: [...] } or plain array
@@ -145,6 +148,12 @@ export default function ProfilePage() {
               const raw = hist.value;
               const list = Array.isArray(raw) ? raw : (raw?.history || raw?.tracks || raw?.data || []);
               setHistory(list.slice(0, 6));
+            }
+            // getPlaylists returns { playlists: [...] } or plain array
+            if (pls.status === 'fulfilled') {
+              const raw = pls.value;
+              const list = Array.isArray(raw) ? raw : (raw?.playlists || raw?.data || []);
+              setPlaylists(list.slice(0, 6));
             }
           }
         }
@@ -306,6 +315,62 @@ export default function ProfilePage() {
             <div className="space-y-0.5">
               {history.map((track, i) => (
                 <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayHistory} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Playlists — flat rows */}
+        {playlists.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div className="flex items-center gap-2">
+                <ListMusic className="w-4 h-4 text-[#8E8E93]" />
+                <span className="text-sm font-bold text-white">Your Playlists</span>
+                <span className="text-xs text-[#8E8E93]">({playlists.length})</span>
+              </div>
+              <button
+                onClick={() => navigate('/library?tab=playlists')}
+                className="flex items-center gap-1 text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+              >
+                View all
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-0.5">
+              {playlists.map((pl) => (
+                <button
+                  key={pl.id}
+                  type="button"
+                  onClick={() => navigate(`/playlist/${encodeURIComponent(pl.id)}`)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#1C1C1E]">
+                    {pl.image || pl.thumbnail || pl.cover ? (
+                      <img
+                        src={pl.image || pl.thumbnail || pl.cover}
+                        alt={pl.name || pl.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ListMusic className="w-4 h-4 text-[#8E8E93]" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate group-hover:text-white">
+                      {pl.name || pl.title || 'Untitled Playlist'}
+                    </p>
+                    <p className="text-xs text-[#8E8E93] truncate">
+                      {pl.tracks?.length || pl.song_count || pl.trackCount || 0} songs
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#555558] group-hover:text-white transition-colors flex-shrink-0" />
+                </button>
               ))}
             </div>
           </div>
