@@ -32,15 +32,13 @@ export const RankedTrackList = ({
 
   if (isLoading) {
     return (
-      <div className="bg-[#181818]/50 border border-white/[0.05] rounded-2xl p-4 sm:p-5 space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white/5 animate-pulse" />
-            <div className="space-y-1.5">
-              <div className="w-32 h-4 bg-white/10 rounded animate-pulse" />
-              <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
-            </div>
+      <div className="bg-[#181818]/60 border border-white/[0.05] rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className="flex items-start justify-between pb-2">
+          <div className="space-y-2">
+            <div className="w-36 h-5 bg-white/10 rounded animate-pulse" />
+            <div className="w-28 h-3 bg-white/5 rounded animate-pulse" />
           </div>
+          <div className="w-9 h-9 rounded-full bg-white/10 animate-pulse" />
         </div>
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -71,30 +69,24 @@ export const RankedTrackList = ({
   return (
     <div className="bg-[#181818]/60 hover:bg-[#1E1E22] border border-white/[0.05] hover:border-white/10 rounded-2xl p-4 sm:p-5 select-none transition-all flex flex-col justify-between shadow-lg">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-white/5 mb-2">
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl ${iconBg} ${iconColor} flex items-center justify-center flex-shrink-0 shadow-inner`}>
-            <Icon className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="text-[11px] text-[#8E8E93] mt-0.5 leading-none">
-                {subtitle}
-              </p>
-            )}
-          </div>
+      <div className="flex items-start justify-between gap-3 pb-3 mb-1">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white leading-snug truncate">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="text-xs text-[#8E8E93] mt-0.5 leading-normal line-clamp-1 font-medium">
+              {subtitle}
+            </p>
+          )}
         </div>
 
         <button
           onClick={handlePlayAll}
-          className="px-3 py-1 rounded-full bg-white/10 hover:bg-white text-white hover:text-black text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
-          title="Play Top 5"
+          className="w-9 h-9 rounded-full bg-[#22C55E] hover:bg-[#1fba57] text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer flex-shrink-0"
+          title={`Play all ${title}`}
         >
-          <Play className="w-3 h-3 fill-current ml-0.5" />
-          <span>Play All</span>
+          <Play className="w-4 h-4 fill-black ml-0.5" />
         </button>
       </div>
 

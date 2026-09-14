@@ -73,6 +73,7 @@ export default function SearchPage() {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'songs' | 'artists' | 'albums' | 'playlists'
   const [isLoading, setIsLoading] = useState(false);
   const [recentActivities, setRecentActivities] = useState(() => getRecentActivity(12));
+  const debounceTimerRef = useRef(null);
 
   // Subscribe to real entity-based recent activity
   useEffect(() => {
