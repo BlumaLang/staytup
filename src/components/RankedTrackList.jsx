@@ -152,12 +152,13 @@ export const RankedTrackList = ({
                   >
                     {track.title}
                   </p>
-                  <div className="mt-0.5 line-clamp-1">
+                  <div className="mt-0.5 overflow-hidden">
                     <ArtistLinks
                       track={track}
                       className="text-[11px] text-[#8E8E93]"
                       maxDisplay={3}
                       showAvatars={false}
+                      singleLine={true}
                     />
                   </div>
                 </div>
