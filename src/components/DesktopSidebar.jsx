@@ -226,7 +226,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
         )}
 
         {/* Scrollable Library List */}
-        <div className="flex-1 overflow-y-auto no-scrollbar space-y-1">
+        <div className="flex-1 overflow-y-auto no-scrollbar space-y-1 pb-4">
           {/* Pinned: Liked Songs (Shown in 'all' and 'playlists') */}
           {(libraryFilter === 'all' || libraryFilter === 'playlists') && (
             <div

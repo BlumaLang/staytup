@@ -207,7 +207,7 @@ export const AppShell = () => {
       </header>
 
       {/* Body: Sidebar + Main Content View + Desktop Right Panel (Spotify 3-Pane Layout) */}
-      <div className="flex-1 flex w-full h-full overflow-hidden relative min-w-0 lg:px-2 lg:pb-2 lg:pt-1.5 lg:gap-2 bg-black">
+      <div className="flex-1 flex w-full min-h-0 overflow-hidden relative min-w-0 lg:px-2 lg:pb-2 lg:pt-1.5 lg:gap-2 bg-black">
         {/* Desktop Sidebar (visible on lg+) */}
         <DesktopSidebar
           activeView={getActiveView()}
@@ -219,7 +219,7 @@ export const AppShell = () => {
         {/* Routed Page Content Area (Center Pane) */}
         <main
           className={`flex-1 w-full h-full relative overflow-y-auto lg:rounded-xl lg:bg-[#121212] lg:border lg:border-white/[0.06] shadow-2xl min-w-0 ${
-            hasTrack ? 'pb-36 lg:pb-28 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
+            hasTrack ? 'pb-36 lg:pb-6 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
           }`}
         >
           <Outlet />

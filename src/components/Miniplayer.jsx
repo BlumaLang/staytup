@@ -182,7 +182,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
       {/* DESKTOP FULL-WIDTH INTEGRATED BOTTOM PLAYER (≥ 1024px)                    */}
       {/* Exactly matches Spotify desktop layout                                   */}
       {/* ========================================================================= */}
-      <footer className="hidden lg:flex fixed bottom-0 left-0 right-0 h-[88px] z-50 bg-[#000000] border-t border-[#1C1C1E] px-4 items-center justify-between select-none">
+      <footer className="hidden lg:flex relative h-[88px] w-full flex-shrink-0 z-40 bg-black border-t border-[#1C1C1E] px-4 items-center justify-between select-none">
         {/* Left Section: Track Artwork, Title, Artist, Liked Status (~30%) */}
         <div className="flex items-center gap-3.5 w-[30%] min-w-[220px] max-w-[360px]">
           <div

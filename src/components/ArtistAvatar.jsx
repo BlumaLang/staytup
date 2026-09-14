@@ -4,7 +4,6 @@ import {
   resolveArtistImage,
   subscribeToArtistImages,
   getArtistInitial,
-  getArtistGradient,
 } from '../services/artistImageService';
 import { get500x500Image } from '../utils/media';
 
@@ -27,7 +26,6 @@ export const ArtistAvatar = ({
   alt,
 }) => {
   const initial = getArtistInitial(name);
-  const gradient = getArtistGradient(name);
 
   // Check passed image or cached image
   const initialImage =
@@ -82,7 +80,7 @@ export const ArtistAvatar = ({
         <>
           {/* Subtle initial skeleton behind the image while it loads */}
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold tracking-tight uppercase transition-opacity duration-300 ${
+            className={`absolute inset-0 bg-[#242426] border border-white/5 flex items-center justify-center text-[#8E8E93] font-bold tracking-tight uppercase transition-opacity duration-300 ${
               isLoaded ? 'opacity-0' : 'opacity-100'
             }`}
           >
@@ -101,9 +99,9 @@ export const ArtistAvatar = ({
           />
         </>
       ) : (
-        /* Deterministic Initial Badge (Intentional, elegant fallback) */
+        /* Neutral gray fallback badge */
         <div
-          className={`w-full h-full bg-gradient-to-br ${gradient} border border-white/10 flex items-center justify-center text-white font-bold tracking-tight uppercase shadow-inner`}
+          className="w-full h-full bg-[#242426] border border-white/10 flex items-center justify-center text-[#8E8E93] font-bold tracking-tight uppercase shadow-inner"
         >
           <span>{initial}</span>
         </div>

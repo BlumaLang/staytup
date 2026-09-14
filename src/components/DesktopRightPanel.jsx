@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +10,6 @@ import {
   Heart,
   Play,
   Pause,
-  Sparkles,
   Music2,
   Trash2,
   ListMusic,
@@ -75,6 +74,16 @@ export const DesktopRightPanel = ({ onClose }) => {
     return './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
   };
 
+  const scrollContainerRef = useRef(null);
+  const trackId = currentTrack?.videoId || currentTrack?.video_id || currentTrack?.id;
+
+  // Auto-scroll to top whenever a new track is selected so artwork is immediately visible
+  useEffect(() => {
+    if (trackId && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [trackId]);
+
   return (
     <aside className="w-[300px] xl:w-[330px] 2xl:w-[360px] h-full bg-[#121212] flex flex-col flex-shrink-0 select-none z-20 overflow-hidden">
       {/* Panel Top Bar */}
@@ -95,7 +104,7 @@ export const DesktopRightPanel = ({ onClose }) => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+      <div ref={scrollContainerRef} className="flex-1 flex flex-col overflow-y-auto no-scrollbar scroll-smooth">
         {/* ========================================================================= */}
         {/* TOP SECTION: CURRENTLY PLAYING MUSIC                                       */}
         {/* ========================================================================= */}
@@ -306,9 +315,8 @@ export const DesktopRightPanel = ({ onClose }) => {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="w-full py-2 mt-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] font-bold text-[#8E8E93] hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="w-full py-2 mt-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] font-bold text-[#8E8E93] hover:text-white transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{isLoadingMore ? 'Loading suggestions...' : 'Add recommended tracks'}</span>
               </button>
             </div>
@@ -322,9 +330,8 @@ export const DesktopRightPanel = ({ onClose }) => {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white text-white hover:text-black text-xs font-bold transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 shadow-md"
               >
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>{isLoadingMore ? 'Loading...' : 'Autoplay Suggestions'}</span>
               </button>
             </div>

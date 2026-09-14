@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getArtistGradient, getArtistInitial } from '../services/artistImageService';
+import { getArtistInitial } from '../services/artistImageService';
 
 const SIZE_CLASSES = {
   xs: 'w-6 h-6 text-[10px]',
@@ -24,7 +24,6 @@ export const UserAvatar = ({
 
   const [hasError, setHasError] = useState(false);
   const initial = getArtistInitial(displayName);
-  const gradient = getArtistGradient(displayName);
   const sizeClass = SIZE_CLASSES[size] || size;
 
   const showImage = Boolean(rawAvatar && !hasError);
@@ -43,7 +42,7 @@ export const UserAvatar = ({
         />
       ) : (
         <div
-          className={`w-full h-full bg-gradient-to-br ${gradient} border border-white/10 flex items-center justify-center text-white font-bold tracking-tight uppercase shadow-inner`}
+          className="w-full h-full bg-[#242426] border border-white/10 flex items-center justify-center text-[#8E8E93] font-bold tracking-tight uppercase shadow-inner"
         >
           <span>{initial}</span>
         </div>
