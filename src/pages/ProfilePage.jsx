@@ -333,17 +333,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Settings link hint at bottom */}
-        <button
-          onClick={() => navigate('/settings')}
-          className="w-full flex items-center justify-between px-4 py-3.5 bg-[#121214] border border-[#222226] rounded-2xl hover:bg-[#18181B] transition-colors group cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <Settings className="w-4 h-4 text-[#8E8E93] group-hover:text-white transition-colors" />
-            <span className="text-sm font-medium text-white">Settings</span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-white transition-colors" />
-        </button>
       </div>
 
       {/* Edit Profile Modal */}

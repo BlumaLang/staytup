@@ -222,17 +222,6 @@ export default function BlendPage() {
           </button>
         </div>
 
-        {/* Mobile-only: Create Blend button (title is in AppShell top bar) */}
-        <div className="flex lg:hidden items-center justify-end mb-5">
-          <button
-            onClick={handleOpenInviteModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-md"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Create Blend</span>
-          </button>
-        </div>
-
         {/* Blends Grid */}
         {allBlends.length === 0 ? (
           <div className="bg-[#141417] border border-white/5 rounded-2xl p-8 sm:p-12 text-center">
