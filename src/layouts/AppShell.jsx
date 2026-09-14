@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { DesktopSidebar } from '../components/DesktopSidebar';
+import { DesktopRightPanel } from '../components/DesktopRightPanel';
 import { BottomNav } from '../components/BottomNav';
 import { Miniplayer } from '../components/Miniplayer';
 import { FullPlayerView } from '../components/FullPlayerView';
@@ -9,7 +10,6 @@ import { SleepTimerModal } from '../components/SleepTimerModal';
 import { LyricsDrawer } from '../components/LyricsDrawer';
 import { LoginModal } from '../components/LoginModal';
 import { usePlayer } from '../context/PlayerContext';
-import { get500x500Image } from '../utils/media';
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,6 +20,7 @@ import {
   Heart,
   X,
   Sparkles,
+  PanelRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -129,6 +130,7 @@ export const AppShell = () => {
           >
             <Search className="absolute left-3.5 w-4 h-4 text-[#8E8E93]" />
             <input
+              id="universal-search-input"
               type="text"
               value={topSearchQuery}
               onChange={(e) => {
@@ -164,8 +166,8 @@ export const AppShell = () => {
           </form>
         </div>
 
-        {/* Right: Social & Profile shortcuts */}
-        <div className="flex items-center justify-end gap-3 w-[220px]">
+        {/* Right: Social, Now Playing Panel Toggle, & Profile shortcuts */}
+        <div className="flex items-center justify-end gap-2.5 w-[220px]">
           <button
             onClick={() => navigate('/friends')}
             className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
@@ -176,6 +178,18 @@ export const AppShell = () => {
             title="Friends & Social"
           >
             <Users className="w-4.5 h-4.5" />
+          </button>
+
+          <button
+            onClick={() => setShowNowPlayingSide((prev) => !prev)}
+            className={`w-9 h-9 rounded-full hidden xl:flex items-center justify-center transition-colors cursor-pointer ${
+              showNowPlayingSide
+                ? 'bg-white/15 text-white'
+                : 'text-[#8E8E93] hover:text-white hover:bg-white/5'
+            }`}
+            title={showNowPlayingSide ? 'Hide Right Panel' : 'Show Right Panel (Now Playing & Queue)'}
+          >
+            <PanelRight className="w-4.5 h-4.5" />
           </button>
 
           <button
@@ -204,8 +218,8 @@ export const AppShell = () => {
         </div>
       </header>
 
-      {/* Body: Sidebar + Main Content View + Optional Right Panel */}
-      <div className="flex-1 flex w-full h-full overflow-hidden relative min-w-0">
+      {/* Body: Sidebar + Main Content View + Desktop Right Panel (Spotify 3-Pane Layout) */}
+      <div className="flex-1 flex w-full h-full overflow-hidden relative min-w-0 lg:p-2 lg:pt-0 lg:gap-2 bg-black">
         {/* Desktop Sidebar (visible on lg+) */}
         <DesktopSidebar
           activeView={getActiveView()}
@@ -214,87 +228,20 @@ export const AppShell = () => {
           onOpenFriends={() => navigate('/friends')}
         />
 
-        {/* Routed Page Content Area */}
+        {/* Routed Page Content Area (Center Pane) */}
         <main
-          className={`flex-1 w-full h-full relative overflow-y-auto ${
+          className={`flex-1 w-full h-full relative overflow-y-auto lg:rounded-2xl lg:bg-[#0F0F12] lg:border lg:border-[#1E1E24] shadow-2xl min-w-0 ${
             hasTrack ? 'pb-36 lg:pb-28 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
           }`}
         >
           <Outlet />
         </main>
 
-        {/* Spotify Desktop Right Panel: Now Playing & About Artist (xl: screens) */}
-        {hasTrack && showNowPlayingSide && (
-          <aside className="hidden 2xl:flex flex-col w-[320px] bg-[#0A0A0C] border-l border-[#1C1C1E] h-full flex-shrink-0 p-5 overflow-y-auto no-scrollbar select-none z-20">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white tracking-tight truncate pr-2">
-                {currentTrack.title}
-              </h3>
-              <button
-                onClick={() => setShowNowPlayingSide(false)}
-                className="text-[#8E8E93] hover:text-white transition-colors"
-                title="Hide panel"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Large Cover Art */}
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/10 mb-4 bg-black">
-              <img
-                src={get500x500Image(
-                  currentTrack.image || currentTrack.thumbnail || currentTrack.artwork_url
-                )}
-                alt={currentTrack.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            {/* Track Info */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="min-w-0 flex-1 pr-2">
-                <h4 className="text-base font-bold text-white line-clamp-1">{currentTrack.title}</h4>
-                <p
-                  onClick={() =>
-                    navigate(`/artist/${encodeURIComponent(currentTrack.artist || '')}`)
-                  }
-                  className="text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer line-clamp-1 mt-0.5"
-                >
-                  {currentTrack.artist || 'Unknown Artist'}
-                </p>
-              </div>
-              <button
-                onClick={() => toggleLike(currentTrack)}
-                className="text-[#8E8E93] hover:text-white transition-colors flex-shrink-0"
-              >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isLiked ? 'fill-[#22C55E] text-[#22C55E]' : 'stroke-current'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* About the Artist Card */}
-            <div className="p-4 rounded-2xl bg-[#141416] border border-[#222226] space-y-3">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-[#8E8E93]">
-                About the artist
-              </h5>
-              <div
-                onClick={() =>
-                  navigate(`/artist/${encodeURIComponent(currentTrack.artist || '')}`)
-                }
-                className="cursor-pointer group"
-              >
-                <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
-                  {currentTrack.artist}
-                </p>
-                <p className="text-xs text-[#8E8E93] line-clamp-3 mt-1 leading-relaxed">
-                  Discover more tracks, popular hits, and curated albums from this artist on Staytup.
-                </p>
-              </div>
-            </div>
-          </aside>
+        {/* Spotify Desktop Right Panel: Now Playing (top) + Queue List (bottom) */}
+        {showNowPlayingSide && (
+          <div className="hidden xl:flex h-full lg:rounded-2xl lg:overflow-hidden lg:border lg:border-[#1E1E24] shadow-2xl flex-shrink-0">
+            <DesktopRightPanel onClose={() => setShowNowPlayingSide(false)} />
+          </div>
         )}
       </div>
 

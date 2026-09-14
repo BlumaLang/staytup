@@ -87,12 +87,12 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
 
   return (
     <aside
-      className={`hidden lg:flex flex-col h-full bg-[#09090B] border-r border-[#1C1C1F] flex-shrink-0 select-none relative z-30 transition-all duration-300 ease-in-out ${
+      className={`hidden lg:flex flex-col h-full bg-[#0F0F12] border border-[#1E1E24] rounded-2xl flex-shrink-0 select-none relative z-30 transition-all duration-300 ease-in-out shadow-2xl overflow-hidden ${
         isCollapsed ? 'w-[76px]' : 'w-[260px] xl:w-[280px]'
       }`}
     >
       {/* Top Brand Header */}
-      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+      <div className="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
         <div
           onClick={() => {
             setActiveView('home');
@@ -127,7 +127,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
       </div>
 
       {/* Primary Navigation Box (Spotify Style Rounded Card) */}
-      <div className="mx-2.5 bg-[#121215] border border-[#202024] rounded-2xl p-1.5 space-y-1 shadow-sm">
+      <div className="mx-2 bg-[#141417] border border-white/5 rounded-2xl p-1.5 space-y-1 shadow-sm">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -142,6 +142,11 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
               onClick={() => {
                 setActiveView(item.id);
                 navigate(item.path);
+                if (item.id === 'search') {
+                  setTimeout(() => {
+                    document.getElementById('universal-search-input')?.focus();
+                  }, 50);
+                }
               }}
               title={isCollapsed ? item.label : undefined}
               className={`w-full flex items-center rounded-xl text-sm font-semibold transition-all group cursor-pointer ${
@@ -164,7 +169,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
       </div>
 
       {/* "Your Library" Card (Fills remaining height) */}
-      <div className="flex-1 mx-2.5 mt-2.5 mb-3 bg-[#121215] border border-[#202024] rounded-2xl p-2 flex flex-col min-h-0 overflow-hidden shadow-sm">
+      <div className="flex-1 mx-2 mt-2 mb-2 bg-[#141417] border border-white/5 rounded-2xl p-2 flex flex-col min-h-0 overflow-hidden shadow-sm">
         {/* Library Header */}
         <div className="flex items-center justify-between px-1.5 py-1 mb-1">
           <button

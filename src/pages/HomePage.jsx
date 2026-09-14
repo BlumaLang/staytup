@@ -6,7 +6,8 @@ import { loadSmartFeed } from '../services/smartFeedService';
 import { RankedTrackList } from '../components/RankedTrackList';
 import { MediaCard } from '../components/MediaCard';
 import { MediaRail } from '../components/MediaRail';
-import { Flame, TrendingUp, Sparkles, Disc3, ListMusic, History, Radio } from 'lucide-react';
+import { get500x500Image } from '../utils/media';
+import { Flame, TrendingUp, Sparkles, Disc3, ListMusic, History, Radio, Play, Pause, Heart } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -56,6 +57,71 @@ export default function HomePage() {
 
   const displayName = user?.username || user?.displayName?.split(' ')[0] || '';
 
+  // Quick Jump cards derived from smartFeed
+  const quickCards = [];
+  if (smartFeed.trendingOnApp?.[0]) {
+    const t = smartFeed.trendingOnApp[0];
+    quickCards.push({
+      title: t.title,
+      subtitle: t.artist || 'Trending',
+      image: get500x500Image(t.image || t.thumbnail || t.artwork_url),
+      onClick: () => playTrack(t, smartFeed.trendingOnApp),
+      onPlay: () => playTrack(t, smartFeed.trendingOnApp),
+    });
+  }
+  if (smartFeed.popularRightNow?.[0]) {
+    const t = smartFeed.popularRightNow[0];
+    quickCards.push({
+      title: t.title,
+      subtitle: t.artist || 'Top Hit',
+      image: get500x500Image(t.image || t.thumbnail || t.artwork_url),
+      onClick: () => playTrack(t, smartFeed.popularRightNow),
+      onPlay: () => playTrack(t, smartFeed.popularRightNow),
+    });
+  }
+  if (smartFeed.newReleases?.[0]) {
+    const t = smartFeed.newReleases[0];
+    quickCards.push({
+      title: t.title,
+      subtitle: t.artist || 'New Release',
+      image: get500x500Image(t.image || t.thumbnail || t.artwork_url),
+      onClick: () => (t.videoId ? playTrack(t, smartFeed.newReleases) : navigate(`/album/${t.id}`)),
+      onPlay: () => (t.videoId ? playTrack(t, smartFeed.newReleases) : navigate(`/album/${t.id}`)),
+    });
+  }
+  if (smartFeed.popularAlbums?.[0]) {
+    const a = smartFeed.popularAlbums[0];
+    quickCards.push({
+      title: a.title,
+      subtitle: a.artist || 'Album',
+      image: get500x500Image(a.image || a.thumbnail),
+      onClick: () => navigate(`/album/${encodeURIComponent(a.id)}`),
+      onPlay: () => navigate(`/album/${encodeURIComponent(a.id)}`),
+    });
+  }
+  if (smartFeed.popularPlaylists?.[0]) {
+    const p = smartFeed.popularPlaylists[0];
+    quickCards.push({
+      title: p.title,
+      subtitle: 'Playlist',
+      image: get500x500Image(p.image || p.thumbnail),
+      onClick: () => navigate(`/playlist/${encodeURIComponent(p.id)}`),
+      onPlay: () => navigate(`/playlist/${encodeURIComponent(p.id)}`),
+    });
+  }
+  if (quickCards.length < 5 && smartFeed.trendingOnApp?.length > 1) {
+    for (let i = 1; i < smartFeed.trendingOnApp.length && quickCards.length < 5; i++) {
+      const t = smartFeed.trendingOnApp[i];
+      quickCards.push({
+        title: t.title,
+        subtitle: t.artist || 'Trending',
+        image: get500x500Image(t.image || t.thumbnail || t.artwork_url),
+        onClick: () => playTrack(t, smartFeed.trendingOnApp),
+        onPlay: () => playTrack(t, smartFeed.trendingOnApp),
+      });
+    }
+  }
+
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Smart Welcome & Filter Chips Bar */}
@@ -92,7 +158,79 @@ export default function HomePage() {
       </div>
 
       {/* Main Content View (Full Width) */}
-      <div className="flex-1 px-4 sm:px-8 py-6 w-full space-y-10">
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full space-y-9">
+        {/* ========================================================================= */}
+        {/* QUICK JUMP 6-PACK GRID (Spotify Signature Desktop Dashboard Grid)         */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
+          {/* Card 1: Liked Songs */}
+          <div
+            onClick={() => navigate('/library?tab=favorites')}
+            className="group relative flex items-center bg-[#151518] hover:bg-[#202025] rounded-xl overflow-hidden transition-all duration-200 cursor-pointer border border-white/[0.04] hover:border-white/10 shadow-md"
+          >
+            <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 bg-gradient-to-br from-purple-700 via-indigo-600 to-blue-700 flex items-center justify-center shadow-md">
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+            </div>
+            <div className="flex-1 min-w-0 px-3 py-1.5">
+              <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight">
+                Liked Songs
+              </p>
+              <p className="text-[10px] sm:text-xs text-[#8E8E93] truncate mt-0.5">
+                {likedTrackIds.size} {likedTrackIds.size === 1 ? 'song' : 'songs'}
+              </p>
+            </div>
+            <div className="pr-3 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
+                <Play className="w-4 h-4 fill-black ml-0.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Cards 2-6: Dynamic Quick Hits */}
+          {isLoading ? (
+            [...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 sm:h-14 rounded-xl bg-white/5 animate-pulse" />
+            ))
+          ) : (
+            quickCards.map((item, idx) => (
+              <div
+                key={idx}
+                onClick={item.onClick}
+                className="group relative flex items-center bg-[#151518] hover:bg-[#202025] rounded-xl overflow-hidden transition-all duration-200 cursor-pointer border border-white/[0.04] hover:border-white/10 shadow-md"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 bg-black overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="flex-1 min-w-0 px-3 py-1.5">
+                  <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight">
+                    {item.title}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-[#8E8E93] truncate mt-0.5">
+                    {item.subtitle}
+                  </p>
+                </div>
+                <div className="pr-3 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (item.onPlay) item.onPlay();
+                      else item.onClick();
+                    }}
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform cursor-pointer"
+                    title={`Play ${item.title}`}
+                  >
+                    <Play className="w-4 h-4 fill-black ml-0.5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* ========================================================================= */}
         {/* SECTION 1: TOP DUAL-RANKED LISTS (Trending on This App vs Popular Right Now) */}
         {/* ========================================================================= */}

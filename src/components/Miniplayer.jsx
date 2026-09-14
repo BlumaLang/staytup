@@ -382,10 +382,10 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
           {onToggleNowPlayingSide && (
             <button
               onClick={onToggleNowPlayingSide}
-              className={`w-8 h-8 rounded-full hidden 2xl:flex items-center justify-center transition-colors cursor-pointer ${
+              className={`w-8 h-8 rounded-full hidden xl:flex items-center justify-center transition-colors cursor-pointer ${
                 showNowPlayingSide ? 'text-[#22C55E]' : 'hover:text-white hover:bg-white/5'
               }`}
-              title="Now Playing View"
+              title="Now Playing & Queue Panel"
             >
               <PanelRight className="w-4 h-4" />
             </button>
