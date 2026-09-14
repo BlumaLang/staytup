@@ -239,7 +239,7 @@ export default function LibraryPage() {
     <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Header & Tabs */}
       <div className="sticky top-0 z-20 px-4 sm:px-8 pt-5 pb-3 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">My Library</h1>
 
           {/* Circle Pill Tabs */}
@@ -271,7 +271,7 @@ export default function LibraryPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-4 sm:px-8 py-6 w-full">
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full max-w-7xl mx-auto">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center text-[#8E8E93]">
             <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin mb-4" />
@@ -282,21 +282,41 @@ export default function LibraryPage() {
             {/* TAB: FAVORITES */}
             {activeTab === 'favorites' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-white">Liked Songs</h2>
-                    <p className="text-xs text-[#8E8E93]">{favorites.length} songs</p>
+                {/* Spotify-Style Hero Banner for Liked Songs */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#4f22b3] via-[#2d1264] to-[#121214] p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-end gap-6 shadow-2xl border border-white/10">
+                  <div className="w-28 h-28 sm:w-40 sm:h-40 rounded-2xl bg-gradient-to-br from-[#501fe0] via-[#855bf0] to-[#c3ecdc] flex items-center justify-center shadow-2xl shadow-indigo-900/60 flex-shrink-0">
+                    <Heart className="w-14 h-14 sm:w-20 sm:h-20 text-white fill-white drop-shadow-md" />
                   </div>
-                  {favorites.length > 0 && (
+
+                  <div className="flex-1 text-center sm:text-left min-w-0">
+                    <span className="text-[11px] font-extrabold uppercase tracking-widest text-indigo-300">
+                      Playlist
+                    </span>
+                    <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight mt-1 mb-2 truncate">
+                      Liked Songs
+                    </h1>
+                    <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-[#D1D5DB] flex-wrap">
+                      <span className="font-bold text-white">
+                        {user?.username || 'Staytup Listener'}
+                      </span>
+                      <span>•</span>
+                      <span>{favorites.length} {favorites.length === 1 ? 'song' : 'songs'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Bar */}
+                {favorites.length > 0 && (
+                  <div className="flex items-center gap-4 py-1">
                     <button
                       onClick={() => playTrack(favorites[0], favorites)}
-                      className="px-5 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs sm:text-sm flex items-center gap-2 transition-transform active:scale-95 cursor-pointer shadow-lg"
+                      className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-xl shadow-emerald-600/30 transition-all cursor-pointer"
+                      title="Play All"
                     >
-                      <Play className="w-4 h-4 fill-black" />
-                      <span>Play All</span>
+                      <Play className="w-6 h-6 fill-black ml-0.5" />
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {favorites.length === 0 ? (
                   <div className="py-16 text-center text-[#8E8E93]">
@@ -312,7 +332,7 @@ export default function LibraryPage() {
                       <div
                         key={track.videoId || track.id || i}
                         onClick={() => playTrack(track, favorites)}
-                        className="flex items-center justify-between py-2 px-3 hover:bg-[#141416] rounded-xl cursor-pointer transition-colors group"
+                        className="flex items-center justify-between py-2 px-3 hover:bg-white/[0.08] rounded-xl cursor-pointer transition-colors group"
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-3">
                           <span className="w-5 text-center text-xs font-mono text-[#8E8E93] group-hover:hidden">

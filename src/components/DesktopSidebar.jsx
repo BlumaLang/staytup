@@ -164,7 +164,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
       </div>
 
       {/* "Your Library" Card (Fills remaining height) */}
-      <div className="flex-1 mx-2.5 mt-2.5 bg-[#121215] border border-[#202024] rounded-2xl p-2 flex flex-col min-h-0 overflow-hidden shadow-sm">
+      <div className="flex-1 mx-2.5 mt-2.5 mb-3 bg-[#121215] border border-[#202024] rounded-2xl p-2 flex flex-col min-h-0 overflow-hidden shadow-sm">
         {/* Library Header */}
         <div className="flex items-center justify-between px-1.5 py-1 mb-1">
           <button
@@ -327,47 +327,6 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
               );
             })}
         </div>
-      </div>
-
-      {/* User Profile Section at Bottom */}
-      <div className="p-2.5 mt-auto">
-        <button
-          onClick={onOpenProfile}
-          title={isCollapsed ? user?.username || 'Profile & Settings' : undefined}
-          className={`w-full flex items-center rounded-2xl bg-[#121215] hover:bg-[#18181C] border border-[#202024] transition-all group cursor-pointer ${
-            isCollapsed ? 'justify-center p-2.5' : 'gap-3 p-2.5'
-          } ${activeView === 'profile' ? 'ring-1 ring-white/20 bg-white/10' : ''}`}
-        >
-          <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#202025]">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt="Profile"
-                onError={(e) => {
-                  e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
-                }}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <User className="w-4 h-4 text-[#8E8E93]" />
-              </div>
-            )}
-            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#22C55E] ring-1 ring-black" />
-          </div>
-
-          {!isCollapsed && (
-            <>
-              <div className="min-w-0 text-left flex-1">
-                <p className="text-xs font-bold text-white truncate leading-tight">
-                  {user?.username || user?.displayName || 'Staytup Listener'}
-                </p>
-                <p className="text-[10px] text-[#8E8E93] truncate mt-0.5">Member</p>
-              </div>
-              <Settings className="w-4 h-4 text-[#8E8E93] group-hover:text-white flex-shrink-0 transition-colors" />
-            </>
-          )}
-        </button>
       </div>
     </aside>
   );

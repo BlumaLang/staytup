@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { DesktopSidebar } from '../components/DesktopSidebar';
 import { BottomNav } from '../components/BottomNav';
@@ -32,6 +32,18 @@ export const AppShell = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false);
   const [showNowPlayingSide, setShowNowPlayingSide] = useState(true);
+
+  const searchParams = new URLSearchParams(location.search);
+  const urlQuery = searchParams.get('q') || '';
+  const [topSearchQuery, setTopSearchQuery] = useState(urlQuery);
+
+  useEffect(() => {
+    if (location.pathname === '/search') {
+      setTopSearchQuery(urlQuery);
+    } else {
+      setTopSearchQuery('');
+    }
+  }, [location.pathname, urlQuery]);
 
   // Map route pathname to active nav item
   const getActiveView = () => {
@@ -105,19 +117,51 @@ export const AppShell = () => {
             <Home className="w-5 h-5" />
           </button>
 
-          <div
-            onClick={() => navigate('/search')}
-            className="flex-1 relative flex items-center cursor-pointer"
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = topSearchQuery.trim();
+              if (q) {
+                navigate(`/search?q=${encodeURIComponent(q)}`);
+              }
+            }}
+            className="flex-1 relative flex items-center"
           >
             <Search className="absolute left-3.5 w-4 h-4 text-[#8E8E93]" />
             <input
               type="text"
-              readOnly
-              onClick={() => navigate('/search')}
+              value={topSearchQuery}
+              onChange={(e) => {
+                const val = e.target.value;
+                setTopSearchQuery(val);
+                if (location.pathname === '/search') {
+                  navigate(val ? `/search?q=${encodeURIComponent(val)}` : '/search', { replace: true });
+                }
+              }}
+              onFocus={() => {
+                if (location.pathname !== '/search') {
+                  navigate(topSearchQuery ? `/search?q=${encodeURIComponent(topSearchQuery)}` : '/search');
+                }
+              }}
               placeholder="What do you want to play?"
-              className="w-full pl-10 pr-4 py-2.5 bg-[#18181B] hover:bg-[#222226] border border-transparent hover:border-white/10 focus:border-white/30 rounded-full text-xs sm:text-sm text-white placeholder-[#8E8E93] cursor-pointer transition-all shadow-inner"
+              className="w-full pl-10 pr-9 py-2.5 bg-[#18181B] hover:bg-[#222226] focus:bg-[#222226] border border-transparent hover:border-white/10 focus:border-white/30 rounded-full text-xs sm:text-sm text-white placeholder-[#8E8E93] transition-all shadow-inner focus:outline-none"
             />
-          </div>
+            {topSearchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTopSearchQuery('');
+                  if (location.pathname === '/search') {
+                    navigate('/search', { replace: true });
+                  }
+                }}
+                className="absolute right-3 text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </form>
         </div>
 
         {/* Right: Social & Profile shortcuts */}
