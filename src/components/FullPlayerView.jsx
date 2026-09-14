@@ -220,15 +220,11 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
 
           <button
             onClick={handleLikeClick}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer ${
-              isLiked
-                ? 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/40 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
+            className="p-2.5 flex items-center justify-center transition-all active:scale-90 cursor-pointer text-[#8E8E93] hover:text-white"
             title={isLiked ? 'Unlike' : 'Like'}
           >
             <Heart
-              className={`w-6 h-6 transition-transform duration-200 ${
+              className={`w-7 h-7 transition-transform duration-200 ${
                 isLiked
                   ? 'fill-[#22C55E] stroke-[#22C55E] scale-110'
                   : 'stroke-white'
