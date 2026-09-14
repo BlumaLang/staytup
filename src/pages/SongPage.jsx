@@ -4,6 +4,7 @@ import { api } from '../api/endpoints';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { getSongUrl, shareContent } from '../utils/canonicalUrl';
+import { ArtistLinks } from '../components/ArtistLinks';
 import {
   Play,
   Pause,
@@ -255,21 +256,20 @@ export default function SongPage() {
               {track.title}
             </h1>
 
-            <p className="text-sm sm:text-base text-[#8E8E93]">
-              <Link
-                to={`/artist/${encodeURIComponent(track.artist || '')}`}
-                className="font-bold text-white hover:text-gray-300 transition-colors"
-              >
-                {track.artist || 'Unknown Artist'}
-              </Link>
+            <div className="flex items-center justify-center sm:justify-start flex-wrap gap-2 text-sm sm:text-base text-[#8E8E93]">
+              <ArtistLinks
+                track={track}
+                className="font-bold text-white hover:text-gray-300"
+                showAvatars={true}
+              />
               {track.album && (
                 <>
-                  {' • '}
+                  <span>•</span>
                   <span className="text-[#8E8E93]">{track.album}</span>
                 </>
               )}
-              {track.duration ? ` • ${formatDuration(track.duration)}` : ''}
-            </p>
+              {track.duration ? <span>• {formatDuration(track.duration)}</span> : null}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center sm:justify-start gap-3 pt-3 flex-wrap">
@@ -370,7 +370,14 @@ export default function SongPage() {
                       >
                         {item.title}
                       </p>
-                      <p className="text-[11px] text-[#8E8E93] truncate">{item.artist}</p>
+                      <div className="mt-0.5">
+                        <ArtistLinks
+                          track={item}
+                          className="text-[11px] text-[#8E8E93]"
+                          maxDisplay={2}
+                          showAvatars={false}
+                        />
+                      </div>
                     </div>
                   </div>
 

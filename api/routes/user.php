@@ -107,9 +107,7 @@ class UserRoutes {
         if ($method !== 'POST') sendError('Method not allowed', 405);
         
         $body = getRequestBody();
-        $userId = $body['user_id'] ?? null;
-        
-        if (!$userId) sendError('user_id is required');
+        $userId = $body['user_id'] ?? $_SERVER['HTTP_X_USER_ID'] ?? getQueryParam('user_id') ?? 'guest_user';
         
         // Record recently played
         $track = [

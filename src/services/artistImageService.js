@@ -50,13 +50,13 @@ const GRADIENTS = [
  * Extracts first meaningful uppercase letter (skips 'The ', digits, special chars)
  */
 export function getArtistInitial(name) {
-  if (!name || typeof name !== 'string') return '♪';
+  if (!name || typeof name !== 'string') return 'A';
   let clean = name.trim();
   if (clean.toLowerCase().startsWith('the ')) {
     clean = clean.slice(4).trim();
   }
   const match = clean.match(/[a-zA-Z]/);
-  return match ? match[0].toUpperCase() : clean.charAt(0).toUpperCase() || '♪';
+  return match ? match[0].toUpperCase() : (clean.charAt(0).toUpperCase() || 'A');
 }
 
 /**

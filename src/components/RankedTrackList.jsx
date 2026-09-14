@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Pause, Heart, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { get500x500Image } from '../utils/media';
+import { ArtistLinks } from './ArtistLinks';
 
 const formatDuration = (val) => {
   if (!val) return '3:24';
@@ -159,17 +160,14 @@ export const RankedTrackList = ({
                   >
                     {track.title}
                   </p>
-                  <p
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (track.artist) {
-                        navigate(`/artist/${encodeURIComponent(track.artist)}`);
-                      }
-                    }}
-                    className="text-[11px] text-[#8E8E93] hover:text-white transition-colors cursor-pointer truncate mt-0.5"
-                  >
-                    {track.artist || 'Unknown Artist'}
-                  </p>
+                  <div className="mt-0.5">
+                    <ArtistLinks
+                      track={track}
+                      className="text-[11px] text-[#8E8E93]"
+                      maxDisplay={2}
+                      showAvatars={false}
+                    />
+                  </div>
                 </div>
               </div>
 

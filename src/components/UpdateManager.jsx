@@ -96,7 +96,7 @@ export default function UpdateManager() {
       className="fixed top-3 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 z-50 max-w-[92vw] sm:max-w-md w-full animate-in fade-in slide-in-from-top-4 duration-300 pointer-events-auto"
     >
       <div className="bg-[#18181B]/95 backdrop-blur-xl border border-[#27272A] shadow-2xl shadow-black/80 rounded-2xl p-3.5 sm:p-4 text-white flex items-center justify-between gap-3">
-        {/* Left: Sparkle Icon + Info */}
+        {/* Left: Update Icon + Info */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black flex-shrink-0 shadow-lg shadow-emerald-500/20">
             <ArrowUpCircle className="w-5 h-5" />

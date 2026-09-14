@@ -101,7 +101,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
           className="flex items-center gap-3 cursor-pointer group min-w-0"
           title="Staytup Music"
         >
-          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center transition-transform duration-200 group-hover:scale-105 shadow-md flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center transition-colors duration-200 group-hover:bg-gray-100 shadow-md flex-shrink-0">
             <Music2 className="w-5 h-5 text-black" />
           </div>
           {!isCollapsed && (

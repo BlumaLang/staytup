@@ -14,6 +14,7 @@ import {
   Check,
 } from 'lucide-react';
 import { getPlaylistUrl, shareContent } from '../utils/canonicalUrl';
+import { ArtistLinks } from '../components/ArtistLinks';
 
 const formatDuration = (seconds) => {
   if (!seconds || isNaN(seconds)) return '--:--';
@@ -234,7 +235,14 @@ export default function PlaylistPage() {
                         >
                           {track.title}
                         </p>
-                        <p className="text-xs text-[#8E8E93] line-clamp-1">{track.artist}</p>
+                        <div className="mt-0.5">
+                          <ArtistLinks
+                            track={track}
+                            className="text-xs text-[#8E8E93]"
+                            maxDisplay={2}
+                            showAvatars={false}
+                          />
+                        </div>
                       </div>
                     </div>
 

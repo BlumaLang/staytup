@@ -1,11 +1,13 @@
 import React from 'react';
 import { Play } from 'lucide-react';
 import { get500x500Image } from '../utils/media';
+import { ArtistLinks } from './ArtistLinks';
 
 export const MediaCard = ({
   image,
   title,
   subtitle,
+  track,
   isRound = false,
   onPlay,
   onClick,
@@ -59,11 +61,20 @@ export const MediaCard = ({
         <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-white tracking-tight">
           {title}
         </p>
-        {subtitle && (
+        {track ? (
+          <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+            <ArtistLinks
+              track={track}
+              className="text-xs text-[#A7A7A7]"
+              maxDisplay={2}
+              showAvatars={false}
+            />
+          </div>
+        ) : subtitle ? (
           <p className="text-xs text-[#A7A7A7] line-clamp-2 mt-1 font-medium leading-tight">
             {subtitle}
           </p>
-        )}
+        ) : null}
       </div>
     </div>
   );

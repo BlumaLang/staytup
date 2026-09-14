@@ -3,6 +3,8 @@ import { api } from '../api/endpoints';
 import { useAuth } from './AuthContext';
 import { get500x500Image } from '../utils/media';
 import { recordTrackHistoryToFirebase, syncFavoritesToFirebase } from '../services/firebase';
+import { generateIntelligentQueue, getTrackId, deduplicateTracks } from '../services/intelligentQueueService';
+import { recordRecentActivity } from '../services/recentActivityService';
 
 const PlayerContext = createContext(null);
 
@@ -166,8 +168,29 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [fetchLyrics]);
 
+  // Intelligent queue replenishment
+  const isReplenishingRef = useRef(false);
+
+  const replenishQueue = useCallback(async (customSeedTrack = null, count = 10) => {
+    if (isReplenishingRef.current) return;
+    isReplenishingRef.current = true;
+    try {
+      const effectiveTrack = customSeedTrack || queueRef.current[currentIndexRef.current] || currentTrack;
+      if (!effectiveTrack) return;
+      const newRecs = await generateIntelligentQueue(effectiveTrack, queueRef.current, count);
+      if (newRecs && newRecs.length > 0) {
+        setQueue(prev => deduplicateTracks([...prev, ...newRecs]));
+      }
+    } catch (err) {
+      console.warn('Queue replenishment error:', err);
+    } finally {
+      isReplenishingRef.current = false;
+    }
+  }, [currentTrack]);
+
   // Set new track or queue
   const playTrack = useCallback((track, newQueue = null) => {
+    if (!track) return;
     if (newQueue && newQueue.length > 0) {
       queueRef.current = newQueue;
       setQueue(newQueue);
@@ -177,13 +200,19 @@ export const PlayerProvider = ({ children }) => {
       const targetIdx = idx !== -1 ? idx : 0;
       setCurrentIndex(targetIdx);
       loadAndPlayTrack(newQueue[targetIdx], true);
+      // Auto-replenish if queue is very short
+      if (newQueue.length <= 2) {
+        replenishQueue(newQueue[targetIdx], 10);
+      }
     } else {
       queueRef.current = [track];
       setQueue([track]);
       setCurrentIndex(0);
       loadAndPlayTrack(track, true);
+      // Automatically generate recommendations in the background so queue never halts
+      replenishQueue(track, 10);
     }
-  }, [loadAndPlayTrack]);
+  }, [loadAndPlayTrack, replenishQueue]);
 
   // Change index in current queue (Doom scroll snap)
   const jumpToIndex = useCallback((index) => {
@@ -191,8 +220,12 @@ export const PlayerProvider = ({ children }) => {
     if (index >= 0 && index < q.length) {
       setCurrentIndex(index);
       loadAndPlayTrack(q[index], true);
+      // If approaching end of queue, replenish preemptively
+      if (index >= q.length - 2) {
+        replenishQueue(q[index], 10);
+      }
     }
-  }, [loadAndPlayTrack]);
+  }, [loadAndPlayTrack, replenishQueue]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -214,8 +247,18 @@ export const PlayerProvider = ({ children }) => {
     const q = queueRef.current;
     if (currentIndex < q.length - 1) {
       jumpToIndex(currentIndex + 1);
+      if (currentIndex + 2 >= q.length) {
+        replenishQueue(q[currentIndex + 1], 10);
+      }
+    } else if (q.length > 0) {
+      // Reached end of queue: replenish and jump to next
+      replenishQueue(q[currentIndex], 10).then(() => {
+        if (queueRef.current.length > currentIndex + 1) {
+          jumpToIndex(currentIndex + 1);
+        }
+      });
     }
-  }, [currentIndex, jumpToIndex]);
+  }, [currentIndex, jumpToIndex, replenishQueue]);
 
   const prevTrack = useCallback(() => {
     if (currentIndex > 0) {
@@ -294,7 +337,21 @@ export const PlayerProvider = ({ children }) => {
             // 2. Realtime Firebase Community & User History record
             recordTrackHistoryToFirebase(effectiveUserId, currentTrack);
 
-            // 3. LocalStorage persistence for instant offline & zero-latency history
+            // 3. Record entity-aware recent activity for search & library
+            try {
+              recordRecentActivity({
+                type: 'song',
+                id: trackId,
+                videoId: trackId,
+                title: currentTrack.title,
+                artist: currentTrack.artist || '',
+                artists: currentTrack.artists || [],
+                image: currentTrack.thumbnail || currentTrack.image || '',
+                thumbnail: currentTrack.thumbnail || currentTrack.image || '',
+              });
+            } catch (e) {}
+
+            // 4. LocalStorage persistence for instant offline & zero-latency history
             try {
               const savedHistory = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
               const filtered = savedHistory.filter(t => {
@@ -304,7 +361,7 @@ export const PlayerProvider = ({ children }) => {
               localStorage.setItem('staytup_recently_played', JSON.stringify([currentTrack, ...filtered].slice(0, 50)));
             } catch (e) {}
 
-            // 4. Record artist into recent listening artists list for Queue personalization
+            // 5. Record artist into recent listening artists list for Queue personalization
             if (currentTrack.artist) {
               try {
                 const recent = JSON.parse(localStorage.getItem('staytup_recent_artists') || '[]');
@@ -610,6 +667,7 @@ export const PlayerProvider = ({ children }) => {
         addToQueueNext,
         reorderQueue,
         clearQueue,
+        replenishQueue,
       }}
     >
       {children}

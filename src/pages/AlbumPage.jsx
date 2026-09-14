@@ -14,6 +14,7 @@ import {
   Check,
 } from 'lucide-react';
 import { getAlbumUrl, shareContent } from '../utils/canonicalUrl';
+import { ArtistLinks } from '../components/ArtistLinks';
 
 const formatDuration = (seconds) => {
   if (!seconds || isNaN(seconds)) return '--:--';
@@ -156,15 +157,14 @@ export default function AlbumPage() {
               <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white line-clamp-2">
                 {albumTitle}
               </h1>
-              <p className="text-sm text-[#8E8E93]">
-                <Link
-                  to={`/artist/${encodeURIComponent(albumArtist)}`}
-                  className="font-bold text-white hover:text-gray-300 transition-colors"
-                >
-                  {albumArtist}
-                </Link>
+              <div className="flex items-center justify-center sm:justify-start flex-wrap gap-1.5 text-sm text-[#8E8E93]">
+                <ArtistLinks
+                  track={{ artist: albumArtist }}
+                  className="font-bold text-white hover:text-gray-300"
+                  showAvatars={false}
+                />
                 {albumYear ? ` • ${albumYear}` : ''} • {tracks.length} songs
-              </p>
+              </div>
 
               <div className="flex items-center justify-center sm:justify-start gap-3 pt-2">
                 <button
@@ -235,7 +235,14 @@ export default function AlbumPage() {
                         >
                           {track.title}
                         </p>
-                        <p className="text-xs text-[#8E8E93] line-clamp-1">{track.artist}</p>
+                        <div className="mt-0.5">
+                          <ArtistLinks
+                            track={track}
+                            className="text-xs text-[#8E8E93]"
+                            maxDisplay={2}
+                            showAvatars={false}
+                          />
+                        </div>
                       </div>
                     </div>
 

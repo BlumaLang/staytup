@@ -19,6 +19,7 @@ import {
   getCommunityListeningHistoryFromFirebase,
   getUserHistoryFromFirebase,
 } from '../services/firebase';
+import { ArtistLinks } from '../components/ArtistLinks';
 
 export default function LibraryPage() {
   const navigate = useNavigate();
@@ -348,7 +349,14 @@ export default function LibraryPage() {
                             <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                               {track.title}
                             </p>
-                            <p className="text-xs text-[#8E8E93] line-clamp-1">{track.artist}</p>
+                            <div className="mt-0.5">
+                              <ArtistLinks
+                                track={track}
+                                className="text-xs text-[#8E8E93]"
+                                maxDisplay={2}
+                                showAvatars={false}
+                              />
+                            </div>
                           </div>
                         </div>
                         <span className="text-xs font-mono text-[#8E8E93]">
@@ -509,7 +517,14 @@ export default function LibraryPage() {
                             <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                               {track.title}
                             </p>
-                            <p className="text-xs text-[#8E8E93] line-clamp-1">{track.artist}</p>
+                            <div className="mt-0.5">
+                              <ArtistLinks
+                                track={track}
+                                className="text-xs text-[#8E8E93]"
+                                maxDisplay={2}
+                                showAvatars={false}
+                              />
+                            </div>
                           </div>
                         </div>
                         <Play className="w-4 h-4 text-[#8E8E93] group-hover:text-white transition-colors" />
@@ -565,7 +580,14 @@ export default function LibraryPage() {
                             <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                               {track.title}
                             </p>
-                            <p className="text-xs text-[#8E8E93] line-clamp-1">{track.artist}</p>
+                            <div className="mt-0.5">
+                              <ArtistLinks
+                                track={track}
+                                className="text-xs text-[#8E8E93]"
+                                maxDisplay={2}
+                                showAvatars={false}
+                              />
+                            </div>
                           </div>
                         </div>
                         <span className="text-xs font-mono text-[#8E8E93]">

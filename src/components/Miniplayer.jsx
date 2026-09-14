@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { MarqueeText } from './MarqueeText';
+import { ArtistLinks } from './ArtistLinks';
 import confetti from 'canvas-confetti';
 import {
   Play,
@@ -136,9 +137,14 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
               <p className="text-xs sm:text-sm font-bold text-white line-clamp-1 tracking-tight">
                 {currentTrack.title}
               </p>
-              <p className="text-[11px] text-[#8E8E93] line-clamp-1 mt-0.5">
-                {currentTrack.artist || 'Unknown Artist'}
-              </p>
+              <div className="mt-0.5" onClick={(e) => e.stopPropagation()}>
+                <ArtistLinks
+                  track={currentTrack}
+                  className="text-[11px] text-[#8E8E93]"
+                  maxDisplay={2}
+                  showAvatars={false}
+                />
+              </div>
             </div>
           </div>
 
@@ -209,9 +215,14 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
             >
               {currentTrack.title}
             </p>
-            <p className="text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer line-clamp-1 mt-0.5">
-              {currentTrack.artist || 'Unknown Artist'}
-            </p>
+            <div className="mt-0.5">
+              <ArtistLinks
+                track={currentTrack}
+                className="text-xs text-[#8E8E93]"
+                maxDisplay={2}
+                showAvatars={false}
+              />
+            </div>
           </div>
 
           <button

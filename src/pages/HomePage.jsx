@@ -316,6 +316,7 @@ export default function HomePage() {
                     image={track.image || track.thumbnail || track.artwork_url}
                     title={track.title}
                     subtitle={track.artist}
+                    track={track}
                     onPlay={() => playTrack(track, smartFeed.todaysHits)}
                   />
                 </div>
@@ -397,6 +398,7 @@ export default function HomePage() {
                     image={item.image || item.thumbnail || item.artwork_url}
                     title={item.title || item.name}
                     subtitle={item.artist}
+                    track={item.type === 'song' || item.videoId ? item : undefined}
                     badge={item.releaseBadge}
                     onPlay={
                       item.type === 'song' || item.videoId
@@ -562,6 +564,7 @@ export default function HomePage() {
                   image={track.thumbnail || track.image || track.artwork_url}
                   title={track.title}
                   subtitle={track.artist}
+                  track={track}
                   onPlay={() => playTrack(track, smartFeed.jumpBackIn)}
                 />
               </div>

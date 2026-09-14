@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { MarqueeText } from './MarqueeText';
+import { ArtistLinks } from './ArtistLinks';
 import confetti from 'canvas-confetti';
 import {
   ChevronDown,
@@ -207,9 +208,14 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
                 </h2>
               )}
             </div>
-            <p className="text-sm sm:text-base text-[#8E8E93] line-clamp-1">
-              {currentTrack.artist || 'Unknown Artist'}
-            </p>
+            <div className="mt-1">
+              <ArtistLinks
+                track={currentTrack}
+                className="text-sm sm:text-base text-[#8E8E93]"
+                maxDisplay={3}
+                showAvatars={false}
+              />
+            </div>
           </div>
 
           <button

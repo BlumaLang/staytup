@@ -413,11 +413,26 @@ class JioSaavnService {
         $albums = self::searchAlbums($resolved, 1, 8);
         $playlists = self::searchPlaylists($resolved, 1, 8);
 
+        // Rank songs: if query matches an artist, surface songs by that artist first
+        $tracks = $songs['tracks'] ?? [];
+        if (!empty($tracks)) {
+            $qLower = strtolower(trim($resolved));
+            usort($tracks, function($a, $b) use ($qLower) {
+                $aArtist = strtolower($a['artist'] ?? '');
+                $bArtist = strtolower($b['artist'] ?? '');
+                $aInArtist = str_contains($aArtist, $qLower);
+                $bInArtist = str_contains($bArtist, $qLower);
+                if ($aInArtist && !$bInArtist) return -1;
+                if (!$aInArtist && $bInArtist) return 1;
+                return 0;
+            });
+        }
+
         return [
             'query'     => $query,
             'resolved'  => $resolved,
             'operators' => $parsed['operators'],
-            'tracks'    => $songs['tracks'] ?? [],
+            'tracks'    => $tracks,
             'artists'   => $artists['artists'] ?? [],
             'albums'    => $albums['albums'] ?? [],
             'playlists' => $playlists['playlists'] ?? [],
@@ -1201,9 +1216,43 @@ class JioSaavnService {
         
         // Get artists
         $artists = [];
+        $artistObjects = [];
         if (!empty($song['more_info']['artistMap']['primary_artists'])) {
             foreach ($song['more_info']['artistMap']['primary_artists'] as $pa) {
-                $artists[] = html_entity_decode($pa['name'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $aName = html_entity_decode($pa['name'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (!empty($aName)) {
+                    $artists[] = $aName;
+                    $artistObjects[] = [
+                        'id'    => $pa['id'] ?? '',
+                        'name'  => $aName,
+                        'role'  => $pa['role'] ?? 'primary_artists',
+                        'image' => !empty($pa['image']) ? self::getBestImage($pa['image']) : '',
+                    ];
+                }
+            }
+        }
+        if (!empty($song['more_info']['artistMap']['featured_artists'])) {
+            foreach ($song['more_info']['artistMap']['featured_artists'] as $fa) {
+                $fName = html_entity_decode($fa['name'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (!empty($fName) && !in_array($fName, $artists)) {
+                    $artists[] = $fName;
+                    $artistObjects[] = [
+                        'id'    => $fa['id'] ?? '',
+                        'name'  => $fName,
+                        'role'  => 'featured_artists',
+                        'image' => !empty($fa['image']) ? self::getBestImage($fa['image']) : '',
+                    ];
+                }
+            }
+        }
+        if (empty($artists) && !empty($song['more_info']['singers'])) {
+            $rawSingers = explode(', ', html_entity_decode($song['more_info']['singers'], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            foreach ($rawSingers as $s) {
+                $s = trim($s);
+                if (!empty($s) && !in_array($s, $artists)) {
+                    $artists[] = $s;
+                    $artistObjects[] = ['id' => '', 'name' => $s, 'role' => 'singer', 'image' => ''];
+                }
             }
         }
         $artistStr = $artists ? implode(', ', $artists) : $subtitle;
@@ -1215,6 +1264,7 @@ class JioSaavnService {
             'video_id'             => $videoId,
             'title'                => $title,
             'artist'               => $artistStr,
+            'artists'              => $artistObjects,
             'image'                => $image,
             'thumbnail'            => $image,
             'artwork_url'          => $image,

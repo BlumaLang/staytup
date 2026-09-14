@@ -4,6 +4,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { get500x500Image } from '../utils/media';
 import { replenishInfiniteDailyQueue } from '../services/dailyFeedService';
+import { ArtistLinks } from './ArtistLinks';
 import {
   X,
   Play,
@@ -29,6 +30,7 @@ export const QueueModal = () => {
     clearQueue,
     isQueueModalOpen,
     setIsQueueModalOpen,
+    replenishQueue,
   } = usePlayer();
 
   const { user } = useAuth();
@@ -64,9 +66,13 @@ export const QueueModal = () => {
   const handleLoadMoreToQueue = async () => {
     setIsLoadingMore(true);
     try {
-      const moreTracks = await replenishInfiniteDailyQueue(user, queue.length);
-      if (moreTracks.length > 0) {
-        setQueue((prev) => [...prev, ...moreTracks]);
+      if (replenishQueue && nowPlaying) {
+        await replenishQueue(nowPlaying, 10);
+      } else {
+        const moreTracks = await replenishInfiniteDailyQueue(user, queue.length);
+        if (moreTracks.length > 0) {
+          setQueue((prev) => [...prev, ...moreTracks]);
+        }
       }
     } catch (e) {
       console.warn(e);
@@ -143,9 +149,14 @@ export const QueueModal = () => {
                   <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                     {nowPlaying.title}
                   </p>
-                  <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5">
-                    {nowPlaying.artist}
-                  </p>
+                  <div className="mt-0.5">
+                    <ArtistLinks
+                      track={nowPlaying}
+                      className="text-xs text-[#8E8E93]"
+                      maxDisplay={2}
+                      showAvatars={false}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -228,9 +239,14 @@ export const QueueModal = () => {
                         <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                           {track.title}
                         </p>
-                        <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5">
-                          {track.artist}
-                        </p>
+                        <div className="mt-0.5">
+                          <ArtistLinks
+                            track={track}
+                            className="text-xs text-[#8E8E93]"
+                            maxDisplay={2}
+                            showAvatars={false}
+                          />
+                        </div>
                       </div>
                     </div>
 

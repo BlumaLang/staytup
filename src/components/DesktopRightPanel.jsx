@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { get500x500Image } from '../utils/media';
 import { replenishInfiniteDailyQueue } from '../services/dailyFeedService';
 import { ArtistAvatar } from './ArtistAvatar';
+import { ArtistLinks } from './ArtistLinks';
 import {
   X,
   Heart,
@@ -39,6 +40,7 @@ export const DesktopRightPanel = ({ onClose }) => {
     likedTrackIds,
     toggleLike,
     setIsQueueModalOpen,
+    replenishQueue,
   } = usePlayer();
 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -50,9 +52,13 @@ export const DesktopRightPanel = ({ onClose }) => {
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
     try {
-      const moreTracks = await replenishInfiniteDailyQueue(user, queue.length);
-      if (moreTracks.length > 0) {
-        setQueue((prev) => [...prev, ...moreTracks]);
+      if (replenishQueue && currentTrack) {
+        await replenishQueue(currentTrack, 10);
+      } else {
+        const moreTracks = await replenishInfiniteDailyQueue(user, queue.length);
+        if (moreTracks.length > 0) {
+          setQueue((prev) => [...prev, ...moreTracks]);
+        }
       }
     } catch (e) {
       console.warn('Could not replenish queue:', e);
@@ -155,14 +161,14 @@ export const DesktopRightPanel = ({ onClose }) => {
                 <h4 className="text-base font-bold text-white truncate tracking-tight">
                   {currentTrack.title}
                 </h4>
-                <p
-                  onClick={() =>
-                    navigate(`/artist/${encodeURIComponent(currentTrack.artist || '')}`)
-                  }
-                  className="text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer truncate mt-0.5"
-                >
-                  {currentTrack.artist || 'Unknown Artist'}
-                </p>
+                <div className="mt-1">
+                  <ArtistLinks
+                    track={currentTrack}
+                    className="text-xs text-[#8E8E93]"
+                    maxDisplay={2}
+                    showAvatars={false}
+                  />
+                </div>
               </div>
 
               <button
@@ -283,9 +289,14 @@ export const DesktopRightPanel = ({ onClose }) => {
                         <p className="text-xs font-semibold text-white truncate leading-tight group-hover:text-white">
                           {track.title}
                         </p>
-                        <p className="text-[10px] text-[#8E8E93] truncate mt-0.5">
-                          {track.artist || 'Unknown Artist'}
-                        </p>
+                        <div className="mt-0.5">
+                          <ArtistLinks
+                            track={track}
+                            className="text-[10px] text-[#8E8E93]"
+                            maxDisplay={2}
+                            showAvatars={false}
+                          />
+                        </div>
                       </div>
                     </div>
 
