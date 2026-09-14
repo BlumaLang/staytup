@@ -12,7 +12,37 @@ function getStoredItems() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+
+    // Backfill song artist if missing from historical entries
+    let cachedHistory = null;
+    return parsed.map((item) => {
+      if (item.type === 'song' && (!item.subtitle || item.subtitle === 'Song' || !item.artist)) {
+        if (!cachedHistory) {
+          try {
+            cachedHistory = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
+          } catch (e) {
+            cachedHistory = [];
+          }
+        }
+        const match = cachedHistory.find(
+          (t) => String(t.videoId || t.video_id || t.id) === String(item.id)
+        );
+        if (match && (match.artist || match.artists)) {
+          const artistName =
+            match.artist ||
+            (Array.isArray(match.artists) && match.artists.length > 0
+              ? match.artists.map((a) => (typeof a === 'string' ? a : a?.name)).filter(Boolean).join(', ')
+              : '');
+          return {
+            ...item,
+            subtitle: artistName || item.subtitle,
+            artist: artistName || item.artist,
+          };
+        }
+      }
+      return item;
+    });
   } catch (e) {
     return [];
   }
@@ -35,7 +65,7 @@ function saveItems(items) {
  * @param {string} [entry.image]
  * @param {Object} [entry.extra]
  */
-export function recordRecentActivity({ type, id, title, subtitle = '', image = '', extra = {} }) {
+export function recordRecentActivity({ type, id, title, subtitle = '', artist = '', artists = [], image = '', extra = {} }) {
   if (!type || !id || !title) return;
 
   const cleanId = String(id).trim();
@@ -47,11 +77,20 @@ export function recordRecentActivity({ type, id, title, subtitle = '', image = '
   // Collapse repeated plays / visits of the same entity
   const filtered = current.filter((item) => !(item.type === type && String(item.id) === cleanId));
 
+  const resolvedArtist =
+    artist ||
+    subtitle ||
+    (Array.isArray(artists) && artists.length > 0
+      ? artists.map((a) => (typeof a === 'string' ? a : a?.name)).filter(Boolean).join(', ')
+      : '');
+
   const newEntry = {
     type,
     id: cleanId,
     title: cleanTitle,
-    subtitle: String(subtitle || '').trim(),
+    subtitle: String(resolvedArtist || subtitle || '').trim(),
+    artist: String(resolvedArtist || '').trim(),
+    artists: Array.isArray(artists) ? artists : [],
     image: image || '',
     extra: extra || {},
     timestamp: Date.now(),

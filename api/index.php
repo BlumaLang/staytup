@@ -306,25 +306,40 @@ try {
             }
             break;
         
-        // ==================== FRIENDS ====================
-        case 'friends':
-            require_once __DIR__ . '/routes/friends.php';
-            if ($subresource === 'search') {
-                FriendRoutes::handle('search', $method);
-            } elseif ($subresource === 'requests' && $id) {
-                FriendRoutes::handle('accept', $method, ['id' => $id]);
-            } elseif ($subresource === 'requests' && $subaction === 'decline' && $id) {
-                FriendRoutes::handle('decline', $method, ['id' => $id]);
-            } elseif ($subresource === 'requests') {
-                FriendRoutes::handle('requests', $method);
-            } elseif ($subresource && $id === 'remove') {
-                FriendRoutes::handle('remove', $method, ['id' => $subresource]);
-            } elseif ($subresource === 'send') {
-                FriendRoutes::handle('send', $method);
+        // ==================== BLEND (EXCLUSIVE SOCIAL SYSTEM) ====================
+        case 'blend':
+            require_once __DIR__ . '/routes/blend.php';
+            if ($subresource === 'invite' && $id === 'generate') {
+                BlendRoutes::handle('generate_invite', $method);
+            } elseif ($subresource === 'invite' && $subaction === 'join' && $id) {
+                BlendRoutes::handle('join_invite', $method, ['token' => $id]);
+            } elseif ($subresource === 'invite' && $id) {
+                BlendRoutes::handle('get_invite', $method, ['token' => $id]);
+            } elseif ($subresource === 'user') {
+                BlendRoutes::handle('list_user_blends', $method);
+            } elseif ($subresource === 'create' || $subresource === 'save') {
+                BlendRoutes::handle('save', $method);
             } elseif ($subresource) {
-                FriendRoutes::handle('list', $method);
+                BlendRoutes::handle('get', $method, ['id' => $subresource]);
             } else {
-                FriendRoutes::handle('list', $method);
+                BlendRoutes::handle('list_user_blends', $method);
+            }
+            break;
+
+        // ==================== USERS (BLEND INVITATIONS SEARCH) ====================
+        case 'users':
+            if ($subresource === 'search') {
+                require_once __DIR__ . '/utils/storage.php';
+                $q = getQueryParam('q', '');
+                $limit = (int) getQueryParam('limit', 20);
+                if (strlen($q) < 2) {
+                    sendJson(['users' => []]);
+                } else {
+                    $users = Storage::searchUsers($q, $limit);
+                    sendJson(['users' => $users]);
+                }
+            } else {
+                sendError('Unknown users endpoint', 404);
             }
             break;
         

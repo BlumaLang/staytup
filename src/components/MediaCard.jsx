@@ -18,11 +18,11 @@ export const MediaCard = ({
   return (
     <div
       onClick={onClick || onPlay}
-      className="group p-3 sm:p-3.5 bg-[#181818]/60 hover:bg-[#282828] border border-transparent hover:border-white/5 rounded-xl cursor-pointer transition-all duration-300 flex flex-col justify-between select-none relative"
+      className="group p-2.5 sm:p-3.5 bg-[#181818]/60 hover:bg-[#282828] border border-transparent hover:border-white/5 rounded-xl cursor-pointer transition-all duration-300 flex flex-col justify-between select-none relative"
     >
       {/* Artwork Container */}
       <div
-        className={`relative w-full aspect-square overflow-hidden bg-black mb-3 shadow-md ${
+        className={`relative w-full aspect-square overflow-hidden bg-black mb-2 sm:mb-3 shadow-md ${
           isRound ? 'rounded-full' : 'rounded-lg'
         }`}
       >
@@ -42,15 +42,15 @@ export const MediaCard = ({
               e.stopPropagation();
               onPlay();
             }}
-            className="absolute bottom-2.5 right-2.5 w-11 h-11 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
+            className="absolute bottom-2 right-2 sm:bottom-2.5 sm:right-2.5 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
             title="Play"
           >
-            <Play className="w-5 h-5 fill-black ml-0.5" />
+            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-black ml-0.5" />
           </button>
         )}
 
         {badge && (
-          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-white">
+          <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 px-1.5 sm:px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white">
             {badge}
           </span>
         )}
@@ -58,20 +58,21 @@ export const MediaCard = ({
 
       {/* Info Container */}
       <div className={`min-w-0 ${isRound ? 'text-center' : 'text-left'}`}>
-        <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-white tracking-tight">
+        <p className="font-bold text-xs sm:text-sm text-white line-clamp-1 group-hover:text-white tracking-tight">
           {title}
         </p>
         {track ? (
-          <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+          <div className="mt-0.5 sm:mt-1 truncate overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <ArtistLinks
               track={track}
-              className="text-xs text-[#A7A7A7]"
+              className="text-[11px] sm:text-xs text-[#A7A7A7]"
               maxDisplay={2}
               showAvatars={false}
+              singleLine={true}
             />
           </div>
         ) : subtitle ? (
-          <p className="text-xs text-[#A7A7A7] line-clamp-2 mt-1 font-medium leading-tight">
+          <p className="text-[11px] sm:text-xs text-[#A7A7A7] truncate mt-0.5 sm:mt-1 font-medium leading-tight">
             {subtitle}
           </p>
         ) : null}

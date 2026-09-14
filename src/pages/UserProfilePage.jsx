@@ -9,8 +9,6 @@ import { getUserUrl, shareContent } from '../utils/canonicalUrl';
 import { get500x500Image } from '../utils/media';
 import {
   ArrowLeft,
-  UserPlus,
-  UserCheck,
   Disc3,
   Share2,
   Play,
@@ -29,7 +27,6 @@ export default function UserProfilePage() {
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState([]);
   const [playlists, setPlaylists] = useState([]);
-  const [friendStatus, setFriendStatus] = useState('none'); // 'none' | 'pending' | 'friends'
   const [isLoading, setIsLoading] = useState(true);
   const [copiedToast, setCopiedToast] = useState(false);
 
@@ -66,17 +63,6 @@ export default function UserProfilePage() {
         setIsLoading(false);
       });
 
-    // Check friend relationship
-    api
-      .getFriends()
-      .then((res) => {
-        const list = res.friends || [];
-        if (list.some((f) => f.id === id)) {
-          setFriendStatus('friends');
-        }
-      })
-      .catch(() => {});
-
     // Fetch public listening history / tracks
     api
       .getHistory(id)
@@ -87,23 +73,9 @@ export default function UserProfilePage() {
       .catch(() => {});
   }, [id]);
 
-  const handleToggleFriend = async () => {
-    if (friendStatus === 'friends') {
-      try {
-        await api.removeFriend(id);
-        setFriendStatus('none');
-      } catch (e) {}
-    } else if (friendStatus === 'none') {
-      try {
-        await api.sendFriendRequest(id);
-        setFriendStatus('pending');
-      } catch (e) {}
-    }
-  };
-
   const handleStartBlend = async () => {
     if (!currentUser || !profile) return;
-    const blendData = await createOrGetBlend(currentUser, profile, [], history, [], []);
+    const blendData = await createOrGetBlend(currentUser, [profile], [], history, [], []);
     if (blendData?.id) {
       navigate(`/blend/${encodeURIComponent(blendData.id)}`);
     }
@@ -183,36 +155,11 @@ export default function UserProfilePage() {
             {!isMe && (
               <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap">
                 <button
-                  onClick={handleToggleFriend}
-                  className={`px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-md ${
-                    friendStatus === 'friends'
-                      ? 'bg-white/10 hover:bg-rose-500/20 text-white hover:text-rose-400 border border-white/10'
-                      : friendStatus === 'pending'
-                      ? 'bg-white/10 text-[#8E8E93] border border-white/10'
-                      : 'bg-white text-black hover:bg-gray-200'
-                  }`}
-                >
-                  {friendStatus === 'friends' ? (
-                    <>
-                      <UserCheck className="w-4 h-4 text-[#22C55E]" />
-                      <span>Friends</span>
-                    </>
-                  ) : friendStatus === 'pending' ? (
-                    <span>Request Sent</span>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      <span>Add Friend</span>
-                    </>
-                  )}
-                </button>
-
-                <button
                   onClick={handleStartBlend}
-                  className="px-5 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105"
+                  className="px-6 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-black transition-all flex items-center gap-2 shadow-lg cursor-pointer active:scale-95"
                 >
                   <Disc3 className="w-4 h-4" />
-                  <span>Start Blend</span>
+                  <span>Invite to Blend</span>
                 </button>
               </div>
             )}

@@ -8,6 +8,7 @@ import { MediaCard } from '../components/MediaCard';
 import { MediaRail } from '../components/MediaRail';
 import { ArtistAvatar } from '../components/ArtistAvatar';
 import { get500x500Image } from '../utils/media';
+import { getStoredBlends } from '../services/blendService';
 import { Flame, TrendingUp, Disc3, ListMusic, History, Radio, Play, Pause, Heart } from 'lucide-react';
 
 export default function HomePage() {
@@ -53,6 +54,28 @@ export default function HomePage() {
 
   // Quick Jump cards derived from smartFeed (Spotify 6-Pack Grid)
   const quickCards = [];
+
+  // If user has active blend(s), feature their latest Blend in quick cards
+  const userBlends = Object.values(getStoredBlends());
+  if (userBlends.length > 0) {
+    const b = userBlends[0];
+    const memberNames = (b.members || []).map((m) => m.name || m.username).filter(Boolean);
+    const blendLabel = memberNames.length > 0 ? memberNames.join(' + ') : b.title || 'Taste Blend';
+    const firstTrack = b.tracks?.[0];
+    quickCards.push({
+      title: blendLabel,
+      subtitle: `${(b.tracks || []).length} songs • ${b.matchScore || 85}% match`,
+      image: firstTrack
+        ? get500x500Image(firstTrack.image || firstTrack.thumbnail || firstTrack.artwork_url)
+        : './assets/staytup_logo.32975537674b053888ade6460fa37f97.png',
+      onClick: () => navigate(`/blend/${b.id}`),
+      onPlay: () => {
+        if (firstTrack) playTrack(firstTrack, b.tracks);
+        else navigate(`/blend/${b.id}`);
+      },
+    });
+  }
+
   if (smartFeed.trendingOnApp?.[0]) {
     const t = smartFeed.trendingOnApp[0];
     quickCards.push({
@@ -121,28 +144,28 @@ export default function HomePage() {
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
       {/* Main Content View (Full Width) */}
-      <div className="flex-1 px-4 sm:px-8 py-5 sm:py-6 w-full space-y-10">
+      <div className="flex-1 px-3 sm:px-8 py-4 sm:py-6 w-full space-y-7 sm:space-y-10">
         {/* ========================================================================= */}
         {/* QUICK JUMP 6-PACK GRID (Spotify Signature Desktop Dashboard Grid)         */}
         {/* ========================================================================= */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
           {/* 1. Liked Songs Dashboard Tile */}
           <div
             onClick={() => navigate('/library?tab=favorites')}
-            className="group flex items-center gap-3 bg-[#1A1A1A]/80 hover:bg-[#282828] transition-all duration-200 rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-3"
+            className="group flex items-center gap-2 sm:gap-3 bg-[#1A1A1A]/90 hover:bg-[#282828] active:scale-[0.98] transition-all duration-200 rounded-lg sm:rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-2 sm:pr-3"
           >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-gradient-to-br from-[#450af5] to-[#c4efd9] flex items-center justify-center shadow-md">
-              <Heart className="w-6 h-6 fill-white text-white" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 bg-gradient-to-br from-[#450af5] to-[#c4efd9] flex items-center justify-center shadow-md">
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 fill-white text-white" />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-bold text-xs sm:text-sm text-white truncate leading-tight group-hover:text-white">
+            <div className="min-w-0 flex-1 py-1">
+              <p className="font-bold text-xs sm:text-sm text-white line-clamp-2 leading-tight group-hover:text-white">
                 Liked Songs
               </p>
-              <p className="text-[10px] sm:text-xs text-[#A7A7A7] truncate mt-0.5">
+              <p className="hidden sm:block text-[10px] sm:text-xs text-[#A7A7A7] truncate mt-0.5">
                 {likedTrackIds.size} {likedTrackIds.size === 1 ? 'track' : 'tracks'}
               </p>
             </div>
-            <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
+            <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0 hidden sm:block">
               <div className="w-9 h-9 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
                 <Play className="w-4 h-4 fill-black ml-0.5" />
               </div>
@@ -154,12 +177,12 @@ export default function HomePage() {
             [1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 bg-[#1A1A1A]/50 rounded-md overflow-hidden animate-pulse h-14 sm:h-16"
+                className="flex items-center gap-2 sm:gap-3 bg-[#1A1A1A]/50 rounded-lg sm:rounded-md overflow-hidden animate-pulse h-12 sm:h-16"
               >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/5 flex-shrink-0" />
-                <div className="space-y-1.5 flex-1 pr-3">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/5 flex-shrink-0" />
+                <div className="space-y-1.5 flex-1 pr-2 sm:pr-3">
                   <div className="w-3/4 h-3.5 bg-white/10 rounded" />
-                  <div className="w-1/2 h-2.5 bg-white/5 rounded" />
+                  <div className="w-1/2 h-2.5 bg-white/5 rounded hidden sm:block" />
                 </div>
               </div>
             ))
@@ -168,22 +191,22 @@ export default function HomePage() {
               <div
                 key={idx}
                 onClick={item.onClick}
-                className="group flex items-center gap-3 bg-[#1A1A1A]/80 hover:bg-[#282828] transition-all duration-200 rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-3"
+                className="group flex items-center gap-2 sm:gap-3 bg-[#1A1A1A]/90 hover:bg-[#282828] active:scale-[0.98] transition-all duration-200 rounded-lg sm:rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-2 sm:pr-3"
               >
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-14 h-14 sm:w-16 sm:h-16 object-cover flex-shrink-0 shadow-md"
+                  className="w-12 h-12 sm:w-16 sm:h-16 object-cover flex-shrink-0 shadow-md"
                 />
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-xs sm:text-sm text-white truncate leading-tight group-hover:text-white">
+                <div className="min-w-0 flex-1 py-1">
+                  <p className="font-bold text-xs sm:text-sm text-white line-clamp-2 leading-tight group-hover:text-white">
                     {item.title}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-[#A7A7A7] truncate mt-0.5">
+                  <p className="hidden sm:block text-[10px] sm:text-xs text-[#A7A7A7] truncate mt-0.5">
                     {item.subtitle}
                   </p>
                 </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
+                <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0 hidden sm:block">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -205,41 +228,45 @@ export default function HomePage() {
         {/* SECTION 1: TOP DUAL-RANKED LISTS (Trending on This App vs Popular Right Now) */}
         {/* ========================================================================= */}
         {(isLoading || smartFeed.trendingOnApp || smartFeed.popularRightNow) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+          <div className="flex lg:grid lg:grid-cols-2 gap-3.5 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0 pb-1">
             {/* Left: Trending on This App */}
             {(isLoading || smartFeed.trendingOnApp) && (
-              <RankedTrackList
-                title="Trending on Staytup"
-                subtitle="Most played & saved by community listeners"
-                icon={Flame}
-                iconColor="text-rose-400"
-                iconBg="bg-rose-500/15"
-                tracks={smartFeed.trendingOnApp || []}
-                onPlayTrack={playTrack}
-                currentTrack={currentTrack}
-                isPlaying={isPlaying}
-                likedTrackIds={likedTrackIds}
-                toggleLike={toggleLike}
-                isLoading={isLoading}
-              />
+              <div className="w-[86vw] max-w-[340px] sm:max-w-none flex-shrink-0 lg:w-auto">
+                <RankedTrackList
+                  title="Trending on Staytup"
+                  subtitle="Most played & saved by community listeners"
+                  icon={Flame}
+                  iconColor="text-rose-400"
+                  iconBg="bg-rose-500/15"
+                  tracks={smartFeed.trendingOnApp || []}
+                  onPlayTrack={playTrack}
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  likedTrackIds={likedTrackIds}
+                  toggleLike={toggleLike}
+                  isLoading={isLoading}
+                />
+              </div>
             )}
 
             {/* Right: Popular Right Now (Global Charts) */}
             {(isLoading || smartFeed.popularRightNow) && (
-              <RankedTrackList
-                title="Popular Right Now"
-                subtitle="Top songs currently topping the charts"
-                icon={TrendingUp}
-                iconColor="text-[#1ED760]"
-                iconBg="bg-[#1ED760]/15"
-                tracks={smartFeed.popularRightNow || []}
-                onPlayTrack={playTrack}
-                currentTrack={currentTrack}
-                isPlaying={isPlaying}
-                likedTrackIds={likedTrackIds}
-                toggleLike={toggleLike}
-                isLoading={isLoading}
-              />
+              <div className="w-[86vw] max-w-[340px] sm:max-w-none flex-shrink-0 lg:w-auto">
+                <RankedTrackList
+                  title="Popular Right Now"
+                  subtitle="Top songs currently topping the charts"
+                  icon={TrendingUp}
+                  iconColor="text-[#1ED760]"
+                  iconBg="bg-[#1ED760]/15"
+                  tracks={smartFeed.popularRightNow || []}
+                  onPlayTrack={playTrack}
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  likedTrackIds={likedTrackIds}
+                  toggleLike={toggleLike}
+                  isLoading={isLoading}
+                />
+              </div>
             )}
           </div>
         )}
@@ -262,7 +289,7 @@ export default function HomePage() {
           >
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={i} className="w-32 sm:w-48 flex-shrink-0">
                   <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
@@ -270,7 +297,7 @@ export default function HomePage() {
               ))
             ) : (
               smartFeed.todaysHits.map((track, idx) => (
-                <div key={track.videoId || track.id || idx} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
                   <MediaCard
                     image={track.image || track.thumbnail || track.artwork_url}
                     title={track.title}
@@ -304,23 +331,23 @@ export default function HomePage() {
               <div
                 key={artist.id || idx}
                 onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
-                className="w-36 sm:w-44 flex-shrink-0 p-3.5 rounded-xl hover:bg-white/[0.06] transition-all duration-300 group cursor-pointer flex flex-col items-center text-center select-none"
+                className="w-24 sm:w-28 flex-shrink-0 flex flex-col items-center text-center select-none py-1 group cursor-pointer hover:opacity-90 transition-opacity"
               >
-                <div className="relative mb-3">
+                <div className="relative mb-2">
                   <ArtistAvatar
                     name={artist.name}
                     image={artist.image}
-                    size="xl"
-                    className="w-28 h-28 sm:w-32 sm:h-32 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                    size="lg"
+                    className="w-18 h-18 sm:w-20 sm:h-20 shadow-md group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute right-1 bottom-1 w-10 h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
-                    <Play className="w-5 h-5 fill-black ml-0.5" />
+                  <div className="absolute right-0 bottom-0 w-7 h-7 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-md opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+                    <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
                   </div>
                 </div>
-                <p className="font-bold text-sm text-white truncate w-full group-hover:text-white tracking-tight">
+                <p className="font-semibold text-xs sm:text-sm text-white truncate w-full group-hover:text-emerald-400 transition-colors tracking-tight">
                   {artist.name}
                 </p>
-                <span className="text-xs text-[#A7A7A7] mt-1 font-medium">Artist</span>
+                <span className="text-[11px] text-[#8E8E93] mt-0.5 font-medium">Artist</span>
               </div>
             ))}
           </MediaRail>
@@ -344,7 +371,7 @@ export default function HomePage() {
           >
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={i} className="w-32 sm:w-48 flex-shrink-0">
                   <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
@@ -352,7 +379,7 @@ export default function HomePage() {
               ))
             ) : (
               smartFeed.newReleases.map((item, idx) => (
-                <div key={item.id || item.videoId || idx} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={item.id || item.videoId || idx} className="w-32 sm:w-48 flex-shrink-0">
                   <MediaCard
                     image={item.image || item.thumbnail || item.artwork_url}
                     title={item.title || item.name}
@@ -396,23 +423,23 @@ export default function HomePage() {
               <div
                 key={mood.id}
                 onClick={() => navigate(`/search?q=${encodeURIComponent(mood.query)}`)}
-                className="w-40 sm:w-48 flex-shrink-0 p-3.5 rounded-xl bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer flex flex-col justify-between select-none relative"
+                className="w-32 sm:w-48 flex-shrink-0 p-2.5 sm:p-3.5 rounded-xl bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer flex flex-col justify-between select-none relative"
               >
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black shadow-md mb-3">
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black shadow-md mb-2 sm:mb-3">
                   <img
                     src={mood.image}
                     alt={mood.title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                  <div className="absolute right-2 bottom-2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
                     <Play className="w-4 h-4 fill-black ml-0.5" />
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-sm text-white truncate group-hover:text-white tracking-tight">
+                  <p className="font-bold text-xs sm:text-sm text-white truncate group-hover:text-white tracking-tight">
                     {mood.title}
                   </p>
-                  <p className="text-xs text-[#A7A7A7] line-clamp-2 mt-1 font-medium leading-tight">
+                  <p className="text-[11px] sm:text-xs text-[#A7A7A7] line-clamp-2 mt-0.5 sm:mt-1 font-medium leading-tight">
                     {mood.subtitle}
                   </p>
                 </div>
@@ -439,7 +466,7 @@ export default function HomePage() {
           >
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={i} className="w-32 sm:w-48 flex-shrink-0">
                   <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
@@ -447,7 +474,7 @@ export default function HomePage() {
               ))
             ) : (
               smartFeed.popularAlbums.map((album, idx) => (
-                <div key={album.id || idx} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={album.id || idx} className="w-32 sm:w-48 flex-shrink-0">
                   <MediaCard
                     image={album.image || album.thumbnail}
                     title={album.title || album.name}
@@ -479,7 +506,7 @@ export default function HomePage() {
           >
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={i} className="w-32 sm:w-48 flex-shrink-0">
                   <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
@@ -487,7 +514,7 @@ export default function HomePage() {
               ))
             ) : (
               smartFeed.popularPlaylists.map((playlist, idx) => (
-                <div key={playlist.id || idx} className="w-38 sm:w-48 flex-shrink-0">
+                <div key={playlist.id || idx} className="w-32 sm:w-48 flex-shrink-0">
                   <MediaCard
                     image={playlist.image || playlist.thumbnail}
                     title={playlist.title || playlist.name}
@@ -518,7 +545,7 @@ export default function HomePage() {
             }
           >
             {smartFeed.jumpBackIn.map((track, idx) => (
-              <div key={track.videoId || track.id || idx} className="w-38 sm:w-48 flex-shrink-0">
+              <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
                 <MediaCard
                   image={track.thumbnail || track.image || track.artwork_url}
                   title={track.title}

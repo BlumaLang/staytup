@@ -19,12 +19,26 @@ export const PlaylistSheet = ({ track, isOpen, onClose }) => {
     setIsLoading(true);
     api.getPlaylists(userId)
       .then(res => {
-        if (Array.isArray(res)) setPlaylists(res);
-        else if (res && Array.isArray(res.playlists)) setPlaylists(res.playlists);
+        const list = Array.isArray(res) ? res : res?.playlists || [];
+        setPlaylists(list);
+
+        // Prepopulate addedMap if track is already in playlist
+        if (track) {
+          const trackId = String(track.videoId || track.video_id || track.id || '');
+          const initialAdded = {};
+          list.forEach(pl => {
+            const has = Array.isArray(pl.tracks) && pl.tracks.some(t => {
+              const tid = String(t.videoId || t.video_id || t.id || '');
+              return tid && tid === trackId;
+            });
+            if (has) initialAdded[pl.id] = true;
+          });
+          setAddedMap(initialAdded);
+        }
       })
       .catch(err => console.warn('Could not fetch playlists:', err))
       .finally(() => setIsLoading(false));
-  }, [isOpen, userId]);
+  }, [isOpen, userId, track]);
 
   if (!isOpen) return null;
 

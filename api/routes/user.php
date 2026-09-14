@@ -109,19 +109,22 @@ class UserRoutes {
         $body = getRequestBody();
         $userId = $body['user_id'] ?? $_SERVER['HTTP_X_USER_ID'] ?? getQueryParam('user_id') ?? 'guest_user';
         
-        // Record recently played
+        // Record recently played with normalized entity fields
         $track = [
-            'id'               => $body['videoId'] ?? '',
-            'videoId'          => $body['videoId'] ?? '',
-            'video_id'         => $body['videoId'] ?? '',
-            'title'            => $body['title'] ?? '',
-            'artist'           => $body['artist'] ?? '',
-            'album'            => $body['album'] ?? '',
-            'thumbnail'        => $body['thumbnail'] ?? $body['image'] ?? '',
-            'artwork_url'      => $body['artwork_url'] ?? $body['image'] ?? '',
-            'duration'         => $body['duration'] ?? 0,
-            'duration_seconds' => $body['duration_seconds'] ?? $body['duration'] ?? 0,
-            'playedAt'         => date('c'),
+            'id'                 => $body['videoId'] ?? '',
+            'videoId'            => $body['videoId'] ?? '',
+            'video_id'           => $body['videoId'] ?? '',
+            'title'              => $body['title'] ?? '',
+            'artist'             => $body['artist'] ?? '',
+            'album'              => $body['album'] ?? '',
+            'thumbnail'          => $body['thumbnail'] ?? $body['image'] ?? '',
+            'artwork_url'        => $body['artwork_url'] ?? $body['image'] ?? '',
+            'duration'           => $body['duration'] ?? 0,
+            'duration_seconds'   => $body['duration_seconds'] ?? $body['duration'] ?? 0,
+            'provider'           => $body['provider'] ?? 'jiosaavn',
+            'provider_artist_id' => $body['provider_artist_id'] ?? $body['artist_id'] ?? '',
+            'artists'            => $body['artists'] ?? [],
+            'playedAt'           => date('c'),
         ];
         
         Storage::addRecentlyPlayed($userId, $track);
@@ -151,32 +154,38 @@ class UserRoutes {
         if ($method !== 'POST') sendError('Method not allowed', 405);
         
         $body = getRequestBody();
-        $userId = $body['user_id'] ?? null;
+        $userId = $body['user_id'] ?? $_SERVER['HTTP_X_USER_ID'] ?? getQueryParam('user_id');
         
-        if (!$userId) sendError('user_id is required');
+        if (!$userId) sendError('user_id is required', 400);
         
-        $videoId = $body['videoId'] ?? '';
+        $videoId = $body['videoId'] ?? $body['id'] ?? '';
+        if (empty($videoId)) sendError('videoId is required', 400);
+
         $track = [
-            'videoId'          => $videoId,
-            'video_id'         => $videoId,
-            'title'            => $body['title'] ?? '',
-            'artist'           => $body['artist'] ?? '',
-            'album'            => $body['album'] ?? '',
-            'thumbnail'        => $body['thumbnail'] ?? $body['image'] ?? '',
-            'artwork_url'      => $body['artwork_url'] ?? $body['image'] ?? '',
-            'duration'         => $body['duration'] ?? 0,
-            'duration_seconds' => $body['duration_seconds'] ?? $body['duration'] ?? 0,
-            'likedAt'          => date('c'),
+            'id'                 => $videoId,
+            'videoId'            => $videoId,
+            'video_id'           => $videoId,
+            'title'              => $body['title'] ?? '',
+            'artist'             => $body['artist'] ?? '',
+            'album'              => $body['album'] ?? '',
+            'thumbnail'          => $body['thumbnail'] ?? $body['image'] ?? '',
+            'artwork_url'        => $body['artwork_url'] ?? $body['image'] ?? '',
+            'duration'           => $body['duration'] ?? 0,
+            'duration_seconds'   => $body['duration_seconds'] ?? $body['duration'] ?? 0,
+            'provider'           => $body['provider'] ?? 'jiosaavn',
+            'provider_artist_id' => $body['provider_artist_id'] ?? '',
+            'artists'            => $body['artists'] ?? [],
+            'likedAt'            => date('c'),
         ];
         
         $isFavorited = Storage::toggleFavorite($userId, $videoId, $track);
         
-        sendJson(['favorited' => $isFavorited]);
+        sendJson(['favorited' => $isFavorited, 'videoId' => $videoId]);
     }
     
     private static function favorites() {
-        $userId = getQueryParam('user_id');
-        if (!$userId) sendError('user_id is required');
+        $userId = getQueryParam('user_id') ?? $_SERVER['HTTP_X_USER_ID'];
+        if (!$userId) sendError('user_id is required', 400);
         
         $favorites = Storage::getFavorites($userId);
         sendJson(['favorites' => $favorites]);

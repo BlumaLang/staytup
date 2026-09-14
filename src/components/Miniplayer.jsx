@@ -107,59 +107,55 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
   return (
     <>
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
       {/* MOBILE & TABLET COMPACT MINIPLAYER (< 1024px)                             */}
-      {/* Docked precisely above BottomNav without covering content                 */}
+      {/* Integrated flush on top of BottomNav with solid dark surface              */}
       {/* ========================================================================= */}
       <div
         onClick={onExpand}
-        className="lg:hidden fixed bottom-[60px] left-2.5 right-2.5 z-30 bg-[#161618]/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.8)] overflow-hidden cursor-pointer active:scale-[0.99] transition-transform select-none"
+        className="lg:hidden fixed bottom-[56px] left-0 right-0 z-40 bg-[#121214] border-t border-white/[0.08] cursor-pointer select-none"
       >
-        {/* Top Progress Line */}
-        <div className="w-full h-[2.5px] bg-white/10 relative overflow-hidden">
-          <div
-            className="h-full bg-white rounded-full transition-all duration-150"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between px-3 py-2 gap-3">
+        <div className="flex items-center justify-between px-3.5 py-2 gap-3 max-w-md mx-auto">
           {/* Left: Artwork + Title & Artist */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <img
-              src={artwork}
-              alt={currentTrack.title}
-              onError={(e) => {
-                e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
-              }}
-              className="w-11 h-11 rounded-xl object-cover bg-black flex-shrink-0 border border-white/10 shadow-sm"
-            />
-            <div className="min-w-0 flex-1 pr-1">
-              <p className="text-xs sm:text-sm font-bold text-white line-clamp-1 tracking-tight">
+            <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-black flex-shrink-0 border border-white/10 shadow-sm">
+              <img
+                src={artwork}
+                alt={currentTrack.title}
+                onError={(e) => {
+                  e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+                }}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1 pr-1 overflow-hidden">
+              <p className="text-xs sm:text-sm font-bold text-white truncate tracking-tight">
                 {currentTrack.title}
               </p>
-              <div className="mt-0.5" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-0.5 truncate overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 <ArtistLinks
                   track={currentTrack}
-                  className="text-[11px] text-[#8E8E93]"
+                  className="text-[11px] text-[#A1A1AA] hover:text-white"
                   maxDisplay={2}
                   showAvatars={false}
+                  singleLine={true}
                 />
               </div>
             </div>
           </div>
 
           {/* Right: Like, Play/Pause */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={handleLikeClick}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer active:scale-90"
               title={isLiked ? 'Unlike' : 'Like'}
             >
               <Heart
-                className={`w-4.5 h-4.5 transition-transform duration-200 ${
+                className={`w-5 h-5 transition-transform duration-200 ${
                   isLiked
                     ? 'fill-[#22C55E] text-[#22C55E] stroke-[#22C55E] scale-110'
-                    : 'stroke-white'
+                    : 'stroke-white/80 hover:stroke-white'
                 }`}
               />
             </button>
@@ -169,7 +165,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
                 e.stopPropagation();
                 togglePlay();
               }}
-              className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center transition-transform active:scale-90 cursor-pointer shadow-md"
+              className="w-9 h-9 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isLoadingStream ? (
@@ -181,6 +177,14 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
               )}
             </button>
           </div>
+        </div>
+
+        {/* Bottom Progress Line (Positioned at the BOTTOM of the miniplayer) */}
+        <div className="w-full h-[2px] bg-white/[0.08] relative overflow-hidden">
+          <div
+            className="h-full bg-[#22C55E] transition-all duration-150"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </div>
 

@@ -13,16 +13,20 @@ class Storage {
         if (self::$dataDir === null) {
             self::$dataDir = __DIR__ . '/../../data';
             if (!is_dir(self::$dataDir)) {
-                mkdir(self::$dataDir, 0755, true);
+                @mkdir(self::$dataDir, 0777, true);
+                @chmod(self::$dataDir, 0777);
             }
         }
         return self::$dataDir;
     }
     
     private static function getUserDir($userId) {
-        $dir = self::getDataDir() . '/users/' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $userId);
+        $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string)$userId);
+        if (empty($cleanId)) $cleanId = 'guest_user';
+        $dir = self::getDataDir() . '/users/' . $cleanId;
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            @mkdir($dir, 0777, true);
+            @chmod($dir, 0777);
         }
         return $dir;
     }
@@ -36,9 +40,15 @@ class Storage {
     private static function writeJson($path, $data) {
         $dir = dirname($path);
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            @mkdir($dir, 0777, true);
+            @chmod($dir, 0777);
         }
-        file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $written = file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        if ($written !== false) {
+            @chmod($path, 0666);
+            return true;
+        }
+        return false;
     }
     
     // ==================== USER PROFILE ====================
@@ -129,15 +139,25 @@ class Storage {
         $path = $dir . '/favorites.json';
         $favorites = self::readJson($path) ?? [];
         
-        if (isset($favorites[$videoId])) {
-            unset($favorites[$videoId]);
+        $key = (string)$videoId;
+        if (empty($key)) return false;
+
+        if (isset($favorites[$key])) {
+            unset($favorites[$key]);
             self::writeJson($path, $favorites);
             return false; // Removed
         } else {
-            $favorites[$videoId] = $track;
+            $favorites[$key] = $track;
             self::writeJson($path, $favorites);
             return true; // Added
         }
+    }
+
+    public static function isFavorite($userId, $videoId) {
+        $dir = self::getUserDir($userId);
+        $path = $dir . '/favorites.json';
+        $favorites = self::readJson($path) ?? [];
+        return isset($favorites[(string)$videoId]);
     }
     
     public static function getFavorites($userId) {
@@ -494,111 +514,66 @@ class Storage {
         return $result;
     }
 
-    // ==================== FRIENDS ====================
+    // ==================== BLENDS ====================
     
-    public static function getFriends($userId) {
-        $dir = self::getUserDir($userId);
-        return self::readJson($dir . '/friends.json') ?? [];
-    }
-    
-    public static function addFriend($userId, $friendId, $friendData) {
-        $dir = self::getUserDir($userId);
-        $path = $dir . '/friends.json';
-        $friends = self::readJson($path) ?? [];
-        
-        if (!isset($friends[$friendId])) {
-            $friends[$friendId] = $friendData;
-            self::writeJson($path, $friends);
-            return true;
+    public static function saveBlendData($blendId, $blendData, $userId = null) {
+        $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $blendId);
+        $blendsDir = self::getDataDir() . '/blends';
+        if (!is_dir($blendsDir)) {
+            mkdir($blendsDir, 0755, true);
         }
-        return false;
-    }
-    
-    public static function removeFriend($userId, $friendId) {
-        $dir = self::getUserDir($userId);
-        $path = $dir . '/friends.json';
-        $friends = self::readJson($path) ?? [];
-        
-        if (isset($friends[$friendId])) {
-            unset($friends[$friendId]);
-            self::writeJson($path, $friends);
-            return true;
+        $path = $blendsDir . '/' . $cleanId . '.json';
+        self::writeJson($path, $blendData);
+
+        // Also associate with the user if provided
+        if ($userId) {
+            $userDir = self::getUserDir($userId);
+            $userBlendsPath = $userDir . '/blends.json';
+            $userBlends = self::readJson($userBlendsPath) ?? [];
+            $userBlends[$cleanId] = [
+                'id' => $cleanId,
+                'title' => $blendData['title'] ?? 'Blend',
+                'updatedAt' => time(),
+            ];
+            self::writeJson($userBlendsPath, $userBlends);
         }
-        return false;
-    }
-    
-    public static function isFriend($userId, $friendId) {
-        $friends = self::getFriends($userId);
-        return isset($friends[$friendId]);
-    }
-    
-    public static function getFriendRequests($userId) {
-        $dir = self::getUserDir($userId);
-        return self::readJson($dir . '/friend_requests.json') ?? [];
-    }
-    
-    public static function sendFriendRequest($fromUserId, $toUserId, $fromUserData) {
-        $dir = self::getUserDir($toUserId);
-        $path = $dir . '/friend_requests.json';
-        $requests = self::readJson($path) ?? [];
-        
-        foreach ($requests as $req) {
-            if ($req['from_user_id'] === $fromUserId) {
-                return false;
-            }
-        }
-        
-        $requests[] = [
-            'id' => uniqid('fr_', true),
-            'from_user_id' => $fromUserId,
-            'name' => $fromUserData['username'] ?? $fromUserData['displayName'] ?? 'Unknown',
-            'avatar' => $fromUserData['avatar'] ?? '',
-            'created_at' => time(),
-        ];
-        
-        self::writeJson($path, $requests);
         return true;
     }
-    
-    public static function acceptFriendRequest($userId, $requestId) {
-        $dir = self::getUserDir($userId);
-        $path = $dir . '/friend_requests.json';
-        $requests = self::readJson($path) ?? [];
-        
-        $found = null;
-        foreach ($requests as $i => $req) {
-            if ($req['id'] === $requestId) {
-                $found = $req;
-                unset($requests[$i]);
-                break;
-            }
-        }
-        
-        if ($found) {
-            self::writeJson($path, array_values($requests));
-            return $found;
-        }
-        return null;
+
+    public static function getBlendData($blendId) {
+        $cleanId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $blendId);
+        $path = self::getDataDir() . '/blends/' . $cleanId . '.json';
+        return self::readJson($path);
     }
-    
-    public static function declineFriendRequest($userId, $requestId) {
-        $dir = self::getUserDir($userId);
-        $path = $dir . '/friend_requests.json';
-        $requests = self::readJson($path) ?? [];
-        
-        $found = false;
-        foreach ($requests as $i => $req) {
-            if ($req['id'] === $requestId) {
-                unset($requests[$i]);
-                $found = true;
-                break;
+
+    public static function getUserBlends($userId) {
+        $userDir = self::getUserDir($userId);
+        $userBlends = self::readJson($userDir . '/blends.json') ?? [];
+        $list = [];
+        foreach ($userBlends as $blendId => $meta) {
+            $full = self::getBlendData($blendId);
+            if ($full) {
+                $list[] = $full;
+            } else {
+                $list[] = $meta;
             }
         }
-        
-        if ($found) {
-            self::writeJson($path, array_values($requests));
+        return $list;
+    }
+
+    public static function saveInviteToken($token, $inviteData) {
+        $invitesDir = self::getDataDir() . '/blend_invites';
+        if (!is_dir($invitesDir)) {
+            mkdir($invitesDir, 0755, true);
         }
-        return $found;
+        $cleanToken = preg_replace('/[^a-zA-Z0-9_-]/', '', $token);
+        self::writeJson($invitesDir . '/' . $cleanToken . '.json', $inviteData);
+    }
+
+    public static function getInviteToken($token) {
+        $cleanToken = preg_replace('/[^a-zA-Z0-9_-]/', '', $token);
+        $path = self::getDataDir() . '/blend_invites/' . $cleanToken . '.json';
+        return self::readJson($path);
     }
     
     public static function searchUsers($query, $limit = 20) {

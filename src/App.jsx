@@ -15,8 +15,8 @@ import SongPage from './pages/SongPage';
 import ArtistPage from './pages/ArtistPage';
 import AlbumPage from './pages/AlbumPage';
 import PlaylistPage from './pages/PlaylistPage';
-import FriendsPage from './pages/FriendsPage';
 import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import UserProfilePage from './pages/UserProfilePage';
 import BlendPage from './pages/BlendPage';
 
@@ -95,10 +95,13 @@ export default function App() {
           <Route path="/artist/:id" element={<ArtistPage />} />
           <Route path="/album/:id" element={<AlbumPage />} />
           <Route path="/playlist/:id" element={<PlaylistPage />} />
-          <Route path="/friends" element={<FriendsPage />} />
           <Route path="/user/:id" element={<UserProfilePage />} />
+          <Route path="/blend" element={<BlendPage />} />
           <Route path="/blend/:id" element={<BlendPage />} />
+          <Route path="/blend/invite/:token" element={<BlendPage />} />
+          <Route path="/friends" element={<Navigate to="/blend" replace />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           {/* Catch-all redirect to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

@@ -15,33 +15,53 @@ export function getStoredBlends() {
 }
 
 /**
- * Get a specific blend by ID
+ * Get a specific blend by ID (checks memory/localStorage, then falls back to backend)
  */
-export function getBlendById(blendId) {
+export async function getBlendById(blendId) {
   if (!blendId) return null;
   const blends = getStoredBlends();
-  return blends[blendId] || null;
+  if (blends[blendId]) {
+    return blends[blendId];
+  }
+  try {
+    const res = await api.getBlend(blendId);
+    if (res?.blend) {
+      saveBlend(res.blend);
+      return res.blend;
+    }
+  } catch (e) {}
+  return null;
 }
 
 /**
- * Save a blend to storage
+ * Save a blend to local storage and sync with backend
  */
 export function saveBlend(blend) {
   if (!blend?.id) return;
   try {
     const blends = getStoredBlends();
-    blends[blend.id] = {
+    const updated = {
       ...blend,
       updatedAt: Date.now(),
     };
+    blends[blend.id] = updated;
     localStorage.setItem(BLENDS_STORAGE_KEY, JSON.stringify(blends));
+    window.dispatchEvent(new CustomEvent('staytup_blends_updated', { detail: updated }));
+
+    // Async sync to backend
+    api.saveBlend(updated).catch(() => {});
   } catch (e) {}
 }
 
 /**
  * Calculate genuine music compatibility score between two listening profiles
  */
-export function calculateCompatibilityScore(user1Favs = [], user2Favs = [], user1History = [], user2History = []) {
+export function calculateCompatibilityScore(
+  user1Favs = [],
+  user2Favs = [],
+  user1History = [],
+  user2History = []
+) {
   // Extract artist sets
   const getArtists = (items) => {
     const set = new Set();
@@ -92,7 +112,7 @@ export function calculateCompatibilityScore(user1Favs = [], user2Favs = [], user
   const songRatio = sharedSongCount / totalSongs;
 
   // Base score algorithm:
-  // 60 base + up to 25 from artist overlap + up to 15 from exact song overlap
+  // 65 base + up to 22 from artist overlap + up to 13 from exact song overlap
   let score = Math.round(65 + artistRatio * 22 + songRatio * 13);
   if (score > 98) score = 98;
   if (score < 62) score = 64;
@@ -105,70 +125,153 @@ export function calculateCompatibilityScore(user1Favs = [], user2Favs = [], user
 }
 
 /**
- * Create or generate a shared Blend playlist between currentUser and friend
+ * Generate pairwise comparisons and mixes for any pair of members
  */
-export async function createOrGetBlend(currentUser, friend, user1History = [], user2History = [], user1Favs = [], user2Favs = []) {
-  if (!currentUser?.id || !friend?.id) return null;
-
-  // Stable Blend ID based on sorted user IDs
-  const sortedIds = [String(currentUser.id), String(friend.id)].sort();
-  const blendId = `blend_${sortedIds[0]}_${sortedIds[1]}`;
-
-  // Check existing blend
-  const existing = getBlendById(blendId);
-  if (existing && existing.tracks?.length > 0) {
-    return existing;
-  }
-
-  // Calculate match score
+export function generatePairMix(userA, userB, historyA = [], historyB = [], favsA = [], favsB = []) {
   const { score, sharedArtistCount, sharedSongCount } = calculateCompatibilityScore(
-    user1Favs,
-    user2Favs,
-    user1History,
-    user2History
+    favsA,
+    favsB,
+    historyA,
+    historyB
   );
 
-  // Group songs into:
-  // 1. Both love
-  // 2. Fresh for user 1
-  // 3. Fresh for friend
   const bothLove = [];
-  const freshForUser1 = [];
-  const freshForUser2 = [];
+  const freshForA = [];
+  const freshForB = [];
   const seenIds = new Set();
 
-  const user1IdSet = new Set(user1History.map((t) => String(t.videoId || t.video_id || t.id)));
-  const user2IdSet = new Set(user2History.map((t) => String(t.videoId || t.video_id || t.id)));
+  const idSetA = new Set(historyA.map((t) => String(t.videoId || t.video_id || t.id)));
+  const idSetB = new Set(historyB.map((t) => String(t.videoId || t.video_id || t.id)));
 
-  // Tracks present in both profiles
-  user2History.forEach((track) => {
+  historyB.forEach((track) => {
     const id = String(track.videoId || track.video_id || track.id || '');
-    if (id && user1IdSet.has(id) && !seenIds.has(id)) {
+    if (id && idSetA.has(id) && !seenIds.has(id)) {
       seenIds.add(id);
       bothLove.push(track);
     }
   });
 
-  // User 2 tracks fresh for User 1
-  user2History.forEach((track) => {
+  historyB.forEach((track) => {
     const id = String(track.videoId || track.video_id || track.id || '');
-    if (id && !user1IdSet.has(id) && !seenIds.has(id)) {
+    if (id && !idSetA.has(id) && !seenIds.has(id)) {
       seenIds.add(id);
-      freshForUser1.push(track);
+      freshForA.push(track);
     }
   });
 
-  // User 1 tracks fresh for User 2
-  user1History.forEach((track) => {
+  historyA.forEach((track) => {
     const id = String(track.videoId || track.video_id || track.id || '');
-    if (id && !user2IdSet.has(id) && !seenIds.has(id)) {
+    if (id && !idSetB.has(id) && !seenIds.has(id)) {
       seenIds.add(id);
-      freshForUser2.push(track);
+      freshForB.push(track);
     }
   });
 
-  // If there are too few tracks, supplement with trending songs from the platform
-  let combinedTracks = [...bothLove, ...freshForUser1, ...freshForUser2];
+  const pairKey = [String(userA.id), String(userB.id)].sort().join(':');
+
+  return {
+    pairKey,
+    userA: { id: userA.id, name: userA.displayName || userA.name || userA.username, avatar: userA.avatar || '' },
+    userB: { id: userB.id, name: userB.displayName || userB.name || userB.username, avatar: userB.avatar || '' },
+    matchScore: score,
+    sharedArtistCount,
+    sharedSongCount,
+    bothLoveTracks: bothLove.slice(0, 10),
+    freshForUser1Tracks: freshForA.slice(0, 10),
+    freshForUser2Tracks: freshForB.slice(0, 10),
+  };
+}
+
+/**
+ * Get personalized relative pair mixes for the current viewing user
+ * If current user is A, pairs are returned relative to A: (A + B), (A + C), etc.
+ */
+export function getRelativePairs(currentUser, blend) {
+  if (!blend || !blend.members || blend.members.length < 2) return [];
+  const currentId = String(currentUser?.id || '');
+  const pairs = blend.pairs || [];
+
+  return pairs
+    .filter((p) => String(p.userA.id) === currentId || String(p.userB.id) === currentId)
+    .map((p) => {
+      const isA = String(p.userA.id) === currentId;
+      const partner = isA ? p.userB : p.userA;
+      return {
+        ...p,
+        partner,
+        relativeTitle: `You + ${partner.name}`,
+        relativeFreshForYou: isA ? p.freshForUser1Tracks : p.freshForUser2Tracks,
+        relativeFreshForPartner: isA ? p.freshForUser2Tracks : p.freshForUser1Tracks,
+      };
+    });
+}
+
+/**
+ * Create or generate a multi-user Blend
+ */
+export async function createOrGetBlend(currentUser, otherMembers = [], userHistory = [], userFavs = []) {
+  if (!currentUser?.id) return null;
+
+  const allMembers = [
+    {
+      id: currentUser.id,
+      name: currentUser.displayName || currentUser.username || 'You',
+      username: currentUser.username || '',
+      avatar: currentUser.avatar || '',
+      joinedAt: Date.now(),
+    },
+  ];
+
+  const others = Array.isArray(otherMembers) ? otherMembers : [otherMembers];
+  others.forEach((m) => {
+    if (m && m.id && String(m.id) !== String(currentUser.id)) {
+      allMembers.push({
+        id: m.id,
+        name: m.name || m.displayName || m.username || 'Member',
+        username: m.username || '',
+        avatar: m.avatar || '',
+        joinedAt: Date.now(),
+      });
+    }
+  });
+
+  const sortedMemberIds = allMembers.map((m) => String(m.id)).sort();
+  const blendId = `blend_${sortedMemberIds.join('_')}`;
+
+  // Check existing blend
+  const existing = await getBlendById(blendId);
+  if (existing && existing.tracks?.length > 0) {
+    return existing;
+  }
+
+  // Generate deterministic pairs
+  const pairs = [];
+  let totalScore = 0;
+  let pairCount = 0;
+
+  for (let i = 0; i < allMembers.length; i++) {
+    for (let j = i + 1; j < allMembers.length; j++) {
+      const pair = generatePairMix(allMembers[i], allMembers[j], userHistory, [], userFavs, []);
+      pairs.push(pair);
+      totalScore += pair.matchScore;
+      pairCount++;
+    }
+  }
+
+  const overallScore = pairCount > 0 ? Math.round(totalScore / pairCount) : 85;
+
+  // Build Everyone's Mix
+  let combinedTracks = [];
+  const seenIds = new Set();
+
+  userHistory.slice(0, 15).forEach((t) => {
+    const id = String(t.videoId || t.video_id || t.id || '');
+    if (id && !seenIds.has(id)) {
+      seenIds.add(id);
+      combinedTracks.push(t);
+    }
+  });
+
   if (combinedTracks.length < 15) {
     try {
       const trending = await api.getTrending();
@@ -183,26 +286,18 @@ export async function createOrGetBlend(currentUser, friend, user1History = [], u
     } catch (e) {}
   }
 
+  const title =
+    allMembers.length === 2
+      ? `${allMembers[0].name} + ${allMembers[1].name}`
+      : `${allMembers[0].name} & Friends (${allMembers.length})`;
+
   const blendData = {
     id: blendId,
-    title: `${currentUser.displayName || currentUser.username} + ${friend.name || friend.username}`,
-    description: `A personalized shared daily mix combining music taste between ${currentUser.displayName || currentUser.username} and ${friend.name || friend.username}.`,
-    user1: {
-      id: currentUser.id,
-      name: currentUser.displayName || currentUser.username,
-      avatar: currentUser.avatar || '',
-    },
-    user2: {
-      id: friend.id,
-      name: friend.name || friend.username || friend.displayName,
-      avatar: friend.avatar || '',
-    },
-    matchScore: score,
-    sharedArtistCount,
-    sharedSongCount,
-    bothLoveTracks: bothLove.slice(0, 10),
-    freshForUser1Tracks: freshForUser1.slice(0, 10),
-    freshForUser2Tracks: freshForUser2.slice(0, 10),
+    title,
+    description: `A shared daily mix blending taste across ${allMembers.length} music lovers.`,
+    members: allMembers,
+    matchScore: overallScore,
+    pairs,
     tracks: combinedTracks,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -210,4 +305,93 @@ export async function createOrGetBlend(currentUser, friend, user1History = [], u
 
   saveBlend(blendData);
   return blendData;
+}
+
+/**
+ * Generate a shareable invite link for a Blend
+ */
+export async function createBlendInvite(blendId, inviter) {
+  try {
+    const res = await api.generateBlendInvite(blendId, inviter);
+    if (res?.token) {
+      return {
+        token: res.token,
+        inviteUrl: `${window.location.origin}/staytup/blend/invite/${res.token}`,
+      };
+    }
+  } catch (e) {}
+
+  // Fallback client token
+  const fallbackToken = 'bld_' + Math.random().toString(36).substring(2, 10);
+  return {
+    token: fallbackToken,
+    inviteUrl: `${window.location.origin}/staytup/blend/invite/${fallbackToken}`,
+  };
+}
+
+/**
+ * Resolve an invite token and join the Blend
+ */
+export async function joinBlendWithToken(token, user, userHistory = [], userFavs = []) {
+  if (!token || !user?.id) return null;
+  try {
+    const res = await api.joinBlendInvite(token, user);
+    if (res?.blend) {
+      saveBlend(res.blend);
+      return res.blend;
+    }
+  } catch (e) {}
+
+  // Fallback local join
+  const blends = getStoredBlends();
+  for (const bId of Object.keys(blends)) {
+    const b = blends[bId];
+    if (b) {
+      const exists = b.members?.some((m) => String(m.id) === String(user.id));
+      if (!exists) {
+        b.members = [...(b.members || []), { id: user.id, name: user.displayName || user.username, avatar: user.avatar || '' }];
+        saveBlend(b);
+        return b;
+      }
+      return b;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Delete or Leave a blend completely
+ */
+export function removeBlend(blendId) {
+  if (!blendId) return;
+  try {
+    const blends = getStoredBlends();
+    delete blends[blendId];
+    localStorage.setItem(BLENDS_STORAGE_KEY, JSON.stringify(blends));
+    window.dispatchEvent(new CustomEvent('staytup_blends_updated', { detail: { id: blendId, removed: true } }));
+  } catch (e) {}
+}
+
+/**
+ * Remove a specific member from a blend (or leave blend)
+ */
+export function removeMemberFromBlend(blendId, memberId) {
+  if (!blendId || !memberId) return null;
+  try {
+    const blends = getStoredBlends();
+    const blend = blends[blendId];
+    if (!blend) return null;
+    blend.members = (blend.members || []).filter((m) => String(m.id) !== String(memberId));
+    if (blend.members.length === 0) {
+      delete blends[blendId];
+    } else {
+      blends[blendId] = blend;
+    }
+    localStorage.setItem(BLENDS_STORAGE_KEY, JSON.stringify(blends));
+    window.dispatchEvent(new CustomEvent('staytup_blends_updated', { detail: blend }));
+    return blend;
+  } catch (e) {
+    return null;
+  }
 }

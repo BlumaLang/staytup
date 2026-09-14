@@ -21,6 +21,7 @@ import {
   Heart,
   X,
   PanelRight,
+  Disc3,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -51,8 +52,8 @@ export const AppShell = () => {
     const path = location.pathname;
     if (path.startsWith('/search')) return 'search';
     if (path.startsWith('/library')) return 'library';
-    if (path.startsWith('/friends')) return 'friends';
-    if (path.startsWith('/profile')) return 'profile';
+    if (path.startsWith('/blend')) return 'blend';
+    if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile';
     return 'home';
   };
 
@@ -67,8 +68,8 @@ export const AppShell = () => {
       case 'library':
         navigate('/library');
         break;
-      case 'friends':
-        navigate('/friends');
+      case 'blend':
+        navigate('/blend');
         break;
       case 'profile':
         navigate('/profile');
@@ -87,30 +88,35 @@ export const AppShell = () => {
       {/* Mobile Top Header (< 1024px) — Clean Header with Profile Button */}
       <header className="flex lg:hidden items-center justify-between px-4 py-2.5 bg-black border-b border-white/5 z-40 flex-shrink-0 select-none">
         <div
-          className="flex items-center gap-2.5 cursor-pointer"
+          className="flex items-center cursor-pointer select-none"
           onClick={() => navigate('/')}
         >
-          <img
-            src="./assets/staytup_logo.32975537674b053888ade6460fa37f97.png"
-            alt="Staytup"
-            className="w-7 h-7 rounded-full object-cover"
-          />
-          <span className="font-extrabold text-base tracking-tight text-white">
-            Staytup
+          <span className="font-black text-xl tracking-tight text-white">
+            {location.pathname.startsWith('/library')
+              ? 'My Library'
+              : location.pathname.startsWith('/search')
+              ? 'Search'
+              : location.pathname.startsWith('/blend')
+              ? 'Blend'
+              : location.pathname.startsWith('/settings')
+              ? 'Settings'
+              : location.pathname.startsWith('/profile')
+              ? 'Profile'
+              : 'Staytup'}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/friends')}
+            onClick={() => navigate('/blend')}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-              location.pathname === '/friends'
+              location.pathname.startsWith('/blend')
                 ? 'bg-white/15 text-white'
                 : 'text-[#8E8E93] hover:text-white'
             }`}
-            title="Friends & Social"
+            title="Blend"
           >
-            <Users className="w-4.5 h-4.5" />
+            <Disc3 className="w-4.5 h-4.5" />
           </button>
 
           {/* Mobile Header Profile Button */}
@@ -217,15 +223,15 @@ export const AppShell = () => {
         {/* Right: Social, Now Playing Panel Toggle, & Profile shortcuts */}
         <div className="flex items-center justify-end gap-2.5 w-[220px]">
           <button
-            onClick={() => navigate('/friends')}
+            onClick={() => navigate('/blend')}
             className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-              location.pathname === '/friends'
+              location.pathname.startsWith('/blend')
                 ? 'bg-white/15 text-white'
                 : 'text-[#8E8E93] hover:text-white hover:bg-white/5'
             }`}
-            title="Friends & Social"
+            title="Blend"
           >
-            <Users className="w-4.5 h-4.5" />
+            <Disc3 className="w-4.5 h-4.5" />
           </button>
 
           <button
@@ -260,13 +266,13 @@ export const AppShell = () => {
           activeView={getActiveView()}
           setActiveView={handleNavClick}
           onOpenProfile={() => navigate('/profile')}
-          onOpenFriends={() => navigate('/friends')}
+          onOpenBlend={() => navigate('/blend')}
         />
 
         {/* Routed Page Content Area (Center Pane) */}
         <main
           className={`flex-1 w-full h-full relative overflow-y-auto lg:rounded-xl lg:bg-[#121212] lg:border lg:border-white/[0.06] shadow-2xl min-w-0 ${
-            hasTrack ? 'pb-36 lg:pb-6 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
+            hasTrack ? 'pb-32 sm:pb-36 lg:pb-6 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
           }`}
         >
           <Outlet />

@@ -1,398 +1,353 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import {
-  User,
   Edit3,
-  Wifi,
-  LogOut,
   Heart,
-  Users,
-  Shield,
-  FileText,
-  Instagram,
-  Mail,
-  Code2,
-  ExternalLink,
-  X,
-  RefreshCw,
-  CheckCircle2,
+  Settings,
+  Share2,
+  Clock,
+  Music2,
+  ChevronRight,
+  Play,
+  Disc3,
+  Check,
 } from 'lucide-react';
 import { LoginModal } from '../components/LoginModal';
-import { updateService, CURRENT_BUILD } from '../services/updateService';
+import { api } from '../api/endpoints';
+import { getStoredBlends } from '../services/blendService';
+
+/* ─── Small track row ─── */
+const TrackRow = ({ track, onPlay, index }) => {
+  const { currentTrack, isPlaying } = usePlayer();
+  const videoId = String(track?.videoId || track?.video_id || track?.id || '');
+  const curId = String(
+    currentTrack?.videoId || currentTrack?.video_id || currentTrack?.id || ''
+  );
+  const isActive = videoId && videoId === curId;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onPlay(track, index)}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
+    >
+      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#1C1C1E]">
+        {track?.thumbnail || track?.image ? (
+          <img
+            src={track.thumbnail || track.image}
+            alt={track.title}
+            className="w-full h-full object-cover"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Music2 className="w-4 h-4 text-[#8E8E93]" />
+          </div>
+        )}
+        <div className={`absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          <Play className="w-3.5 h-3.5 text-white fill-white" />
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium truncate ${isActive ? 'text-emerald-400' : 'text-white'}`}>
+          {track?.title || 'Unknown Track'}
+        </p>
+        <p className="text-xs text-[#8E8E93] truncate">
+          {track?.artist || track?.channelTitle || 'Unknown Artist'}
+        </p>
+      </div>
+      {isActive && isPlaying && (
+        <span className="flex-shrink-0">
+          <Disc3 className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
+        </span>
+      )}
+    </button>
+  );
+};
+
+/* ─── Section card ─── */
+const SectionCard = ({ title, icon: Icon, count, onViewAll, viewAllPath, children }) => (
+  <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
+    <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-[#8E8E93]" />}
+        <h4 className="text-sm font-bold text-white">{title}</h4>
+        {count !== undefined && (
+          <span className="text-xs text-[#8E8E93] font-medium">({count})</span>
+        )}
+      </div>
+      {(onViewAll || viewAllPath) && (
+        <button
+          onClick={onViewAll}
+          className="flex items-center gap-1 text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+        >
+          View all
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+    <div className="px-1 pb-2">{children}</div>
+  </div>
+);
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
-  const { likedTrackIds } = usePlayer();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { likedTrackIds, playTrack } = usePlayer();
 
-  const [streamWifiOnly, setStreamWifiOnly] = useState(
-    () => localStorage.getItem('staytup_setting_wifi') === 'true'
-  );
-  const [socialListening, setSocialListening] = useState(
-    () => localStorage.getItem('staytup_setting_social') !== 'false'
-  );
   const [showEditModal, setShowEditModal] = useState(false);
-  const [activeSubModal, setActiveSubModal] = useState(null); // 'terms' | 'privacy'
-  const [updateStatus, setUpdateStatus] = useState(null); // 'checking' | 'available' | 'latest' | null
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const handleCheckUpdate = async () => {
-    setIsCheckingUpdate(true);
-    setUpdateStatus('checking');
-    try {
-      const result = await updateService.checkForUpdates();
-      if (result && result.hasUpdate) {
-        setUpdateStatus('available');
-      } else {
-        setUpdateStatus('latest');
-        setTimeout(() => setUpdateStatus(null), 4000);
-      }
-    } catch (e) {
-      setUpdateStatus('latest');
-      setTimeout(() => setUpdateStatus(null), 3000);
-    } finally {
-      setIsCheckingUpdate(false);
+  const [likedTracks, setLikedTracks] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [blends, setBlends] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const handleShare = useCallback(() => {
+    const url = `${window.location.origin}${window.location.pathname.includes('/staytup') ? '/staytup' : ''}/user/${user?.id || user?.uid}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
     }
-  };
+  }, [user]);
 
-  const handleWifiToggle = () => {
-    const next = !streamWifiOnly;
-    setStreamWifiOnly(next);
-    localStorage.setItem('staytup_setting_wifi', String(next));
-  };
+  const handlePlayLiked = useCallback((track) => {
+    playTrack(track, likedTracks);
+  }, [likedTracks, playTrack]);
 
-  const handleSocialToggle = () => {
-    const next = !socialListening;
-    setSocialListening(next);
-    localStorage.setItem('staytup_setting_social', String(next));
-  };
+  const handlePlayHistory = useCallback((track) => {
+    playTrack(track, history);
+  }, [history, playTrack]);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      setLoading(true);
+      try {
+        // Load liked tracks
+        if (user?.id || user?.uid) {
+          const [favs, hist] = await Promise.allSettled([
+            api.getFavorites(user.id || user.uid),
+            api.getHistory(user.id || user.uid),
+          ]);
+          if (alive) {
+            if (favs.status === 'fulfilled' && Array.isArray(favs.value)) {
+              setLikedTracks(favs.value.slice(0, 6));
+            }
+            if (hist.status === 'fulfilled' && Array.isArray(hist.value)) {
+              setHistory(hist.value.slice(0, 6));
+            }
+          }
+        } else {
+          // Fallback: localStorage recently played
+          if (alive) {
+            try {
+              const raw = localStorage.getItem('staytup_recently_played');
+              if (raw) setHistory(JSON.parse(raw).slice(0, 6));
+            } catch {}
+          }
+        }
+
+        // Load blends
+        if (alive) {
+          const storedBlends = getStoredBlends();
+          setBlends(storedBlends || []);
+        }
+      } catch {
+        // silent
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+    load();
+    return () => { alive = false; };
+  }, [user]);
+
+  const memberSince = user?.createdAt
+    ? new Date(user.createdAt).getFullYear()
+    : null;
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none">
-      {/* Header */}
-      <div className="sticky top-0 z-20 px-4 sm:px-8 py-4 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="w-full">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Profile &amp; Settings</h1>
-        </div>
-      </div>
+      {/* Hero Header */}
+      <div className="relative px-4 sm:px-8 pt-8 pb-6 bg-gradient-to-b from-[#1a1a1f] to-black border-b border-[#1C1C1E]">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-5">
+          {/* Avatar */}
+          <div className="relative flex-shrink-0">
+            <img
+              src={user?.avatar || './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg'}
+              alt={user?.username || 'User avatar'}
+              onError={(e) => {
+                e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
+              }}
+              className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-white/20 bg-black shadow-2xl"
+            />
+          </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 px-4 sm:px-8 py-6 w-full max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Profile Identity Card (Left side on desktop) */}
-          <div className="lg:col-span-5 bg-[#121214] border border-[#222226] rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center h-fit shadow-xl">
-            <div className="relative mb-4">
-              <img
-                src={user?.avatar || './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg'}
-                alt={user?.username || 'User avatar'}
-                onError={(e) => {
-                  e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
-                }}
-                className="w-28 h-28 rounded-full object-cover border-2 border-white/20 bg-black shadow-2xl"
-              />
-            </div>
-
-            <h3 className="font-extrabold text-2xl text-white tracking-tight leading-tight px-2">
+          {/* Identity */}
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#8E8E93] mb-1">Profile</p>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight truncate">
               {user?.username || user?.displayName || 'Staytup Listener'}
-            </h3>
+            </h1>
 
-            <div className="flex items-center gap-2 mt-2 text-xs flex-wrap justify-center">
-              <span className="font-semibold text-[#22C55E]">{likedTrackIds.size} Liked Tracks</span>
-              <span className="text-[#444448]">•</span>
-              <span className="text-[#8E8E93]">Staytup Member</span>
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2 text-xs text-[#8E8E93]">
+              <span className="font-semibold text-emerald-400">{likedTrackIds.size} Liked Tracks</span>
+              {blends.length > 0 && (
+                <>
+                  <span className="text-[#444448]">•</span>
+                  <span className="font-medium">{blends.length} Blend{blends.length !== 1 ? 's' : ''}</span>
+                </>
+              )}
+              {memberSince && (
+                <>
+                  <span className="text-[#444448]">•</span>
+                  <span>Member since {memberSince}</span>
+                </>
+              )}
             </div>
 
-            {user?.email && (
-              <p className="text-xs text-[#8E8E93] mt-1.5 break-all px-2 max-w-xs">{user.email}</p>
-            )}
-
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="mt-6 w-full py-2.5 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs inline-flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Profile</span>
-            </button>
-          </div>
-
-          {/* Right Column: Settings Sections */}
-          <div className="lg:col-span-7 space-y-5">
-
-        {/* Playback Preferences */}
-        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
-          <div className="px-4 pt-3.5 pb-1">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
-              Playback
-            </h4>
-          </div>
-          <div className="divide-y divide-[#222226]">
-            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Wifi className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-white">Wi-Fi only streaming</p>
-                  <p className="text-xs text-[#8E8E93] mt-0.5">Save mobile data while on the move</p>
-                </div>
-              </div>
+            {/* Action buttons */}
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-4">
               <button
-                type="button"
-                onClick={handleWifiToggle}
-                className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${
-                  streamWifiOnly ? 'bg-white' : 'bg-[#2C2C2E]'
-                }`}
+                onClick={() => setShowEditModal(true)}
+                className="px-4 py-2 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs inline-flex items-center gap-1.5 transition-transform active:scale-95 shadow-md cursor-pointer"
               >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-transform ${
-                    streamWifiOnly ? 'translate-x-5 bg-black' : 'translate-x-0 bg-white'
-                  }`}
-                />
+                <Edit3 className="w-3.5 h-3.5" />
+                Edit Profile
               </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Social & Friends */}
-        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
-          <div className="px-4 pt-3.5 pb-1">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
-              Social
-            </h4>
-          </div>
-          <div className="divide-y divide-[#222226]">
-            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Users className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-white">Share Listening Activity</p>
-                  <p className="text-xs text-[#8E8E93] mt-0.5">Let friends see what you are playing</p>
-                </div>
-              </div>
               <button
-                type="button"
-                onClick={handleSocialToggle}
-                className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${
-                  socialListening ? 'bg-white' : 'bg-[#2C2C2E]'
-                }`}
+                onClick={handleShare}
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
               >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-transform ${
-                    socialListening ? 'translate-x-5 bg-black' : 'translate-x-0 bg-white'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* App Version & Updates */}
-        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
-          <div className="px-4 pt-3.5 pb-1 flex items-center justify-between">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
-              App Version &amp; Updates
-            </h4>
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              v{CURRENT_BUILD.version}
-            </span>
-          </div>
-          <div className="divide-y divide-[#222226]">
-            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-white">Build Release</p>
-                  <p className="text-xs text-[#8E8E93] font-medium truncate max-w-[170px] sm:max-w-xs">
-                    {CURRENT_BUILD.buildId}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={
-                  updateStatus === 'available'
-                    ? () => updateService.applyUpdate()
-                    : handleCheckUpdate
-                }
-                disabled={isCheckingUpdate}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0 ${
-                  updateStatus === 'available'
-                    ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20 active:scale-95'
-                    : updateStatus === 'latest'
-                    ? 'bg-white/10 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-white/5 hover:bg-white/10 text-white border border-[#26262A] active:scale-95'
-                }`}
-              >
-                {isCheckingUpdate ? (
-                  <>
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    <span>Checking...</span>
-                  </>
-                ) : updateStatus === 'available' ? (
-                  <>
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Update Now</span>
-                  </>
-                ) : updateStatus === 'latest' ? (
-                  <>
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>Up to Date</span>
-                  </>
+                {copied ? (
+                  <><Check className="w-3.5 h-3.5 text-emerald-400" />Copied!</>
                 ) : (
-                  <>
-                    <RefreshCw className="w-3 h-3" />
-                    <span>Check for Updates</span>
-                  </>
+                  <><Share2 className="w-3.5 h-3.5" />Share Profile</>
                 )}
               </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Developer & Contact */}
-        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
-          <div className="px-4 pt-3.5 pb-1">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
-              Developer &amp; Contact
-            </h4>
-          </div>
-          <div className="divide-y divide-[#222226]">
-            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Code2 className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-white">Developer</p>
-                  <p className="text-xs text-[#8E8E93]">Lead Creator &amp; Engineer</p>
-                </div>
-              </div>
-              <a
-                href="https://instagram.com/animikh.04"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
+              <button
+                onClick={() => navigate('/settings')}
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
               >
-                @animikh.04
-                <ExternalLink className="w-3 h-3" />
-              </a>
+                <Settings className="w-3.5 h-3.5" />
+                Settings
+              </button>
             </div>
-
-            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Instagram className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-white">Official Instagram</p>
-                  <p className="text-xs text-[#8E8E93]">Community &amp; updates</p>
-                </div>
-              </div>
-              <a
-                href="https://instagram.com/staytup.india"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
-              >
-                @staytup.india
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-
-            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Mail className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-white">Support &amp; Inquiries</p>
-                </div>
-              </div>
-              <a
-                href="mailto:staytup.india@gmail.com"
-                className="text-xs font-medium text-[#8E8E93] hover:text-white transition-colors"
-              >
-                staytup.india@gmail.com
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Legal & Policies */}
-        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
-          <div className="px-4 pt-3.5 pb-1">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
-              Legal &amp; Policies
-            </h4>
-          </div>
-          <div className="divide-y divide-[#222226]">
-            <button
-              type="button"
-              onClick={() => setActiveSubModal('terms')}
-              className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-[#8E8E93] group-hover:text-white" />
-                <p className="text-sm font-medium text-white">Terms &amp; Conditions</p>
-              </div>
-              <span className="text-xs text-[#8E8E93] group-hover:text-white">→</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveSubModal('privacy')}
-              className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Shield className="w-4 h-4 text-[#8E8E93] group-hover:text-white" />
-                <p className="text-sm font-medium text-white">Privacy Policy</p>
-              </div>
-              <span className="text-xs text-[#8E8E93] group-hover:text-white">→</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Log Out Button */}
-        <div className="pt-2">
-          <button
-            onClick={logout}
-            className="w-full py-3.5 rounded-2xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Log Out of Staytup</span>
-          </button>
-        </div>
           </div>
         </div>
       </div>
 
-      {/* Edit Profile Modal Dialog */}
-      <LoginModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
+      {/* Music Content */}
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full max-w-5xl mx-auto space-y-5">
 
-      {/* Terms & Privacy Sub Modals */}
-      {activeSubModal && (
-        <div
-          onClick={() => setActiveSubModal(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-[#141416] border border-[#26262A] rounded-2xl p-6 text-white max-h-[80vh] flex flex-col"
+        {/* Liked Songs */}
+        {(likedTracks.length > 0 || likedTrackIds.size > 0) && (
+          <SectionCard
+            title="Liked Songs"
+            icon={Heart}
+            count={likedTrackIds.size}
+            onViewAll={() => navigate('/library?tab=favorites')}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-[#26262A] mb-4">
-              <h3 className="text-base font-bold text-white">
-                {activeSubModal === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'}
-              </h3>
-              <button
-                onClick={() => setActiveSubModal(null)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            {loading ? (
+              <div className="px-3 py-4 text-xs text-[#8E8E93]">Loading...</div>
+            ) : likedTracks.length > 0 ? (
+              likedTracks.map((track, i) => (
+                <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayLiked} />
+              ))
+            ) : (
+              <div className="px-3 py-4 text-xs text-[#8E8E93]">Your liked tracks will appear here.</div>
+            )}
+          </SectionCard>
+        )}
+
+        {/* Recently Played */}
+        {history.length > 0 && (
+          <SectionCard
+            title="Recently Played"
+            icon={Clock}
+            onViewAll={() => navigate('/library?tab=history')}
+          >
+            {history.map((track, i) => (
+              <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayHistory} />
+            ))}
+          </SectionCard>
+        )}
+
+        {/* Active Blends */}
+        {blends.length > 0 && (
+          <SectionCard
+            title="Your Blends"
+            icon={Disc3}
+            onViewAll={() => navigate('/blend')}
+          >
+            <div className="px-2 py-1 space-y-1">
+              {blends.slice(0, 4).map((blend) => {
+                const otherMembers = (blend.members || []).filter(
+                  (m) => m.id !== (user?.id || user?.uid)
+                );
+                const label =
+                  otherMembers.length > 0
+                    ? `Blend with ${otherMembers.map((m) => m.username || m.displayName || 'Someone').join(', ')}`
+                    : 'Your Blend';
+                return (
+                  <button
+                    key={blend.id}
+                    onClick={() => navigate(`/blend/${blend.id}`)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors text-left group cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                      <Disc3 className="w-4.5 h-4.5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{label}</p>
+                      {blend.matchScore && (
+                        <p className="text-xs text-emerald-400 font-medium">{blend.matchScore}% match</p>
+                      )}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-white transition-colors" />
+                  </button>
+                );
+              })}
             </div>
-            <div className="overflow-y-auto text-xs text-[#8E8E93] space-y-3 leading-relaxed">
-              <p>
-                Staytup Music is designed as a fast, privacy-focused audio platform. All audio streams are delivered via licensed or public CDNs and cached strictly in compliance with client storage protocols.
-              </p>
-              <p>
-                Your personal data, playlists, and preferences remain confidential and are synchronized securely using Firebase Realtime Database and localized storage.
-              </p>
-            </div>
+          </SectionCard>
+        )}
+
+        {/* Empty state if nothing loaded */}
+        {!loading && likedTracks.length === 0 && likedTrackIds.size === 0 && history.length === 0 && blends.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Music2 className="w-12 h-12 text-[#333336]" />
+            <p className="text-sm font-medium text-[#8E8E93]">Your music activity will appear here.</p>
+            <p className="text-xs text-[#555558]">Start listening to build your profile.</p>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-2 px-5 py-2 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 transition-colors cursor-pointer"
+            >
+              Explore Music
+            </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Settings link hint at bottom */}
+        <button
+          onClick={() => navigate('/settings')}
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-[#121214] border border-[#222226] rounded-2xl hover:bg-[#18181B] transition-colors group cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <Settings className="w-4 h-4 text-[#8E8E93] group-hover:text-white transition-colors" />
+            <span className="text-sm font-medium text-white">Settings</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-white transition-colors" />
+        </button>
+      </div>
+
+      {/* Edit Profile Modal */}
+      <LoginModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
     </div>
   );
 }

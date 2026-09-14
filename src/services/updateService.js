@@ -77,11 +77,12 @@ class UpdateService {
 
     // Determine correct service worker path
     const isStaytupSubpath = window.location.pathname.startsWith('/staytup');
-    const swPath = isStaytupSubpath ? '/staytup/sw.js' : './sw.js';
+    const swPath = isStaytupSubpath ? '/staytup/sw.js' : '/sw.js';
+    const scope = isStaytupSubpath ? '/staytup/' : '/';
 
     window.addEventListener('load', () => {
       navigator.serviceWorker
-        .register(swPath)
+        .register(swPath, { scope })
         .then((reg) => {
           this.registration = reg;
           console.log('[UpdateService] Service Worker registered with scope:', reg.scope);

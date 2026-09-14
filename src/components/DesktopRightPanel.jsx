@@ -113,62 +113,54 @@ export const DesktopRightPanel = ({ onClose }) => {
         {/* TOP SECTION: CURRENTLY PLAYING MUSIC                                       */}
         {/* ========================================================================= */}
         {currentTrack ? (
-          <div className="p-4 border-b border-white/5 flex-shrink-0">
-            {/* Large Album Artwork */}
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/10 group mb-3.5">
-              <img
-                src={getArtwork(currentTrack)}
-                alt={currentTrack.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-
-              {/* Ambient Glow */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-
-              {/* Live Animated Playing Equalizer Pill */}
-              {isPlaying && (
-                <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-lg">
-                  <div className="flex items-end gap-0.5 h-3">
-                    <span className="w-0.5 h-full bg-[#22C55E] rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                    <span className="w-0.5 h-2/3 bg-[#22C55E] rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.2s]" />
-                    <span className="w-0.5 h-4/5 bg-[#22C55E] rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.4s]" />
-                  </div>
-                  <span className="text-[10px] font-bold text-[#22C55E] tracking-tight uppercase">
-                    Playing
-                  </span>
-                </div>
-              )}
-
-              {/* Quick Play/Pause overlay button */}
-              <button
-                onClick={togglePlay}
-                className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-[#22C55E] hover:bg-[#20ba58] text-black flex items-center justify-center shadow-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-105 cursor-pointer"
-                title={isPlaying ? 'Pause' : 'Play'}
-              >
-                {isPlaying ? (
-                  <Pause className="w-5 h-5 fill-current" />
-                ) : (
-                  <Play className="w-5 h-5 fill-current ml-0.5" />
-                )}
-              </button>
+          <div className="p-3.5 border-b border-white/5 bg-[#161619]/60 flex-shrink-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E93] mb-2 px-0.5">
+              Now Playing
             </div>
+            <div className="flex items-center gap-3">
+              {/* Compact 52x52 Artwork with Play/Pause Button */}
+              <div className="relative w-[52px] h-[52px] rounded-xl overflow-hidden shadow-lg bg-black border border-white/10 flex-shrink-0 group">
+                <img
+                  src={getArtwork(currentTrack)}
+                  alt={currentTrack.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <button
+                  onClick={togglePlay}
+                  className="absolute inset-0 bg-black/40 group-hover:bg-black/60 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                  title={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5 text-white fill-white" />
+                  ) : (
+                    <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                  )}
+                </button>
+                {isPlaying && (
+                  <div className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-black/70 backdrop-blur-sm flex items-end gap-0.5 pointer-events-none">
+                    <span className="w-0.5 h-2 bg-[#22C55E] rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                    <span className="w-0.5 h-1.5 bg-[#22C55E] rounded-full animate-[pulse_0.8s_ease-in-out_infinite_0.2s]" />
+                    <span className="w-0.5 h-2.5 bg-[#22C55E] rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.4s]" />
+                  </div>
+                )}
+              </div>
 
-            {/* Track Title, Artist, & Like Button */}
-            <div className="flex items-start justify-between gap-3 mb-3">
+              {/* Track Info */}
               <div className="min-w-0 flex-1">
-                <h4 className="text-base font-bold text-white truncate tracking-tight">
+                <h4 className="text-xs font-bold text-white truncate tracking-tight">
                   {currentTrack.title}
                 </h4>
-                <div className="mt-1">
+                <div className="mt-0.5">
                   <ArtistLinks
                     track={currentTrack}
-                    className="text-xs text-[#8E8E93]"
+                    className="text-[11px] text-[#8E8E93]"
                     maxDisplay={2}
                     showAvatars={false}
                   />
                 </div>
               </div>
 
+              {/* Like Button */}
               <button
                 onClick={() => toggleLike(currentTrack)}
                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors flex-shrink-0 cursor-pointer"
@@ -183,14 +175,14 @@ export const DesktopRightPanel = ({ onClose }) => {
             </div>
           </div>
         ) : (
-          <div className="p-6 border-b border-white/5 flex flex-col items-center justify-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
-              <Music2 className="w-7 h-7 text-[#8E8E93]" />
+          <div className="p-4 border-b border-white/5 flex items-center gap-3 bg-[#161619]/40">
+            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+              <Music2 className="w-5 h-5 text-[#8E8E93]" />
             </div>
-            <h4 className="text-sm font-bold text-white mb-1">No track playing</h4>
-            <p className="text-xs text-[#8E8E93] max-w-[200px]">
-              Select a song from Home, Search, or Library to start listening.
-            </p>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-xs font-bold text-white">No track playing</h4>
+              <p className="text-[11px] text-[#8E8E93] truncate">Select a song to start listening</p>
+            </div>
           </div>
         )}
 

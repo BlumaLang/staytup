@@ -3,7 +3,7 @@ import {
   Home,
   Search,
   Library,
-  Users,
+  Disc3,
   User,
   Settings,
   Music2,
@@ -19,7 +19,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { ArtistAvatar } from './ArtistAvatar';
 
-export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpenFriends }) => {
+export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpenBlend }) => {
   const { user } = useAuth();
   const { likedTrackIds } = usePlayer();
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
   const navItems = [
     { id: 'home', label: 'Home', icon: Home, path: '/' },
     { id: 'search', label: 'Search', icon: Search, path: '/search' },
-    { id: 'friends', label: 'Friends & Social', icon: Users, path: '/friends' },
+    { id: 'blend', label: 'Blend', icon: Disc3, path: '/blend' },
   ];
 
   const currentPath = location.pathname;
@@ -134,7 +134,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
             activeView === item.id ||
             (item.id === 'home' && currentPath === '/') ||
             (item.id === 'search' && currentPath.startsWith('/search')) ||
-            (item.id === 'friends' && currentPath.startsWith('/friends'));
+            (item.id === 'blend' && currentPath.startsWith('/blend'));
 
           return (
             <button

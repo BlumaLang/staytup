@@ -102,25 +102,26 @@ export const api = {
       method: 'DELETE'
     }),
 
-  // Friends
+  // Users & People Discovery for Blend Invites
   searchUsers: (query, limit = 20) =>
-    apiRequest(`/friends/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+    apiRequest(`/users/search?q=${encodeURIComponent(query)}&limit=${limit}`),
 
-  getFriends: () =>
-    apiRequest('/friends'),
+  // Multi-User Blend Endpoints
+  getUserBlends: (userId) =>
+    apiRequest(`/blend/user?user_id=${encodeURIComponent(userId)}`),
 
-  getFriendRequests: () =>
-    apiRequest('/friends/requests'),
+  getBlend: (blendId) =>
+    apiRequest(`/blend/${encodeURIComponent(blendId)}`),
 
-  sendFriendRequest: (toUserId) =>
-    apiRequest('/friends/send', { method: 'POST', body: { to_user_id: toUserId } }),
+  saveBlend: (blendData) =>
+    apiRequest('/blend/create', { method: 'POST', body: blendData }),
 
-  acceptFriendRequest: (requestId) =>
-    apiRequest(`/friends/requests/${encodeURIComponent(requestId)}`, { method: 'POST' }),
+  generateBlendInvite: (blendId, inviter) =>
+    apiRequest('/blend/invite/generate', { method: 'POST', body: { blendId, inviter } }),
 
-  declineFriendRequest: (requestId) =>
-    apiRequest(`/friends/requests/${encodeURIComponent(requestId)}/decline`, { method: 'POST' }),
+  getBlendInvite: (token) =>
+    apiRequest(`/blend/invite/${encodeURIComponent(token)}`),
 
-  removeFriend: (friendId) =>
-    apiRequest(`/friends/${encodeURIComponent(friendId)}/remove`, { method: 'DELETE' }),
+  joinBlendInvite: (token, user) =>
+    apiRequest(`/blend/invite/${encodeURIComponent(token)}/join`, { method: 'POST', body: { user } }),
 };

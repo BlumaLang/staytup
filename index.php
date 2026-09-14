@@ -173,9 +173,12 @@ if (file_exists($indexHtml)) {
         $userId = urldecode($m[1]);
         $metaTitle = htmlspecialchars($userId . ' — Listener Profile | Staytup Music');
         $metaDesc = htmlspecialchars('Check out ' . $userId . '\'s music profile, playlists, and listening activity on Staytup.');
-    } elseif (preg_match('#^/blend/([^/]+)#i', $route, $m)) {
-        $blendId = urldecode($m[1]);
-        $metaTitle = htmlspecialchars('Friend Blend — Shared Daily Music Mix | Staytup');
+    } elseif (preg_match('#^/blend/invite/([^/]+)#i', $route, $m)) {
+        $token = urldecode($m[1]);
+        $metaTitle = htmlspecialchars('Join Shared Music Blend | Staytup');
+        $metaDesc = htmlspecialchars('You are invited to join a shared music Blend on Staytup! Combine tastes and generate your shared daily mix.');
+    } elseif (preg_match('#^/blend(?:/([^/]+))?#i', $route, $m)) {
+        $metaTitle = htmlspecialchars('Blend — Shared Daily Music Mix | Staytup');
         $metaDesc = htmlspecialchars('A personalized daily shared music mix combining listening profiles on Staytup.');
     }
 

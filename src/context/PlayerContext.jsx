@@ -14,9 +14,27 @@ export const PlayerProvider = ({ children }) => {
   const streamCache = useRef(new Map());
   const playRecordedRef = useRef(new Set());
 
-  // Player state
-  const [queue, setQueue] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Player state with localStorage persistence for session survival across navigation/refresh
+  const [queue, setQueue] = useState(() => {
+    try {
+      const saved = localStorage.getItem('staytup_active_queue');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  });
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem('staytup_active_index');
+      if (saved !== null) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 0) return parsed;
+      }
+    } catch (e) {}
+    return 0;
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -25,8 +43,27 @@ export const PlayerProvider = ({ children }) => {
   const [isLoadingStream, setIsLoadingStream] = useState(false);
   const [streamError, setStreamError] = useState(null);
 
-  // Favorites state
-  const [likedTrackIds, setLikedTrackIds] = useState(new Set());
+  // Sync active queue & index to localStorage
+  useEffect(() => {
+    try {
+      if (queue.length > 0) {
+        localStorage.setItem('staytup_active_queue', JSON.stringify(queue.slice(0, 50)));
+        localStorage.setItem('staytup_active_index', String(currentIndex));
+      }
+    } catch (e) {}
+  }, [queue, currentIndex]);
+
+  // Favorites state with instant localStorage cache hydration
+  const [likedTrackIds, setLikedTrackIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('staytup_favorites');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch (e) {}
+    return new Set();
+  });
 
   // Lyrics state
   const [lyrics, setLyrics] = useState(null);
@@ -172,21 +209,28 @@ export const PlayerProvider = ({ children }) => {
   const isReplenishingRef = useRef(false);
 
   const replenishQueue = useCallback(async (customSeedTrack = null, count = 10) => {
-    if (isReplenishingRef.current) return;
+    if (isReplenishingRef.current) return 0;
     isReplenishingRef.current = true;
     try {
       const effectiveTrack = customSeedTrack || queueRef.current[currentIndexRef.current] || currentTrack;
-      if (!effectiveTrack) return;
-      const newRecs = await generateIntelligentQueue(effectiveTrack, queueRef.current, count);
+      if (!effectiveTrack) return 0;
+      const newRecs = await generateIntelligentQueue({
+        currentTrack: effectiveTrack,
+        currentQueue: queueRef.current,
+        user,
+        limit: count,
+      });
       if (newRecs && newRecs.length > 0) {
         setQueue(prev => deduplicateTracks([...prev, ...newRecs]));
+        return newRecs.length;
       }
     } catch (err) {
       console.warn('Queue replenishment error:', err);
     } finally {
       isReplenishingRef.current = false;
     }
-  }, [currentTrack]);
+    return 0;
+  }, [currentTrack, user]);
 
   // Set new track or queue
   const playTrack = useCallback((track, newQueue = null) => {
@@ -227,6 +271,26 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [loadAndPlayTrack, replenishQueue]);
 
+  const nextTrack = useCallback(() => {
+    const q = queueRef.current;
+    if (currentIndex < q.length - 1) {
+      jumpToIndex(currentIndex + 1);
+      if (currentIndex + 2 >= q.length) {
+        replenishQueue(q[currentIndex + 1], 10);
+      }
+    } else if (q.length > 0) {
+      // Reached end of queue: replenish and jump to next
+      replenishQueue(q[currentIndex], 10).then((added) => {
+        if (queueRef.current.length > currentIndex + 1) {
+          jumpToIndex(currentIndex + 1);
+        } else if (queueRef.current.length > 0) {
+          // Loop back to start so track is never cleared or lost
+          jumpToIndex(0);
+        }
+      });
+    }
+  }, [currentIndex, jumpToIndex, replenishQueue]);
+
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio.src) return;
@@ -242,23 +306,6 @@ export const PlayerProvider = ({ children }) => {
       });
     }
   }, [isPlaying]);
-
-  const nextTrack = useCallback(() => {
-    const q = queueRef.current;
-    if (currentIndex < q.length - 1) {
-      jumpToIndex(currentIndex + 1);
-      if (currentIndex + 2 >= q.length) {
-        replenishQueue(q[currentIndex + 1], 10);
-      }
-    } else if (q.length > 0) {
-      // Reached end of queue: replenish and jump to next
-      replenishQueue(q[currentIndex], 10).then(() => {
-        if (queueRef.current.length > currentIndex + 1) {
-          jumpToIndex(currentIndex + 1);
-        }
-      });
-    }
-  }, [currentIndex, jumpToIndex, replenishQueue]);
 
   const prevTrack = useCallback(() => {
     if (currentIndex > 0) {
@@ -339,12 +386,20 @@ export const PlayerProvider = ({ children }) => {
 
             // 3. Record entity-aware recent activity for search & library
             try {
+              const artistName =
+                currentTrack.artist ||
+                (Array.isArray(currentTrack.artists) && currentTrack.artists.length > 0
+                  ? currentTrack.artists.map((a) => (typeof a === 'string' ? a : a.name)).filter(Boolean).join(', ')
+                  : '') ||
+                '';
+
               recordRecentActivity({
                 type: 'song',
                 id: trackId,
                 videoId: trackId,
                 title: currentTrack.title,
-                artist: currentTrack.artist || '',
+                subtitle: artistName,
+                artist: artistName,
                 artists: currentTrack.artists || [],
                 image: currentTrack.thumbnail || currentTrack.image || '',
                 thumbnail: currentTrack.thumbnail || currentTrack.image || '',
@@ -399,12 +454,21 @@ export const PlayerProvider = ({ children }) => {
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
+    const handleError = (e) => {
+      console.warn('HTML5 Audio playback error event:', e);
+      setIsPlaying(false);
+    };
+    const handleWaiting = () => {
+      // Audio buffering, keep playing state intact
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('waiting', handleWaiting);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
@@ -412,6 +476,8 @@ export const PlayerProvider = ({ children }) => {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('waiting', handleWaiting);
     };
   }, [currentTrack, user?.id, nextTrack]);
 
@@ -499,23 +565,42 @@ export const PlayerProvider = ({ children }) => {
     const videoId = String(rawId);
 
     const isCurrentlyLiked = likedTrackIds.has(videoId);
+    const willBeLiked = !isCurrentlyLiked;
+
     // Optimistic toggle
-    let updatedFavoritesArray = [];
     setLikedTrackIds(prev => {
       const next = new Set(prev);
-      if (next.has(videoId)) {
-        next.delete(videoId);
-      } else {
+      if (willBeLiked) {
         next.add(videoId);
+      } else {
+        next.delete(videoId);
       }
-      updatedFavoritesArray = Array.from(next);
+      try {
+        localStorage.setItem('staytup_favorites', JSON.stringify(Array.from(next)));
+      } catch (e) {}
       return next;
     });
+
+    // Update local cache of favorite track objects
+    try {
+      const cachedFavs = JSON.parse(localStorage.getItem('staytup_favorites_tracks') || '[]');
+      let updatedFavs;
+      if (willBeLiked) {
+        updatedFavs = [track, ...cachedFavs.filter(t => (t.videoId || t.video_id || t.id) !== videoId)];
+      } else {
+        updatedFavs = cachedFavs.filter(t => (t.videoId || t.video_id || t.id) !== videoId);
+      }
+      localStorage.setItem('staytup_favorites_tracks', JSON.stringify(updatedFavs.slice(0, 100)));
+    } catch (e) {}
 
     const userId = user?.id || localStorage.getItem('staytup_user_id') || 'guest_user';
 
     // Firebase realtime sync
-    syncFavoritesToFirebase(userId, updatedFavoritesArray);
+    try {
+      const currentIds = Array.from(likedTrackIds);
+      const targetIds = willBeLiked ? [...currentIds, videoId] : currentIds.filter(id => id !== videoId);
+      syncFavoritesToFirebase(userId, targetIds);
+    } catch (e) {}
 
     try {
       const res = await api.toggleFavorite({
@@ -533,11 +618,24 @@ export const PlayerProvider = ({ children }) => {
           const next = new Set(prev);
           if (res.favorited) next.add(videoId);
           else next.delete(videoId);
+          try {
+            localStorage.setItem('staytup_favorites', JSON.stringify(Array.from(next)));
+          } catch (e) {}
           return next;
         });
       }
     } catch (e) {
-      console.warn('Failed to toggle favorite on server:', e);
+      console.warn('Failed to toggle favorite on server, rolling back:', e);
+      // Rollback on failure
+      setLikedTrackIds(prev => {
+        const rollback = new Set(prev);
+        if (isCurrentlyLiked) rollback.add(videoId);
+        else rollback.delete(videoId);
+        try {
+          localStorage.setItem('staytup_favorites', JSON.stringify(Array.from(rollback)));
+        } catch (err) {}
+        return rollback;
+      });
     }
   }, [likedTrackIds, user?.id]);
 

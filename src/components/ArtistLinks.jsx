@@ -78,11 +78,13 @@ export function formatArtistNames(trackOrArtist) {
 export const ArtistLinks = ({
   artists: artistsProp,
   track,
-  maxVisible = 2,
+  maxVisible,
+  maxDisplay,
   showAvatars = false,
   className = '',
   linkClassName = '',
   songTitle = '',
+  singleLine = false,
 }) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,7 +96,8 @@ export const ArtistLinks = ({
     return <span className={className}>Unknown Artist</span>;
   }
 
-  const visibleArtists = artists.slice(0, maxVisible);
+  const limit = maxDisplay || maxVisible || 3;
+  const visibleArtists = artists.slice(0, limit);
   const remainingCount = artists.length - visibleArtists.length;
 
   const handleArtistClick = (e, artistName) => {
@@ -109,9 +112,17 @@ export const ArtistLinks = ({
 
   return (
     <>
-      <span className={`inline-flex items-center gap-1.5 flex-wrap ${className}`}>
+      <span
+        className={`inline-flex items-center gap-1 ${
+          singleLine ? 'w-full truncate overflow-hidden whitespace-nowrap' : 'flex-wrap'
+        } ${className}`}
+      >
         {/* Clickable individual artist links */}
-        <span className="inline-flex items-center flex-wrap">
+        <span
+          className={`inline-flex items-center ${
+            singleLine ? 'truncate overflow-hidden whitespace-nowrap' : 'flex-wrap'
+          }`}
+        >
           {visibleArtists.map((artist, idx) => (
             <React.Fragment key={`${artist.name}-${idx}`}>
               {idx > 0 && <span className="text-[#8E8E93] mr-1">, </span>}
@@ -124,25 +135,13 @@ export const ArtistLinks = ({
               </span>
             </React.Fragment>
           ))}
-
-          {/* +N Indicator badge for 3+ artists */}
-          {remainingCount > 0 && (
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="ml-1.5 px-1.5 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-[#A1A1AA] hover:text-white text-[10px] font-bold transition-all cursor-pointer inline-flex items-center"
-              title={`+${remainingCount} more artists`}
-            >
-              +{remainingCount}
-            </button>
-          )}
         </span>
 
         {/* Optional compact circular artist avatar stack */}
         {showAvatars && artists.length > 1 && (
           <div
             onClick={handleOpenModal}
-            className="inline-flex items-center pl-1 cursor-pointer group"
+            className="inline-flex items-center pl-1 cursor-pointer group flex-shrink-0"
             title="View all artists"
           >
             <div className="flex items-center -space-x-1.5">

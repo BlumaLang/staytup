@@ -43,7 +43,7 @@ export const MediaRail = ({ title, subtitle, action, children }) => {
       {/* Rail Scrolling Row */}
       <div
         ref={scrollContainerRef}
-        className="flex items-stretch gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+        className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3 px-3 sm:mx-0 sm:px-0"
       >
         {children}
       </div>

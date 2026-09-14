@@ -67,9 +67,9 @@ export const RankedTrackList = ({
   };
 
   return (
-    <div className="bg-[#181818]/60 hover:bg-[#1E1E22] border border-white/[0.05] hover:border-white/10 rounded-2xl p-4 sm:p-5 select-none transition-all flex flex-col justify-between shadow-lg">
+    <div className="bg-[#161619] sm:bg-[#181818]/60 hover:bg-[#1E1E22] border border-white/[0.05] hover:border-white/10 rounded-2xl p-3.5 sm:p-5 select-none transition-all flex flex-col justify-between shadow-lg">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 pb-3 mb-1">
+      <div className="flex items-center justify-between gap-3 pb-2.5 sm:pb-3 mb-1">
         <div className="min-w-0 flex-1">
           <h2 className="text-base sm:text-lg font-bold tracking-tight text-white leading-snug truncate">
             {title}
@@ -83,7 +83,7 @@ export const RankedTrackList = ({
 
         <button
           onClick={handlePlayAll}
-          className="w-9 h-9 rounded-full bg-[#22C55E] hover:bg-[#1fba57] text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer flex-shrink-0"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#22C55E] hover:bg-[#1fba57] active:scale-95 text-black flex items-center justify-center shadow-lg hover:scale-105 transition-all cursor-pointer flex-shrink-0"
           title={`Play all ${title}`}
         >
           <Play className="w-4 h-4 fill-black ml-0.5" />
@@ -102,14 +102,14 @@ export const RankedTrackList = ({
             <div
               key={vid || i}
               onClick={() => onPlayTrack && onPlayTrack(track, tracks)}
-              className={`flex items-center justify-between py-2.5 px-2.5 sm:px-3 rounded-2xl cursor-pointer transition-all duration-150 group ${
+              className={`flex items-center justify-between py-2 sm:py-2.5 px-1.5 sm:px-3 rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-150 group active:scale-[0.99] ${
                 isCurrent ? 'bg-white/[0.07]' : 'hover:bg-white/[0.04]'
               }`}
             >
               {/* Left Zone: Rank Number + Artwork + Titles */}
-              <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 pr-2">
+              <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 pr-2 flex-1">
                 <span
-                  className={`w-5 text-center text-xs font-semibold tabular-nums flex-shrink-0 ${
+                  className={`w-4 sm:w-5 text-center text-xs font-semibold tabular-nums flex-shrink-0 ${
                     isCurrent ? 'text-[#22C55E]' : 'text-[#8E8E93] group-hover:text-white'
                   }`}
                 >
@@ -121,7 +121,7 @@ export const RankedTrackList = ({
                 </span>
 
                 {/* Thumbnail with Hover Play Button */}
-                <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-md">
+                <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl overflow-hidden bg-black flex-shrink-0 shadow-md">
                   <img
                     src={get500x500Image(track.image || track.thumbnail || track.artwork_url)}
                     alt={track.title}
@@ -144,19 +144,19 @@ export const RankedTrackList = ({
                 </div>
 
                 {/* Title & Artist */}
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p
-                    className={`font-bold text-xs sm:text-sm line-clamp-1 transition-colors ${
+                    className={`font-semibold text-xs sm:text-sm line-clamp-1 transition-colors leading-snug ${
                       isCurrent ? 'text-[#22C55E]' : 'text-white group-hover:text-white'
                     }`}
                   >
                     {track.title}
                   </p>
-                  <div className="mt-0.5">
+                  <div className="mt-0.5 line-clamp-1">
                     <ArtistLinks
                       track={track}
                       className="text-[11px] text-[#8E8E93]"
-                      maxDisplay={2}
+                      maxDisplay={3}
                       showAvatars={false}
                     />
                   </div>
@@ -164,7 +164,7 @@ export const RankedTrackList = ({
               </div>
 
               {/* Right Zone: Like Button + Duration */}
-              <div className="flex items-center gap-2.5 text-xs text-[#8E8E93] flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs text-[#8E8E93] flex-shrink-0">
                 {toggleLike && (
                   <button
                     onClick={(e) => {
@@ -175,8 +175,8 @@ export const RankedTrackList = ({
                     title={isLiked ? 'Unlike' : 'Like'}
                   >
                     <Heart
-                      className={`w-3.5 h-3.5 ${
-                        isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-current'
+                      className={`w-4 h-4 ${
+                        isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-white/70 hover:stroke-white'
                       }`}
                     />
                   </button>

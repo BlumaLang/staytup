@@ -47,13 +47,13 @@ export const getPlaylistUrl = (playlistOrId) => {
 };
 
 export const getUserUrl = (userOrId) => {
-  if (!userOrId) return `${getAppBaseUrl()}/friends`;
+  if (!userOrId) return `${getAppBaseUrl()}/blend`;
   const id = typeof userOrId === 'string' ? userOrId : userOrId.id || userOrId.username || '';
   return `${getAppBaseUrl()}/user/${encodeURIComponent(id)}`;
 };
 
 export const getBlendUrl = (blendOrId) => {
-  if (!blendOrId) return `${getAppBaseUrl()}/friends`;
+  if (!blendOrId) return `${getAppBaseUrl()}/blend`;
   const id = typeof blendOrId === 'string' ? blendOrId : blendOrId.id || '';
   return `${getAppBaseUrl()}/blend/${encodeURIComponent(id)}`;
 };

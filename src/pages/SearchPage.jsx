@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/endpoints';
 import { usePlayer } from '../context/PlayerContext';
+import { useAuth } from '../context/AuthContext';
+import { createOrGetBlend } from '../services/blendService';
 import { get500x500Image } from '../utils/media';
 import { ArtistAvatar } from '../components/ArtistAvatar';
 import {
@@ -12,11 +14,14 @@ import {
   Users,
   Disc3,
   ListMusic,
+  ListPlus,
+  Check,
   Heart,
   Music2,
 } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { ArtistLinks } from '../components/ArtistLinks';
+import { PlaylistSheet } from '../components/PlaylistSheet';
 import {
   getRecentActivity,
   recordRecentActivity,
@@ -124,6 +129,7 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { playTrack, currentTrack, isPlaying, likedTrackIds, toggleLike } = usePlayer();
+  const { user } = useAuth();
 
   const queryParam = searchParams.get('q') || '';
   const [query, setQuery] = useState(queryParam);
@@ -133,7 +139,39 @@ export default function SearchPage() {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'songs' | 'artists' | 'albums' | 'playlists'
   const [isLoading, setIsLoading] = useState(false);
   const [recentActivities, setRecentActivities] = useState(() => getRecentActivity(12));
+  const [playlistTrack, setPlaylistTrack] = useState(null);
+  const [showPlaylistSheet, setShowPlaylistSheet] = useState(false);
+  const [userPlaylists, setUserPlaylists] = useState([]);
   const debounceTimerRef = useRef(null);
+
+  const userId = user?.id || localStorage.getItem('staytup_user_id') || 'guest_user';
+
+  // Load user playlists to check which songs are in playlists
+  const loadUserPlaylists = () => {
+    if (!userId) return;
+    api.getPlaylists(userId)
+      .then(res => {
+        const list = Array.isArray(res) ? res : res?.playlists || [];
+        setUserPlaylists(list);
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadUserPlaylists();
+  }, [userId, showPlaylistSheet]);
+
+  // Check if a given track ID is in any user playlist
+  const isTrackInPlaylist = (trackId) => {
+    if (!trackId || !Array.isArray(userPlaylists)) return false;
+    const cleanId = String(trackId);
+    return userPlaylists.some(pl =>
+      Array.isArray(pl.tracks) && pl.tracks.some(t => {
+        const tid = String(t.videoId || t.video_id || t.id || '');
+        return tid && tid === cleanId;
+      })
+    );
+  };
 
   // Subscribe to real entity-based recent activity
   useEffect(() => {
@@ -204,6 +242,16 @@ export default function SearchPage() {
           const id = t.videoId || t.video_id || t.id;
           if (!id || seen.has(id)) return false;
           seen.add(id);
+          return true;
+        });
+      }
+      if (data?.artists && Array.isArray(data.artists)) {
+        const seenArtists = new Set();
+        data.artists = data.artists.filter((a) => {
+          const name = a.name || a.title || '';
+          const key = name.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+          if (!key || seenArtists.has(key)) return false;
+          seenArtists.add(key);
           return true;
         });
       }
@@ -465,7 +513,7 @@ export default function SearchPage() {
                           />
                         </div>
 
-                        <div className="mt-4">
+                        <div className="mt-4 pr-16">
                           <h3 className="text-2xl font-extrabold text-white line-clamp-1 tracking-tight">
                             {topResult.title}
                           </h3>
@@ -493,7 +541,7 @@ export default function SearchPage() {
                             });
                             playTrack(topResult, [topResult, ...otherTracks]);
                           }}
-                          className="w-12 h-12 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all opacity-0 group-hover:opacity-100 absolute bottom-5 right-5 cursor-pointer"
+                          className="w-12 h-12 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 absolute bottom-5 right-5 cursor-pointer flex-shrink-0"
                           title="Play"
                         >
                           {isCurrentPlaying(topResult) ? (
@@ -572,7 +620,28 @@ export default function SearchPage() {
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs text-[#8E8E93] flex-shrink-0">
+                            <div className="flex items-center gap-2.5 text-xs text-[#8E8E93] flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPlaylistTrack(track);
+                                  setShowPlaylistSheet(true);
+                                }}
+                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                                  isTrackInPlaylist(track.videoId || track.id)
+                                    ? 'text-[#22C55E] bg-[#22C55E]/10 hover:bg-[#22C55E]/20'
+                                    : 'text-[#8E8E93] hover:text-white hover:bg-white/10'
+                                }`}
+                                title={isTrackInPlaylist(track.videoId || track.id) ? 'Added to Playlist' : 'Add to Playlist'}
+                              >
+                                {isTrackInPlaylist(track.videoId || track.id) ? (
+                                  <Check className="w-3.5 h-3.5 stroke-[2.8]" />
+                                ) : (
+                                  <ListPlus className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -601,28 +670,28 @@ export default function SearchPage() {
                 {artists.length > 0 && (
                   <div>
                     <h2 className="text-xl font-bold text-white mb-4">Artists</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {artists.slice(0, 6).map((artist, idx) => {
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+                      {artists.slice(0, 8).map((artist, idx) => {
                         const name = artist.name || artist.title;
                         return (
                           <div
                             key={artist.id || idx}
                             onClick={() => navigate(`/artist/${encodeURIComponent(name)}`)}
-                            className="p-3.5 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col items-center text-center select-none"
+                            className="group cursor-pointer flex flex-col items-center text-center select-none py-2 px-1 hover:opacity-90 transition-opacity"
                           >
-                            <div className="relative mb-3">
+                            <div className="relative mb-2">
                               <ArtistAvatar
                                 name={name}
                                 image={artist.image}
-                                size="2xl"
-                                className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                                size="lg"
+                                className="w-16 h-16 sm:w-20 sm:h-20 shadow-md group-hover:scale-105 transition-transform duration-300"
                               />
-                              <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
-                                <Play className="w-4 h-4 fill-black ml-0.5" />
+                              <div className="absolute right-0 bottom-0 w-7 h-7 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-lg opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+                                <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
                               </div>
                             </div>
-                            <h4 className="text-sm font-bold text-white truncate w-full group-hover:underline">{name}</h4>
-                            <p className="text-xs text-[#8E8E93] mt-0.5 font-medium">Artist</p>
+                            <h4 className="text-xs sm:text-sm font-semibold text-white truncate w-full group-hover:text-emerald-400 transition-colors mt-0.5">{name}</h4>
+                            <p className="text-[11px] text-[#8E8E93] mt-0.5 font-medium">Artist</p>
                           </div>
                         );
                       })}
@@ -760,9 +829,18 @@ export default function SearchPage() {
                             <p className="text-xs text-[#8E8E93] truncate w-full mt-0.5">
                               @{person.username}
                             </p>
-                            <span className="mt-2 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                              Profile
-                            </span>
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const b = await createOrGetBlend(user, [person]);
+                                if (b?.id) navigate(`/blend/${b.id}`);
+                              }}
+                              className="mt-2 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/25 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Disc3 className="w-3 h-3" />
+                              <span>Invite to Blend</span>
+                            </button>
                           </div>
                         );
                       })}
@@ -821,7 +899,28 @@ export default function SearchPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-[#8E8E93] flex-shrink-0">
+                      <div className="flex items-center gap-2.5 text-xs text-[#8E8E93] flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPlaylistTrack(track);
+                            setShowPlaylistSheet(true);
+                          }}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                            isTrackInPlaylist(track.videoId || track.id)
+                              ? 'text-[#22C55E] bg-[#22C55E]/10 hover:bg-[#22C55E]/20'
+                              : 'text-[#8E8E93] hover:text-white hover:bg-white/10'
+                          }`}
+                          title={isTrackInPlaylist(track.videoId || track.id) ? 'Added to Playlist' : 'Add to Playlist'}
+                        >
+                          {isTrackInPlaylist(track.videoId || track.id) ? (
+                            <Check className="w-3.5 h-3.5 stroke-[2.8]" />
+                          ) : (
+                            <ListPlus className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -847,7 +946,7 @@ export default function SearchPage() {
 
             {/* TAB: ARTISTS ONLY */}
             {activeTab === 'artists' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
                 {artists.map((artist, idx) => {
                   const name = artist.name || artist.title;
                   return (
@@ -863,21 +962,21 @@ export default function SearchPage() {
                         });
                         navigate(`/artist/${encodeURIComponent(name)}`);
                       }}
-                      className="p-3.5 rounded-2xl hover:bg-white/[0.06] transition-all cursor-pointer group flex flex-col items-center text-center select-none"
+                      className="group cursor-pointer flex flex-col items-center text-center select-none py-2 px-1 hover:opacity-90 transition-opacity"
                     >
-                      <div className="relative mb-3">
+                      <div className="relative mb-2">
                         <ArtistAvatar
                           name={name}
                           image={artist.image}
-                          size="2xl"
-                          className="w-24 h-24 sm:w-28 sm:h-28 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                          size="lg"
+                          className="w-16 h-16 sm:w-20 sm:h-20 shadow-md group-hover:scale-105 transition-transform duration-300"
                         />
-                        <div className="absolute right-1 bottom-1 w-9 h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
-                          <Play className="w-4 h-4 fill-black ml-0.5" />
+                        <div className="absolute right-0 bottom-0 w-7 h-7 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-lg opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+                          <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
                         </div>
                       </div>
-                      <h4 className="text-sm font-bold text-white truncate w-full group-hover:underline">{name}</h4>
-                      <p className="text-xs text-[#8E8E93] mt-0.5 font-medium">Artist</p>
+                      <h4 className="text-xs sm:text-sm font-semibold text-white truncate w-full group-hover:text-emerald-400 transition-colors mt-0.5">{name}</h4>
+                      <p className="text-[11px] text-[#8E8E93] mt-0.5 font-medium">Artist</p>
                     </div>
                   );
                 })}
@@ -1003,9 +1102,18 @@ export default function SearchPage() {
                       <p className="text-xs text-[#8E8E93] truncate w-full mt-0.5">
                         @{person.username}
                       </p>
-                      <span className="mt-2 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                        Profile
-                      </span>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const b = await createOrGetBlend(user, [person]);
+                          if (b?.id) navigate(`/blend/${b.id}`);
+                        }}
+                        className="mt-2 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/25 px-2.5 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <Disc3 className="w-3 h-3" />
+                        <span>Invite to Blend</span>
+                      </button>
                     </div>
                   );
                 })}
@@ -1029,7 +1137,7 @@ export default function SearchPage() {
                     Clear all
                   </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div className="space-y-1">
                   {recentActivities.map((act) => {
                     const isSong = act.type === 'song';
                     const isArtist = act.type === 'artist';
@@ -1060,52 +1168,95 @@ export default function SearchPage() {
                             navigate(`/playlist/${encodeURIComponent(act.id)}`);
                           }
                         }}
-                        className="p-3 bg-[#18181B] hover:bg-[#222226] border border-white/5 rounded-2xl cursor-pointer group transition-all relative flex flex-col justify-between"
+                        className="flex items-center justify-between p-2 rounded-xl hover:bg-[#18181B] cursor-pointer group transition-colors select-none"
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeRecentActivity(act.type, act.id);
-                          }}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 hover:bg-black text-[#8E8E93] hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          title="Remove from recent"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-
-                        <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2.5 bg-black flex-shrink-0">
-                          {isArtist ? (
-                            <ArtistAvatar name={act.title} image={act.image} size="xl" className="w-full h-full !rounded-none" />
-                          ) : isUser ? (
-                            <UserAvatar user={{ displayName: act.title, avatar: act.image }} size="xl" className="w-full h-full !rounded-none" />
-                          ) : act.image ? (
-                            <img src={get500x500Image(act.image)} alt={act.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-[#242426] flex items-center justify-center text-[#8E8E93]">
-                              <Music2 className="w-6 h-6" />
-                            </div>
-                          )}
-                          {isSong && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Play className="w-5 h-5 text-white fill-white ml-0.5" />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-white truncate leading-tight group-hover:text-white">
-                            {act.title}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-[#A1A1AA]">
-                              {act.type}
-                            </span>
-                            {act.subtitle && (
-                              <p className="text-[10px] text-[#8E8E93] truncate">
-                                {act.subtitle}
-                              </p>
+                        <div className="flex items-center gap-3 min-w-0 pr-3">
+                          {/* Thumbnail / Avatar */}
+                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-black flex-shrink-0 flex items-center justify-center">
+                            {isArtist ? (
+                              <ArtistAvatar name={act.title} image={act.image} size="sm" className="w-full h-full rounded-full" />
+                            ) : isUser ? (
+                              <UserAvatar user={{ displayName: act.title, avatar: act.image }} size="sm" className="w-full h-full rounded-full" />
+                            ) : act.image ? (
+                              <img src={get500x500Image(act.image)} alt={act.title} className="w-full h-full object-cover rounded-lg" />
+                            ) : (
+                              <div className="w-full h-full bg-[#242426] flex items-center justify-center text-[#8E8E93] rounded-lg">
+                                <Music2 className="w-4 h-4" />
+                              </div>
+                            )}
+                            {isSong && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                              </div>
                             )}
                           </div>
+
+                          {/* Details */}
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight group-hover:text-emerald-400 transition-colors">
+                              {act.title}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-[#8E8E93]">
+                              <span className="capitalize font-normal text-[#8E8E93]">
+                                {act.type}
+                              </span>
+                              {(act.subtitle || act.artist) && (
+                                <>
+                                  <span className="text-[10px] text-[#71717A]">•</span>
+                                  <p className="truncate font-normal text-[#A1A1AA]">
+                                    {act.subtitle || act.artist}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right side actions: Add to Playlist + Remove item button */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {isSong && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const trackObj = {
+                                  id: act.id,
+                                  videoId: act.id,
+                                  title: act.title,
+                                  artist: act.subtitle,
+                                  image: act.image,
+                                  thumbnail: act.image,
+                                };
+                                setPlaylistTrack(trackObj);
+                                setShowPlaylistSheet(true);
+                              }}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                                isTrackInPlaylist(act.id)
+                                  ? 'text-[#22C55E] bg-[#22C55E]/10 hover:bg-[#22C55E]/20'
+                                  : 'text-[#8E8E93] hover:text-white hover:bg-white/10'
+                              }`}
+                              title={isTrackInPlaylist(act.id) ? 'Added to Playlist' : 'Add to Playlist'}
+                            >
+                              {isTrackInPlaylist(act.id) ? (
+                                <Check className="w-4 h-4 stroke-[2.8]" />
+                              ) : (
+                                <ListPlus className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+
+                          {/* Remove item button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRecentActivity(act.type, act.id);
+                            }}
+                            className="w-8 h-8 rounded-full hover:bg-white/10 text-[#8E8E93] hover:text-white flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
+                            title="Remove"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -1164,6 +1315,16 @@ export default function SearchPage() {
           </div>
         )}
       </div>
+      {/* Playlist Sheet for adding songs from search or recent activity */}
+      <PlaylistSheet
+        track={playlistTrack}
+        isOpen={showPlaylistSheet}
+        onClose={() => {
+          setShowPlaylistSheet(false);
+          setPlaylistTrack(null);
+          loadUserPlaylists();
+        }}
+      />
     </div>
   );
 }
