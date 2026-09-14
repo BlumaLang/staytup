@@ -220,8 +220,8 @@ export default function SearchPage() {
     <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Search Header Bar (Sticky) */}
       <div className="sticky top-0 z-20 px-4 sm:px-8 py-4 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="w-full max-w-4xl mx-auto flex items-center gap-3">
-          <div className="flex-1 relative flex items-center">
+        <div className="w-full flex items-center gap-3">
+          <div className="flex-1 max-w-xl relative flex items-center">
             <Search className="absolute left-4 w-4 h-4 text-[#8E8E93]" />
             <input
               type="text"
@@ -240,7 +240,7 @@ export default function SearchPage() {
                 if (e.key === 'Enter') handleSearch();
               }}
               placeholder="What do you want to play?"
-              className="w-full pl-11 pr-10 py-3 bg-[#141416] border border-[#26262A] focus:border-white/40 focus:bg-[#18181C] rounded-full text-white placeholder-[#8E8E93] text-sm sm:text-base focus:outline-none transition-all shadow-inner"
+              className="w-full pl-11 pr-10 py-2.5 bg-[#141416] border border-[#26262A] focus:border-white/40 focus:bg-[#18181C] rounded-full text-white placeholder-[#8E8E93] text-sm sm:text-base focus:outline-none transition-all shadow-inner"
             />
             {query && (
               <button
@@ -259,7 +259,7 @@ export default function SearchPage() {
 
           <button
             onClick={() => handleSearch()}
-            className="text-sm font-bold text-black bg-white hover:bg-gray-200 px-5 py-3 rounded-full transition-all active:scale-95 cursor-pointer shadow-md"
+            className="text-xs sm:text-sm font-bold text-black bg-white hover:bg-gray-200 px-5 py-2.5 rounded-full transition-all active:scale-95 cursor-pointer shadow-md"
           >
             Search
           </button>
@@ -267,7 +267,7 @@ export default function SearchPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-4 sm:px-8 py-6 max-w-5xl mx-auto w-full">
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full">
         {/* 1. Live Autocomplete Suggestions */}
         {!isLoading && !results && query.trim().length > 0 && (
           <div className="space-y-6">
@@ -717,7 +717,7 @@ export default function SearchPage() {
             {/* Browse Categories & Genres */}
             <div>
               <h3 className="text-lg font-bold text-white mb-3 px-1">Browse All</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5">
                 {BROWSE_CATEGORIES.map((cat) => (
                   <div
                     key={cat.label}

@@ -123,7 +123,7 @@ export default function AlbumPage() {
           <p className="text-sm font-semibold text-white">Loading album...</p>
         </div>
       ) : (
-        <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 py-6 space-y-8">
+        <div className="flex-1 w-full px-4 sm:px-8 py-6 space-y-8">
           {/* Hero Header */}
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 pb-6 border-b border-[#1C1C1E]">
             <img

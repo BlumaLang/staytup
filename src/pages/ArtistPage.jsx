@@ -202,7 +202,7 @@ export default function ArtistPage() {
           <p className="text-sm font-semibold text-white">Loading artist profile...</p>
         </div>
       ) : (
-        <div className="flex-1 w-full max-w-6xl mx-auto">
+        <div className="flex-1 w-full">
           {/* Hero Banner with Dynamic Artwork */}
           <div className="relative w-full h-72 sm:h-96 overflow-hidden flex items-end px-6 sm:px-10 pb-8 bg-gradient-to-b from-[#1E1E24] to-black">
             <div className="absolute inset-0 z-0">
@@ -328,7 +328,7 @@ export default function ArtistPage() {
             {info?.albums && info.albums.length > 0 && (
               <div>
                 <h2 className="text-xl font-bold text-white mb-4">Discography</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
                   {info.albums.map((album, idx) => (
                     <div
                       key={album.id || idx}

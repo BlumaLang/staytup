@@ -47,48 +47,52 @@ export default function ProfilePage() {
     <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Header */}
       <div className="sticky top-0 z-20 px-4 sm:px-8 py-4 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="w-full">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Profile &amp; Settings</h1>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-4 sm:px-6 py-6 max-w-2xl mx-auto w-full space-y-6">
-        {/* Profile Identity Header */}
-        <div className="flex flex-col items-center text-center pb-6 border-b border-[#1C1C1E]">
-          <div className="relative mb-3">
-            <img
-              src={user?.avatar || './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg'}
-              alt={user?.username || 'User avatar'}
-              onError={(e) => {
-                e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
-              }}
-              className="w-24 h-24 rounded-full object-cover border-2 border-white/20 bg-black shadow-xl"
-            />
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Profile Identity Card (Left side on desktop) */}
+          <div className="lg:col-span-5 bg-[#121214] border border-[#222226] rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center h-fit shadow-xl">
+            <div className="relative mb-4">
+              <img
+                src={user?.avatar || './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg'}
+                alt={user?.username || 'User avatar'}
+                onError={(e) => {
+                  e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
+                }}
+                className="w-28 h-28 rounded-full object-cover border-2 border-white/20 bg-black shadow-2xl"
+              />
+            </div>
+
+            <h3 className="font-extrabold text-2xl text-white tracking-tight leading-tight px-2">
+              {user?.username || user?.displayName || 'Staytup Listener'}
+            </h3>
+
+            <div className="flex items-center gap-2 mt-2 text-xs flex-wrap justify-center">
+              <span className="font-semibold text-[#22C55E]">{likedTrackIds.size} Liked Tracks</span>
+              <span className="text-[#444448]">•</span>
+              <span className="text-[#8E8E93]">Staytup Member</span>
+            </div>
+
+            {user?.email && (
+              <p className="text-xs text-[#8E8E93] mt-1.5 break-all px-2 max-w-xs">{user.email}</p>
+            )}
+
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="mt-6 w-full py-2.5 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs inline-flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Profile</span>
+            </button>
           </div>
 
-          <h3 className="font-extrabold text-2xl text-white tracking-tight leading-tight px-4">
-            {user?.username || user?.displayName || 'Staytup Listener'}
-          </h3>
-
-          <div className="flex items-center gap-2 mt-2 text-xs flex-wrap justify-center">
-            <span className="font-semibold text-[#22C55E]">{likedTrackIds.size} Liked Tracks</span>
-            <span className="text-[#444448]">•</span>
-            <span className="text-[#8E8E93]">Staytup Member</span>
-          </div>
-
-          {user?.email && (
-            <p className="text-xs text-[#8E8E93] mt-1 break-all px-4 max-w-xs">{user.email}</p>
-          )}
-
-          <button
-            onClick={() => setShowEditModal(true)}
-            className="mt-4 px-6 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs inline-flex items-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit Profile</span>
-          </button>
-        </div>
+          {/* Right Column: Settings Sections */}
+          <div className="lg:col-span-7 space-y-5">
 
         {/* Playback Preferences */}
         <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
@@ -262,6 +266,8 @@ export default function ProfilePage() {
             <LogOut className="w-4 h-4" />
             <span>Log Out of Staytup</span>
           </button>
+        </div>
+          </div>
         </div>
       </div>
 

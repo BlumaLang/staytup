@@ -40,10 +40,10 @@ export const MediaCard = ({
               e.stopPropagation();
               onPlay();
             }}
-            className="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
+            className="absolute bottom-2.5 right-2.5 w-11 h-11 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-2xl shadow-[#22C55E]/40 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
             title="Play"
           >
-            <Play className="w-4 h-4 fill-black ml-0.5" />
+            <Play className="w-5 h-5 fill-black ml-0.5" />
           </button>
         )}
 

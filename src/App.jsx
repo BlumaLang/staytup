@@ -8,7 +8,6 @@ import AppShell from './layouts/AppShell';
 
 // Routed Pages
 import HomePage from './pages/HomePage';
-import ForYouPage from './pages/ForYouPage';
 import SearchPage from './pages/SearchPage';
 import LibraryPage from './pages/LibraryPage';
 import ArtistPage from './pages/ArtistPage';
@@ -44,7 +43,6 @@ export default function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/foryou" element={<ForYouPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/artist/:id" element={<ArtistPage />} />

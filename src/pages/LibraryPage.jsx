@@ -239,8 +239,8 @@ export default function LibraryPage() {
     <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Header & Tabs */}
       <div className="sticky top-0 z-20 px-4 sm:px-8 pt-5 pb-3 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Your Library</h1>
+        <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">My Library</h1>
 
           {/* Circle Pill Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -271,7 +271,7 @@ export default function LibraryPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 px-4 sm:px-8 py-6 max-w-6xl mx-auto w-full">
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center text-[#8E8E93]">
             <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin mb-4" />
@@ -358,7 +358,7 @@ export default function LibraryPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
                   {/* Create Playlist Card */}
                   <div
                     onClick={() => setShowNewPlaylistModal(true)}

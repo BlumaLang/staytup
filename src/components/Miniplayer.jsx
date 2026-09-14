@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { MarqueeText } from './MarqueeText';
@@ -16,10 +16,13 @@ import {
   Mic2,
   Moon,
   Maximize2,
+  Shuffle,
+  Repeat,
+  PanelRight,
   ChevronUp,
 } from 'lucide-react';
 
-export const Miniplayer = ({ onExpand }) => {
+export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSide }) => {
   const {
     currentTrack,
     isPlaying,
@@ -27,7 +30,6 @@ export const Miniplayer = ({ onExpand }) => {
     duration,
     togglePlay,
     seek,
-    seekTo,
     nextTrack,
     prevTrack,
     likedTrackIds,
@@ -46,12 +48,16 @@ export const Miniplayer = ({ onExpand }) => {
 
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubTime, setScrubTime] = useState(0);
+  const [isShuffleOn, setIsShuffleOn] = useState(false);
+  const [isRepeatOn, setIsRepeatOn] = useState(false);
 
   if (!currentTrack) return null;
 
   const videoId = String(currentTrack.videoId || currentTrack.video_id || currentTrack.id || '');
   const isLiked = likedTrackIds.has(videoId);
-  const artwork = get500x500Image(currentTrack.image || currentTrack.thumbnail || currentTrack.artwork_url);
+  const artwork = get500x500Image(
+    currentTrack.image || currentTrack.thumbnail || currentTrack.artwork_url
+  );
 
   const formatTime = (secs) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -89,17 +95,6 @@ export const Miniplayer = ({ onExpand }) => {
     }
   };
 
-  const handleScrubberChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setScrubTime(val);
-  };
-
-  const handleScrubberCommit = (e) => {
-    const val = parseFloat(e.target.value);
-    seek(val);
-    setIsScrubbing(false);
-  };
-
   const formatTimerBadge = () => {
     if (!sleepTimerMode) return null;
     if (sleepTimerMode === 'end_of_track') return 'End';
@@ -112,13 +107,13 @@ export const Miniplayer = ({ onExpand }) => {
     <>
       {/* ========================================================================= */}
       {/* MOBILE & TABLET COMPACT MINIPLAYER (< 1024px)                             */}
-      {/* Docked directly above BottomNav                                           */}
+      {/* Docked precisely above BottomNav without covering content                 */}
       {/* ========================================================================= */}
       <div
         onClick={onExpand}
-        className="lg:hidden fixed bottom-[58px] left-2 right-2 z-40 bg-[#141416]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden cursor-pointer active:scale-[0.99] transition-transform select-none"
+        className="lg:hidden fixed bottom-[60px] left-2.5 right-2.5 z-30 bg-[#161618]/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.8)] overflow-hidden cursor-pointer active:scale-[0.99] transition-transform select-none"
       >
-        {/* Top Slim Progress Bar */}
+        {/* Top Progress Line */}
         <div className="w-full h-[2.5px] bg-white/10 relative overflow-hidden">
           <div
             className="h-full bg-white rounded-full transition-all duration-150"
@@ -135,30 +130,20 @@ export const Miniplayer = ({ onExpand }) => {
               onError={(e) => {
                 e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
               }}
-              className="w-11 h-11 rounded-xl object-cover bg-black flex-shrink-0 border border-white/10"
+              className="w-11 h-11 rounded-xl object-cover bg-black flex-shrink-0 border border-white/10 shadow-sm"
             />
             <div className="min-w-0 flex-1 pr-1">
-              <div className="overflow-hidden">
-                {currentTrack.title?.length > 22 ? (
-                  <MarqueeText
-                    text={currentTrack.title}
-                    className="text-xs sm:text-sm font-bold text-white tracking-tight"
-                  />
-                ) : (
-                  <p className="text-xs sm:text-sm font-bold text-white line-clamp-1 tracking-tight">
-                    {currentTrack.title}
-                  </p>
-                )}
-              </div>
+              <p className="text-xs sm:text-sm font-bold text-white line-clamp-1 tracking-tight">
+                {currentTrack.title}
+              </p>
               <p className="text-[11px] text-[#8E8E93] line-clamp-1 mt-0.5">
                 {currentTrack.artist || 'Unknown Artist'}
               </p>
             </div>
           </div>
 
-          {/* Right: Controls (Like, Play/Pause, Expand Chevron) */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Like button */}
+          {/* Right: Like, Play/Pause */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={handleLikeClick}
               className="w-9 h-9 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
@@ -173,7 +158,6 @@ export const Miniplayer = ({ onExpand }) => {
               />
             </button>
 
-            {/* Play/Pause Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -195,17 +179,15 @@ export const Miniplayer = ({ onExpand }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* DESKTOP FULL-WIDTH BOTTOM MINIPLAYER (≥ 1024px)                           */}
-      {/* Spotify-style ~90px persistent bar below sidebar & content               */}
+      {/* DESKTOP FULL-WIDTH INTEGRATED BOTTOM PLAYER (≥ 1024px)                    */}
+      {/* Exactly matches Spotify desktop layout                                   */}
       {/* ========================================================================= */}
-      <div
-        className="hidden lg:flex fixed bottom-0 left-0 right-0 h-[88px] z-50 bg-[#0A0A0C] border-t border-[#1C1C1E] px-5 items-center justify-between select-none"
-      >
-        {/* Left Section: Track Info & Like (~30% width) */}
-        <div className="flex items-center gap-3.5 w-[30%] min-w-[200px] max-w-[360px]">
+      <footer className="hidden lg:flex fixed bottom-0 left-0 right-0 h-[88px] z-50 bg-[#000000] border-t border-[#1C1C1E] px-4 items-center justify-between select-none">
+        {/* Left Section: Track Artwork, Title, Artist, Liked Status (~30%) */}
+        <div className="flex items-center gap-3.5 w-[30%] min-w-[220px] max-w-[360px]">
           <div
             onClick={onExpand}
-            className="relative w-14 h-14 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10 cursor-pointer group"
+            className="relative w-14 h-14 rounded-md overflow-hidden bg-black flex-shrink-0 border border-white/10 cursor-pointer group shadow-md"
           >
             <img
               src={artwork}
@@ -221,26 +203,20 @@ export const Miniplayer = ({ onExpand }) => {
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="overflow-hidden">
-              {currentTrack.title?.length > 25 ? (
-                <MarqueeText
-                  text={currentTrack.title}
-                  className="text-sm font-bold text-white tracking-tight"
-                />
-              ) : (
-                <p className="text-sm font-bold text-white line-clamp-1 tracking-tight">
-                  {currentTrack.title}
-                </p>
-              )}
-            </div>
-            <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5 hover:text-white transition-colors cursor-pointer">
+            <p
+              onClick={onExpand}
+              className="text-sm font-semibold text-white hover:underline cursor-pointer line-clamp-1 tracking-tight"
+            >
+              {currentTrack.title}
+            </p>
+            <p className="text-xs text-[#8E8E93] hover:underline hover:text-white cursor-pointer line-clamp-1 mt-0.5">
               {currentTrack.artist || 'Unknown Artist'}
             </p>
           </div>
 
           <button
             onClick={handleLikeClick}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer flex-shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer flex-shrink-0"
             title={isLiked ? 'Unlike' : 'Like'}
           >
             <Heart
@@ -253,10 +229,20 @@ export const Miniplayer = ({ onExpand }) => {
           </button>
         </div>
 
-        {/* Center Section: Playback Controls & Progress Bar (~40% width) */}
-        <div className="flex flex-col items-center justify-center w-[40%] max-w-xl px-4">
-          {/* Controls row */}
+        {/* Center Section: Playback Controls & Scrubber Slider (~40%) */}
+        <div className="flex flex-col items-center justify-center w-[40%] max-w-2xl px-4">
+          {/* Top Controls Row */}
           <div className="flex items-center gap-5 mb-1.5">
+            <button
+              onClick={() => setIsShuffleOn((prev) => !prev)}
+              className={`transition-colors cursor-pointer ${
+                isShuffleOn ? 'text-[#22C55E]' : 'text-[#8E8E93] hover:text-white'
+              }`}
+              title="Shuffle"
+            >
+              <Shuffle className="w-4 h-4" />
+            </button>
+
             <button
               onClick={prevTrack}
               className="text-[#8E8E93] hover:text-white transition-colors active:scale-95 cursor-pointer"
@@ -267,15 +253,15 @@ export const Miniplayer = ({ onExpand }) => {
 
             <button
               onClick={togglePlay}
-              className="w-9 h-9 rounded-full bg-white hover:bg-gray-200 text-black flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
+              className="w-9 h-9 rounded-full bg-white hover:scale-105 text-black flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isLoadingStream ? (
                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="w-4 h-4 fill-black" />
+                <Pause className="w-4.5 h-4.5 fill-black" />
               ) : (
-                <Play className="w-4 h-4 fill-black ml-0.5" />
+                <Play className="w-4.5 h-4.5 fill-black ml-0.5" />
               )}
             </button>
 
@@ -286,11 +272,21 @@ export const Miniplayer = ({ onExpand }) => {
             >
               <SkipForward className="w-4.5 h-4.5 fill-current" />
             </button>
+
+            <button
+              onClick={() => setIsRepeatOn((prev) => !prev)}
+              className={`transition-colors cursor-pointer ${
+                isRepeatOn ? 'text-[#22C55E]' : 'text-[#8E8E93] hover:text-white'
+              }`}
+              title="Repeat"
+            >
+              <Repeat className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Scrubber timeline */}
-          <div className="w-full flex items-center gap-2 text-[11px] font-mono text-[#8E8E93]">
-            <span className="w-9 text-right">{formatTime(activeTime)}</span>
+          <div className="w-full flex items-center gap-2.5 text-[11px] font-mono text-[#8E8E93]">
+            <span className="w-8 text-right select-none">{formatTime(activeTime)}</span>
             <div className="flex-1 relative flex items-center group py-1">
               <input
                 type="range"
@@ -300,21 +296,27 @@ export const Miniplayer = ({ onExpand }) => {
                 value={activeTime}
                 onMouseDown={() => setIsScrubbing(true)}
                 onTouchStart={() => setIsScrubbing(true)}
-                onChange={handleScrubberChange}
-                onMouseUp={handleScrubberCommit}
-                onTouchEnd={handleScrubberCommit}
+                onChange={(e) => setScrubTime(parseFloat(e.target.value))}
+                onMouseUp={(e) => {
+                  seek(parseFloat(e.target.value));
+                  setIsScrubbing(false);
+                }}
+                onTouchEnd={(e) => {
+                  seek(parseFloat(e.target.value));
+                  setIsScrubbing(false);
+                }}
                 className="w-full h-1 group-hover:h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-white transition-all"
                 style={{
                   background: `linear-gradient(to right, #ffffff ${progressPercent}%, rgba(255,255,255,0.2) ${progressPercent}%)`,
                 }}
               />
             </div>
-            <span className="w-9">{formatTime(duration)}</span>
+            <span className="w-8 select-none">{formatTime(duration)}</span>
           </div>
         </div>
 
-        {/* Right Section: Volume & Quick Actions (~30% width) */}
-        <div className="flex items-center justify-end gap-3 w-[30%] min-w-[200px] text-[#8E8E93]">
+        {/* Right Section: Volume & Feature Shortcuts (~30%) */}
+        <div className="flex items-center justify-end gap-2.5 w-[30%] min-w-[220px] text-[#8E8E93]">
           {/* Synchronized Lyrics */}
           <button
             onClick={() => setIsLyricsDrawerOpen(true)}
@@ -347,7 +349,7 @@ export const Miniplayer = ({ onExpand }) => {
             {formatTimerBadge() && <span>{formatTimerBadge()}</span>}
           </button>
 
-          {/* Volume slider */}
+          {/* Volume Control */}
           <div className="flex items-center gap-2 pl-1 group">
             <button
               onClick={toggleMute}
@@ -369,23 +371,36 @@ export const Miniplayer = ({ onExpand }) => {
               step={0.01}
               value={isMuted ? 0 : volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-20 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-white transition-all group-hover:h-1.5"
+              className="w-20 xl:w-24 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-white transition-all group-hover:h-1.5"
               style={{
                 background: `linear-gradient(to right, #ffffff ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.2) ${(isMuted ? 0 : volume) * 100}%)`,
               }}
             />
           </div>
 
-          {/* Expand Full Player View */}
+          {/* Now Playing Side Panel Toggle (on xl+ screens) */}
+          {onToggleNowPlayingSide && (
+            <button
+              onClick={onToggleNowPlayingSide}
+              className={`w-8 h-8 rounded-full hidden 2xl:flex items-center justify-center transition-colors cursor-pointer ${
+                showNowPlayingSide ? 'text-[#22C55E]' : 'hover:text-white hover:bg-white/5'
+              }`}
+              title="Now Playing View"
+            >
+              <PanelRight className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Expand Full Player */}
           <button
             onClick={onExpand}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:text-white hover:bg-white/5 transition-colors cursor-pointer ml-1"
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:text-white hover:bg-white/5 transition-colors cursor-pointer ml-0.5"
             title="Full Player"
           >
             <Maximize2 className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </footer>
     </>
   );
 };

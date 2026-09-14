@@ -117,7 +117,7 @@ export default function FriendsPage() {
     <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Header Bar */}
       <div className="sticky top-0 z-20 px-4 sm:px-8 pt-5 pb-3 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Friends &amp; Social</h1>
             <p className="text-xs text-[#8E8E93] mt-0.5">Listen together and see what friends are playing</p>
@@ -147,7 +147,7 @@ export default function FriendsPage() {
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 w-full">
           {[
             { id: 'friends', label: `Friends (${friends.length})` },
             { id: 'requests', label: 'Requests', badge: requests.length },
@@ -182,7 +182,7 @@ export default function FriendsPage() {
       </div>
 
       {/* Main Container Content */}
-      <div className="flex-1 px-4 sm:px-8 py-6 max-w-4xl mx-auto w-full">
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center text-[#8E8E93]">
             <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin mb-4" />
@@ -202,7 +202,7 @@ export default function FriendsPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                     {filteredFriends.map((friend) => (
                       <div
                         key={friend.id}
@@ -256,7 +256,7 @@ export default function FriendsPage() {
                     <p className="text-xs text-[#8E8E93]">Incoming requests will appear here.</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                     {requests.map((req) => (
                       <div
                         key={req.id}
@@ -308,7 +308,7 @@ export default function FriendsPage() {
                 )}
 
                 {searchResults.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                     {searchResults.map((userResult) => {
                       const isSent = sentRequests.has(userResult.id);
                       return (
