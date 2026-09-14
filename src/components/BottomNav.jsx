@@ -14,7 +14,7 @@ export const BottomNav = ({ activeView, setActiveView, onOpenProfile, onOpenFrie
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-md border-t border-[#1C1C1E] px-2 sm:px-4 pt-1.5 pb-3 sm:pb-3.5 select-none flex items-center justify-center md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-md border-t border-[#1C1C1E] px-2 sm:px-4 pt-1.5 pb-3 sm:pb-3.5 select-none flex items-center justify-center lg:hidden">
       <div className="w-full max-w-md flex items-center justify-around px-1 sm:px-4">
         {navItems.map((item) => {
           const Icon = item.icon;

@@ -14,7 +14,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-[220px] lg:w-[260px] bg-[#0A0A0A] border-r border-[#1C1C1E] h-full flex-shrink-0 select-none relative z-30">
+    <aside className="hidden lg:flex flex-col w-[240px] xl:w-[260px] bg-[#0A0A0A] border-r border-[#1C1C1E] h-full flex-shrink-0 select-none relative z-30">
       {/* Logo / Branding */}
       <div
         onClick={() => setActiveView('home')}
