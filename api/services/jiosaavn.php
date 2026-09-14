@@ -67,61 +67,174 @@ class JioSaavnService {
         $suggestions = [];
         $seen = [];
 
-        // 1. Extract artists from topquery and artists array
-        $candidateArtists = [];
+        // 1. Process topquery first (most accurate match from JioSaavn AI)
         if (!empty($result['topquery']['data'])) {
             foreach ($result['topquery']['data'] as $item) {
-                if (($item['type'] ?? '') === 'artist') {
-                    $candidateArtists[] = $item;
-                }
+                $type = $item['type'] ?? 'song';
+                $title = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (empty($title)) continue;
+                $key = strtolower($type . ':' . $title);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
+                $artist = html_entity_decode($item['more_info']['primary_artists'] ?? $item['more_info']['singers'] ?? $item['description'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+                $suggestions[] = [
+                    'id'          => $item['id'] ?? '',
+                    'videoId'     => $item['id'] ?? '',
+                    'video_id'    => $item['id'] ?? '',
+                    'title'       => $title,
+                    'type'        => $type,
+                    'artist'      => $artist,
+                    'album'       => html_entity_decode($item['album'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                    'image'       => $image,
+                    'thumbnail'   => $image,
+                    'artwork_url' => $image,
+                    'extra'       => $artist ?: ($type === 'artist' ? 'Artist' : ''),
+                    'is_top'      => true,
+                ];
             }
         }
-        if (!empty($result['artists']['data'])) {
-            foreach ($result['artists']['data'] as $item) {
-                $candidateArtists[] = $item;
-            }
-        }
 
-        foreach ($candidateArtists as $item) {
-            $name = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            if (empty($name) || isset($seen[strtolower($name)])) continue;
-            $seen[strtolower($name)] = true;
-
-            $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
-            if (empty($image) || str_contains($image, 'default')) {
-                $cached = Storage::getCachedArtistImage($name);
-                if ($cached && !empty($cached['image'])) {
-                    $image = $cached['image'];
-                }
-            }
-
-            $suggestions[] = [
-                'title' => $name,
-                'type'  => 'artist',
-                'id'    => $item['id'] ?? '',
-                'image' => $image,
-                'extra' => $item['description'] ?? 'Artist',
-            ];
-        }
-
-        // 2. Extract songs and albums
+        // 2. Extract songs next (users searching music want songs first)
         if (!empty($result['songs']['data'])) {
             foreach ($result['songs']['data'] as $item) {
                 $title = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                if (empty($title) || isset($seen[strtolower($title)])) continue;
-                $seen[strtolower($title)] = true;
+                if (empty($title)) continue;
+                $key = strtolower('song:' . $title);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
+                $artist = html_entity_decode($item['more_info']['primary_artists'] ?? $item['more_info']['singers'] ?? $item['description'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
                 $suggestions[] = [
-                    'title' => $title,
-                    'type'  => 'song',
-                    'id'    => $item['id'] ?? '',
-                    'image' => !empty($item['image']) ? self::getBestImage($item['image']) : '',
-                    'extra' => html_entity_decode($item['description'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                    'id'          => $item['id'] ?? '',
+                    'videoId'     => $item['id'] ?? '',
+                    'video_id'    => $item['id'] ?? '',
+                    'title'       => $title,
+                    'type'        => 'song',
+                    'artist'      => $artist,
+                    'album'       => html_entity_decode($item['album'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                    'image'       => $image,
+                    'thumbnail'   => $image,
+                    'artwork_url' => $image,
+                    'extra'       => $artist,
                 ];
-                if (count($suggestions) >= 10) break;
+                if (count($suggestions) >= 12) break;
             }
         }
 
-        // 3. Fallback: simple text suggestions
+        // 3. Extract verified artists (limit to 3, skip placeholder images if query is not artist-like)
+        if (!empty($result['artists']['data'])) {
+            $artistCount = 0;
+            foreach ($result['artists']['data'] as $item) {
+                $name = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (empty($name)) continue;
+                $key = strtolower('artist:' . $name);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
+                if (empty($image) || str_contains($image, 'default')) {
+                    $cached = Storage::getCachedArtistImage($name);
+                    if ($cached && !empty($cached['image'])) {
+                        $image = $cached['image'];
+                    }
+                }
+
+                // If image is still default and not top query, skip low-quality artist results
+                if ((empty($image) || str_contains($image, 'default')) && ($item['ctr'] ?? 0) === 0) {
+                    continue;
+                }
+
+                $suggestions[] = [
+                    'id'          => $item['id'] ?? '',
+                    'title'       => $name,
+                    'type'        => 'artist',
+                    'artist'      => $name,
+                    'image'       => $image,
+                    'thumbnail'   => $image,
+                    'artwork_url' => $image,
+                    'extra'       => 'Artist',
+                ];
+                $artistCount++;
+                if ($artistCount >= 3) break;
+            }
+        }
+
+        // 4. Extract albums (up to 4)
+        if (!empty($result['albums']['data'])) {
+            $albumCount = 0;
+            foreach ($result['albums']['data'] as $item) {
+                $title = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (empty($title)) continue;
+                $key = strtolower('album:' . $title);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
+                $moreInfo = $item['more_info'] ?? [];
+                $artist = '';
+                if (!empty($moreInfo['music'])) {
+                    $artist = $moreInfo['music'];
+                } elseif (!empty($item['subtitle'])) {
+                    $artist = $item['subtitle'];
+                } elseif (!empty($item['description'])) {
+                    $artist = $item['description'];
+                }
+                $artist = html_entity_decode($artist, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $year = $moreInfo['year'] ?? '';
+
+                $suggestions[] = [
+                    'id'          => $item['id'] ?? '',
+                    'title'       => $title,
+                    'name'        => $title,
+                    'type'        => 'album',
+                    'artist'      => $artist,
+                    'album'       => $title,
+                    'year'        => (string)$year,
+                    'image'       => $image,
+                    'thumbnail'   => $image,
+                    'artwork_url' => $image,
+                    'extra'       => $artist ?: 'Album',
+                ];
+                $albumCount++;
+                if ($albumCount >= 4) break;
+            }
+        }
+
+        // 5. Extract playlists (up to 4)
+        if (!empty($result['playlists']['data'])) {
+            $playlistCount = 0;
+            foreach ($result['playlists']['data'] as $item) {
+                $title = html_entity_decode($item['title'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if (empty($title)) continue;
+                $key = strtolower('playlist:' . $title);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+
+                $image = !empty($item['image']) ? self::getBestImage($item['image']) : '';
+                $desc = html_entity_decode($item['description'] ?? $item['subtitle'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+                $suggestions[] = [
+                    'id'          => $item['id'] ?? '',
+                    'title'       => $title,
+                    'name'        => $title,
+                    'type'        => 'playlist',
+                    'artist'      => $desc ?: 'Playlist',
+                    'image'       => $image,
+                    'thumbnail'   => $image,
+                    'artwork_url' => $image,
+                    'extra'       => 'Playlist',
+                ];
+                $playlistCount++;
+                if ($playlistCount >= 4) break;
+            }
+        }
+
+        // 6. Fallback: simple text suggestions if empty
         if (empty($suggestions)) {
             $fallback = self::callApi('search.getSuggestions', ['q' => $query, 'n' => 8]);
             foreach ($fallback['results'] ?? [] as $text) {
@@ -343,7 +456,7 @@ class JioSaavnService {
             }
         }
 
-        // Trending Now (Real playable trending hits cached for high performance)
+        // Trending Now — real organic trending songs from JioSaavn
         $cacheFile = sys_get_temp_dir() . '/staytup_trending_hits.json';
         $trendingItems = null;
         if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < 1800)) {
@@ -353,9 +466,47 @@ class JioSaavnService {
             }
         }
         if (!$trendingItems) {
-            $trendData = self::searchSongs('Hindi Hits', 1, 30);
-            if (!empty($trendData['results'])) {
-                $trendingItems = $trendData['results'];
+            // Attempt 1: real trending songs endpoint
+            $trendData = self::callApi('content.getTrending', [
+                'entity_type' => 'song',
+                'entity_language' => 'hindi,english',
+                'n' => 30,
+            ]);
+            if (!empty($trendData) && is_array($trendData)) {
+                $rawItems = $trendData;
+                // Sometimes wrapped in a key
+                if (!empty($trendData['data'])) $rawItems = $trendData['data'];
+                elseif (!empty($trendData['results'])) $rawItems = $trendData['results'];
+                $trendingItems = [];
+                foreach ($rawItems as $item) {
+                    $normalized = self::normalizeTrack($item);
+                    if (!empty($normalized['id'])) {
+                        $trendingItems[] = $normalized;
+                    }
+                }
+            }
+
+            // Attempt 2: extract songs from homepage trending array
+            if (empty($trendingItems) && !empty($data['trending'])) {
+                $trendingItems = [];
+                foreach ($data['trending'] as $item) {
+                    $type = $item['type'] ?? '';
+                    if ($type === 'song' || !empty($item['more_info']['encrypted_media_url'])) {
+                        $normalized = self::normalizeTrack($item);
+                        if (!empty($normalized['id'])) $trendingItems[] = $normalized;
+                    }
+                }
+            }
+
+            // Attempt 3: fallback to chart search
+            if (empty($trendingItems)) {
+                $trendData = self::searchSongs('Hindi Hits', 1, 30);
+                if (!empty($trendData['results'])) {
+                    $trendingItems = $trendData['results'];
+                }
+            }
+
+            if (!empty($trendingItems)) {
                 @file_put_contents($cacheFile, json_encode($trendingItems));
             }
         }
@@ -425,8 +576,11 @@ class JioSaavnService {
     // ==================== STREAM URL ====================
     
     public static function getStreamUrl($videoId) {
+        $cleanId = preg_replace('/^saavn_/', '', trim((string)$videoId));
+        if (empty($cleanId)) return null;
+        
         $data = self::callApi('song.getDetails', [
-            'pids' => $videoId,
+            'pids' => $cleanId,
         ]);
         
         if (!$data || empty($data['songs'])) return null;
@@ -1065,10 +1219,30 @@ class JioSaavnService {
     public static function normalizeAlbum($album) {
         $id = $album['id'] ?? $album['albumId'] ?? '';
         $title = html_entity_decode($album['title'] ?? $album['name'] ?? 'Unknown Album', ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $artist = html_entity_decode($album['primary_artists'] ?? $album['music'] ?? $album['artist'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        $moreInfo = $album['more_info'] ?? [];
+        $artist = '';
+        if (!empty($album['primary_artists'])) {
+            $artist = $album['primary_artists'];
+        } elseif (!empty($moreInfo['music'])) {
+            $artist = $moreInfo['music'];
+        } elseif (!empty($moreInfo['artistMap']['primary_artists'])) {
+            $artistNames = array_column($moreInfo['artistMap']['primary_artists'], 'name');
+            $artist = implode(', ', $artistNames);
+        } elseif (!empty($album['music'])) {
+            $artist = $album['music'];
+        } elseif (!empty($album['subtitle'])) {
+            $artist = $album['subtitle'];
+        } elseif (!empty($album['artist'])) {
+            $artist = $album['artist'];
+        } elseif (!empty($album['header_desc'])) {
+            $artist = $album['header_desc'];
+        }
+        $artist = html_entity_decode($artist, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
         $image = self::getBestImage($album['image'] ?? $album['thumbnail'] ?? '');
-        $year = $album['year'] ?? '';
-        $songCount = $album['song_count'] ?? $album['numsongs'] ?? 0;
+        $year = $album['year'] ?? $moreInfo['year'] ?? '';
+        $songCount = $album['song_count'] ?? $moreInfo['song_count'] ?? $album['numsongs'] ?? (isset($album['list']) && is_array($album['list']) ? count($album['list']) : 0);
         
         return [
             'id'          => $id,
@@ -1078,8 +1252,9 @@ class JioSaavnService {
             'image'       => $image,
             'thumbnail'   => $image,
             'artwork_url' => $image,
-            'year'        => $year,
+            'year'        => (string)$year,
             'song_count'  => (int)$songCount,
+            'track_count' => (int)$songCount,
             'type'        => 'album',
         ];
     }
@@ -1088,18 +1263,24 @@ class JioSaavnService {
         $id = $playlist['id'] ?? $playlist['listid'] ?? '';
         $title = html_entity_decode($playlist['title'] ?? $playlist['listname'] ?? 'Playlist', ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $image = self::getBestImage($playlist['image'] ?? $playlist['thumbnail'] ?? '');
-        $songCount = $playlist['song_count'] ?? $playlist['numsongs'] ?? 0;
+        $moreInfo = $playlist['more_info'] ?? [];
+        $songCount = $playlist['song_count'] ?? $moreInfo['song_count'] ?? $playlist['numsongs'] ?? 0;
         $subtitle = html_entity_decode($playlist['subtitle'] ?? $playlist['description'] ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if (!$songCount && !empty($subtitle) && preg_match('/(\d+)\s*songs?/i', $subtitle, $sm)) {
+            $songCount = (int)$sm[1];
+        }
 
         return [
             'id'          => $id,
             'title'       => $title,
             'name'        => $title,
+            'artist'      => $subtitle ?: 'Playlist',
             'description' => $subtitle,
             'image'       => $image,
             'thumbnail'   => $image,
             'artwork_url' => $image,
             'song_count'  => (int)$songCount,
+            'track_count' => (int)$songCount,
             'type'        => 'playlist',
         ];
     }

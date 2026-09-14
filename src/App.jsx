@@ -11,7 +11,9 @@ import { SearchModal } from './components/SearchModal';
 import { LibraryModal } from './components/LibraryModal';
 import { LyricsDrawer } from './components/LyricsDrawer';
 import { QueueModal } from './components/QueueModal';
+import { SleepTimerModal } from './components/SleepTimerModal';
 import { BottomNav } from './components/BottomNav';
+import { DesktopSidebar } from './components/DesktopSidebar';
 
 export default function App() {
   const { user, isOnboarded, isLoadingAuth } = useAuth();
@@ -37,56 +39,70 @@ export default function App() {
   }
 
   return (
-    <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex flex-col font-sans select-none">
-      {/* Main Fullscreen Doom-Scrolling Feed */}
-      <main className="flex-1 w-full h-full relative overflow-hidden">
-        <DoomPlayer />
-      </main>
-
-      {/* Global Synchronized Lyrics Drawer */}
-      <LyricsDrawer />
-
-      {/* Global Fullscreen Playback Queue Modal */}
-      <QueueModal />
-
-      {/* Search Overlay */}
-      <SearchModal
-        isOpen={activeView === 'search'}
-        onClose={() => setActiveView('feed')}
-      />
-
-      {/* Library Overlay (Favorites, Playlists, Community, History) */}
-      <LibraryModal
-        isOpen={activeView === 'library'}
-        onClose={() => setActiveView('feed')}
-      />
-
-      {/* Profile & Settings Modal */}
-      <ProfileModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        onOpenEdit={() => setShowEditProfileModal(true)}
-      />
-
-      {/* Edit Profile (Avatar & Username) Modal */}
-      <LoginModal
-        isOpen={showEditProfileModal}
-        onClose={() => setShowEditProfileModal(false)}
-      />
-
-      {/* Friends & Social Modal with Tabs (Friends, Requests, Blend) */}
-      <FriendsModal
-        isOpen={showFriendsModal}
-        onClose={() => setShowFriendsModal(false)}
-      />
-
-      {/* Bottom Navigation Bar */}
-      <BottomNav
+    <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex font-sans select-none">
+      {/* Desktop Sidebar — hidden on mobile, visible on md+ */}
+      <DesktopSidebar
         activeView={activeView}
         setActiveView={setActiveView}
         onOpenProfile={() => setShowProfileModal(true)}
         onOpenFriends={() => setShowFriendsModal(true)}
       />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
+        {/* Main Fullscreen Doom-Scrolling Feed */}
+        <main className={`flex-1 w-full h-full relative overflow-hidden ${activeView !== 'feed' ? 'hidden' : 'block'}`}>
+          <DoomPlayer onOpenLibrary={() => setActiveView('library')} />
+        </main>
+
+        {/* Global Synchronized Lyrics Drawer */}
+        <LyricsDrawer />
+
+        {/* Global Fullscreen Playback Queue Modal */}
+        <QueueModal />
+
+        {/* Global Sleep Timer Modal */}
+        <SleepTimerModal />
+
+        {/* Search Overlay */}
+        <SearchModal
+          isOpen={activeView === 'search'}
+          onClose={() => setActiveView('feed')}
+        />
+
+        {/* Library Overlay (Favorites, Playlists, Community, History) */}
+        <LibraryModal
+          isOpen={activeView === 'library'}
+          onClose={() => setActiveView('feed')}
+        />
+
+        {/* Profile & Settings Modal */}
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          onOpenEdit={() => setShowEditProfileModal(true)}
+        />
+
+        {/* Edit Profile (Avatar & Username) Modal */}
+        <LoginModal
+          isOpen={showEditProfileModal}
+          onClose={() => setShowEditProfileModal(false)}
+        />
+
+        {/* Friends & Social Modal with Tabs (Friends, Requests, Blend) */}
+        <FriendsModal
+          isOpen={showFriendsModal}
+          onClose={() => setShowFriendsModal(false)}
+        />
+
+        {/* Bottom Navigation Bar — mobile only */}
+        <BottomNav
+          activeView={activeView}
+          setActiveView={setActiveView}
+          onOpenProfile={() => setShowProfileModal(true)}
+          onOpenFriends={() => setShowFriendsModal(true)}
+        />
+      </div>
     </div>
   );
 }

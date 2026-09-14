@@ -13,10 +13,11 @@ import {
   X,
   FolderPlus,
   Users,
+  ArrowLeft,
 } from 'lucide-react';
 import { PlaylistSheet } from './PlaylistSheet';
 import { ArtistSheet } from './ArtistSheet';
-import { getCommunityListeningHistoryFromFirebase } from '../services/firebase';
+import { getCommunityListeningHistoryFromFirebase, getUserHistoryFromFirebase } from '../services/firebase';
 
 export const LibraryModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
   const [showNewPlaylistModal, setShowNewPlaylistModal] = useState(false);
   const [selectedPlaylistTracks, setSelectedPlaylistTracks] = useState(null);
 
-  const userId = user?.id || localStorage.getItem('staytup_user_id') || 'guest_user';
+  const userId = user?.id || user?.uid || localStorage.getItem('staytup_user_id') || 'guest_user';
 
   const loadFollowedArtists = () => {
     try {
@@ -124,22 +125,56 @@ export const LibraryModal = ({ isOpen, onClose }) => {
         .catch(e => console.warn(e))
         .finally(() => { if (isMounted) setIsLoading(false); });
     } else if (activeTab === 'history') {
-      api.getHistory(userId)
-        .then(res => {
-          if (isMounted) {
-            const rawRecent = res?.recent || [];
-            const seen = new Set();
-            const uniqueRecent = rawRecent.filter(track => {
-              const id = track?.videoId || track?.video_id || track?.id;
-              if (!id || seen.has(id)) return false;
-              seen.add(id);
-              return true;
-            });
-            setHistory(uniqueRecent);
-            setHistoryStats(res?.stats || null);
+      const loadHistory = async () => {
+        let historyTracks = [];
+        let stats = null;
+
+        // 1. Try PHP backend
+        try {
+          const res = await api.getHistory(userId);
+          if (res?.recent && Array.isArray(res.recent) && res.recent.length > 0) {
+            historyTracks = res.recent;
+            stats = res.stats || null;
           }
-        })
-        .catch(e => console.warn(e))
+        } catch (e) {
+          console.warn('API getHistory error:', e);
+        }
+
+        // 2. Try Firebase Realtime Database
+        if (historyTracks.length === 0) {
+          try {
+            const fbHistory = await getUserHistoryFromFirebase(userId);
+            if (fbHistory && fbHistory.length > 0) {
+              historyTracks = fbHistory;
+            }
+          } catch (e) {}
+        }
+
+        // 3. Fallback to LocalStorage
+        if (historyTracks.length === 0) {
+          try {
+            const localHist = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
+            if (localHist.length > 0) {
+              historyTracks = localHist;
+            }
+          } catch (e) {}
+        }
+
+        if (isMounted) {
+          const seen = new Set();
+          const unique = historyTracks.filter(track => {
+            const id = track?.videoId || track?.video_id || track?.id;
+            if (!id || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+          });
+          setHistory(unique);
+          setHistoryStats(stats || (unique.length > 0 ? { streamCount: unique.length } : null));
+          setIsLoading(false);
+        }
+      };
+
+      loadHistory();
     } else if (activeTab === 'artists') {
       api.getPopularArtists('hindi,punjabi,english,tamil', 24)
         .then(res => {
@@ -192,58 +227,220 @@ export const LibraryModal = ({ isOpen, onClose }) => {
     return true;
   });
 
+  const getCommunityTrackArtwork = (t) => {
+    const candidate = [t?.image, t?.thumbnail, t?.artwork_url].find(
+      (url) => typeof url === 'string' && url.trim().length > 0 && !url.includes('unsplash.com')
+    );
+    if (candidate) return get500x500Image(candidate);
+    const vid = t?.videoId || t?.video_id || t?.id;
+    if (vid && String(vid).length === 11) {
+      return `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+    }
+    return './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white animate-in fade-in duration-200">
-      {/* Header — Matching Lyrics Modal Spacing */}
-      <div className="px-6 pt-4 sm:pt-5 pb-3.5 border-b border-[#1C1C1E] flex items-center justify-between">
-        <h2 className="text-xl font-bold tracking-tight">Your Library</h2>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 rounded-full bg-[#121212] hover:bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center text-[#8E8E93] hover:text-white"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    <div className="fixed inset-0 md:absolute md:inset-0 z-50 flex flex-col bg-black text-white animate-in fade-in duration-200">
+      {/* Header — Close button on left */}
+      <div className="px-4 sm:px-8 pt-4 sm:pt-5 pb-3.5 border-b border-[#1C1C1E] flex-shrink-0 bg-black">
+        <div className="w-full max-w-5xl mx-auto flex items-center gap-3">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[#121212] hover:bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center text-[#8E8E93] hover:text-white flex-shrink-0 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <h2 className="text-xl font-bold tracking-tight flex-1">Your Library</h2>
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-[#1C1C1E] px-6 bg-black overflow-x-auto no-scrollbar">
-        {[
-          { id: 'favorites', label: 'Favorites', icon: Heart },
-          { id: 'artists', label: 'Artists', icon: Users },
-          { id: 'playlists', label: 'Playlists', icon: ListMusic },
-          { id: 'community', label: 'Community', icon: Radio },
-          { id: 'history', label: 'History', icon: History },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSelectedPlaylistTracks(null);
-              }}
-              className={`flex items-center gap-2 py-3 px-4 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors ${
-                isActive
-                  ? 'border-white text-white'
-                  : 'border-transparent text-[#8E8E93] hover:text-white'
-              }`}
-            >
-              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#8E8E93]'}`} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* Navigation Tabs — Spotify Circle Pill Buttons (No Icons) */}
+      <div className="px-4 sm:px-8 pt-2.5 pb-1 bg-black overflow-x-auto no-scrollbar flex-shrink-0">
+        <div className="w-full max-w-5xl mx-auto flex items-center gap-2">
+          {[
+            { id: 'favorites', label: 'Favorites' },
+            { id: 'artists', label: 'Artists' },
+            { id: 'playlists', label: 'Playlists' },
+            { id: 'community', label: 'Community' },
+            { id: 'history', label: 'History' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (activeTab !== tab.id) {
+                    setIsLoading(true);
+                    setActiveTab(tab.id);
+                    setSelectedPlaylistTracks(null);
+                  }
+                }}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-black font-bold shadow-sm'
+                    : 'bg-[#18181A] hover:bg-[#222226] text-[#8E8E93] hover:text-white border border-[#28282C]'
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Main Container Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 pt-3 pb-12 no-scrollbar">
+        <div className="w-full max-w-5xl mx-auto">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-[#8E8E93]">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm">Loading library...</p>
+          <div className="animate-in fade-in duration-200">
+            {/* Favorites Tab Skeleton */}
+            {activeTab === 'favorites' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-4 bg-[#24242A] rounded-md w-32 animate-pulse" />
+                  <div className="h-8 bg-[#24242A] rounded-full w-28 animate-pulse" />
+                </div>
+                <div className="divide-y divide-[#1C1C1E]/60">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between py-3 px-1 sm:px-2 animate-pulse">
+                      <div className="flex items-center gap-3.5 min-w-0 pr-3 flex-1">
+                        <div className="w-12 h-12 rounded-xl bg-[#1C1C20] flex-shrink-0" />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="h-3.5 bg-[#24242A] rounded-md w-3/5" />
+                          <div className="h-3 bg-[#1C1C20] rounded-md w-2/5" />
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-[#1C1C20] flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Playlists Tab Skeleton */}
+            {activeTab === 'playlists' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-4 bg-[#24242A] rounded-md w-44 animate-pulse" />
+                  <div className="h-8 bg-[#24242A] rounded-full w-20 animate-pulse" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {[...Array(10)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="w-full aspect-square rounded-2xl bg-[#1C1C20] mb-2.5" />
+                      <div className="h-3.5 bg-[#24242A] rounded-md w-3/4 mb-1.5" />
+                      <div className="h-3 bg-[#1C1C20] rounded-md w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Artists Tab Skeleton */}
+            {activeTab === 'artists' && (
+              <div className="space-y-8">
+                <div>
+                  <div className="h-4 bg-[#24242A] rounded-md w-36 mb-4 animate-pulse" />
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 animate-pulse">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#1C1C20]" />
+                        <div className="h-3 bg-[#24242A] rounded-md w-16" />
+                        <div className="h-2.5 bg-[#1C1C20] rounded-md w-12" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="h-4 bg-[#24242A] rounded-md w-36 animate-pulse" />
+                    <div className="h-3 bg-[#1C1C20] rounded-md w-28 animate-pulse" />
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    {[...Array(12)].map((_, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 animate-pulse">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#1C1C20]" />
+                        <div className="h-3 bg-[#24242A] rounded-md w-16" />
+                        <div className="h-2.5 bg-[#1C1C20] rounded-md w-12" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Community Tab Skeleton */}
+            {activeTab === 'community' && (
+              <div className="space-y-7">
+                <div>
+                  <div className="flex items-center justify-between gap-3 mb-3 px-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 bg-[#24242A] rounded-md w-40 animate-pulse" />
+                      <div className="h-4 bg-[#24242A] rounded-full w-12 animate-pulse" />
+                    </div>
+                    <div className="h-7 bg-[#24242A] rounded-full w-24 animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="py-2.5 px-3 rounded-2xl flex items-center justify-between animate-pulse">
+                        <div className="flex items-center gap-3.5 min-w-0 pr-3 flex-1">
+                          <div className="w-4 h-4 bg-[#24242A] rounded flex-shrink-0" />
+                          <div className="w-12 h-12 rounded-xl bg-[#1C1C20] flex-shrink-0" />
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="h-3.5 bg-[#24242A] rounded-md w-3/5" />
+                            <div className="h-3 bg-[#1C1C20] rounded-md w-2/5" />
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-[#1C1C20] flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="h-4 bg-[#24242A] rounded-md w-48 mb-3 animate-pulse" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="p-3.5 bg-[#121214] border border-[#1E1E22] rounded-2xl flex items-center justify-between animate-pulse">
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1 pr-3">
+                          <div className="w-12 h-12 rounded-xl bg-[#1C1C20] flex-shrink-0" />
+                          <div className="space-y-2 flex-1 min-w-0">
+                            <div className="h-3.5 bg-[#24242A] rounded-md w-3/4" />
+                            <div className="h-3 bg-[#1C1C20] rounded-md w-1/2" />
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-[#1C1C20] flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* History Tab Skeleton */}
+            {activeTab === 'history' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-4 bg-[#24242A] rounded-md w-36 animate-pulse" />
+                  <div className="h-4 bg-[#24242A] rounded-md w-28 animate-pulse" />
+                </div>
+                <div className="divide-y divide-[#1C1C1E]/60">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between py-3 px-1 sm:px-2 animate-pulse">
+                      <div className="flex items-center gap-3.5 min-w-0 pr-3 flex-1">
+                        <div className="w-12 h-12 rounded-xl bg-[#1C1C20] flex-shrink-0" />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="h-3.5 bg-[#24242A] rounded-md w-3/5" />
+                          <div className="h-3 bg-[#1C1C20] rounded-md w-2/5" />
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-[#1C1C20] flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : selectedPlaylistTracks ? (
           <div>
@@ -541,22 +738,17 @@ export const LibraryModal = ({ isOpen, onClose }) => {
             )}
           </div>
         ) : activeTab === 'community' ? (
-          <div className="space-y-8">
+          <div className="space-y-7">
             {/* Staytup Community Top Tracks Section */}
             <div>
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#8E8E93]">
-                      Staytup Community Top Tracks
-                    </span>
-                    <span className="text-[10px] text-blue-400 font-semibold bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 whitespace-nowrap">
-                      Live Trending
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#8E8E93] mt-0.5 truncate">
-                    Most played and loved tracks across the Staytup community.
-                  </p>
+              <div className="flex items-center justify-between gap-3 mb-3 px-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Staytup Community
+                  </h3>
+                  <span className="text-[10px] text-blue-400 font-bold bg-blue-500/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">
+                    Live
+                  </span>
                 </div>
                 {communityTopTracks.length > 0 && (
                   <button
@@ -564,7 +756,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
                       playTrack(communityTopTracks[0], communityTopTracks);
                       onClose();
                     }}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-gray-100 text-black text-xs font-bold shadow-md transition-all active:scale-95 flex-shrink-0 whitespace-nowrap cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-gray-200 text-black text-xs font-bold shadow-md transition-all active:scale-95 flex-shrink-0 cursor-pointer"
                     title="Play All Community Tracks"
                   >
                     <Play className="w-3.5 h-3.5 fill-black" />
@@ -579,7 +771,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
                   No community tracks recorded yet. Play any song to broadcast to the community!
                 </div>
               ) : (
-                <div className="divide-y divide-[#1C1C1E]/60">
+                <div className="space-y-1">
                   {communityTopTracks.map((track, idx) => (
                     <div
                       key={track.videoId || track.video_id || track.id || idx}
@@ -587,28 +779,43 @@ export const LibraryModal = ({ isOpen, onClose }) => {
                         playTrack(track, communityTopTracks);
                         onClose();
                       }}
-                      className="py-3 px-1 sm:px-2 hover:bg-[#121212] rounded-xl cursor-pointer transition-all flex items-center justify-between group"
+                      className="py-2 px-2 sm:px-2.5 hover:bg-[#1C1C1E] active:bg-[#2C2C2E] rounded-2xl cursor-pointer transition-all flex items-center justify-between group active:scale-[0.99]"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                        <span className="w-4 text-center text-xs font-mono text-[#8E8E93] group-hover:text-white flex-shrink-0">
+                      <div className="flex items-center gap-3 min-w-0 pr-3">
+                        <span
+                          className={`w-4 text-center text-xs font-bold font-mono flex-shrink-0 ${
+                            idx === 0
+                              ? 'text-amber-400'
+                              : idx === 1
+                              ? 'text-slate-300'
+                              : idx === 2
+                              ? 'text-amber-600'
+                              : 'text-[#8E8E93]'
+                          }`}
+                        >
                           {idx + 1}
                         </span>
-                        <img
-                          src={get500x500Image(track.thumbnail || track.image || track.artwork_url)}
-                          alt={track.title}
-                          className="w-12 h-12 rounded-xl object-cover bg-black flex-shrink-0 border border-[#2C2C2E]"
-                        />
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#1C1C1E] flex-shrink-0 border border-[#2C2C2E] relative group-hover:border-white/20 transition-colors">
+                          <img
+                            src={getCommunityTrackArtwork(track)}
+                            alt={track.title}
+                            onError={(e) => {
+                              e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
                         <div className="min-w-0 text-left">
                           <h4 className="font-semibold text-sm text-white group-hover:text-white line-clamp-1">
                             {track.title}
                           </h4>
-                          <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5">
-                            {track.artist || track.subtitle || 'Unknown Artist'}
+                          <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5 font-medium">
+                            {track.artist || track.subtitle || 'Staytup Community'}
                           </p>
                         </div>
                       </div>
-                      <div className="w-8 h-8 rounded-full text-[#8E8E93] hover:text-white hover:bg-[#1C1C1E] flex items-center justify-center flex-shrink-0 transition-colors">
-                        <Play className="w-4 h-4 fill-current ml-0.5" />
+                      <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-white text-[#8E8E93] group-hover:text-black flex items-center justify-center flex-shrink-0 transition-all shadow-sm">
+                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                       </div>
                     </div>
                   ))}
@@ -619,16 +826,13 @@ export const LibraryModal = ({ isOpen, onClose }) => {
             {/* Other Public Mixtapes & Stations (if any) */}
             {otherCommunityPlaylists.length > 0 && (
               <div>
-                <div className="mb-4">
+                <div className="mb-3 px-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#8E8E93]">
                     Community Mixtapes & Stations
                   </span>
-                  <p className="text-xs text-[#8E8E93] mt-0.5">
-                    Curated mixes and shared playlists from the community.
-                  </p>
                 </div>
 
-                <div className="divide-y divide-[#1C1C1E]/60">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {otherCommunityPlaylists.map((pl) => (
                     <div
                       key={pl.id}
@@ -638,7 +842,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
                           onClose();
                         }
                       }}
-                      className="py-3 px-1 sm:px-2 hover:bg-[#121212] rounded-xl cursor-pointer transition-all flex items-center justify-between group"
+                      className="p-3.5 bg-[#121214] hover:bg-[#1A1A1E] border border-[#1E1E22] hover:border-white/15 rounded-2xl cursor-pointer transition-all flex items-center justify-between group active:scale-[0.99]"
                     >
                       <div className="flex items-center gap-3.5 min-w-0 pr-3">
                         <div className="w-12 h-12 rounded-xl bg-[#1C1C1E] overflow-hidden flex items-center justify-center text-[#8E8E93] flex-shrink-0">
@@ -656,7 +860,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
                           </span>
                         </div>
                       </div>
-                      <div className="w-8 h-8 rounded-full text-[#8E8E93] hover:text-white hover:bg-[#1C1C1E] flex items-center justify-center flex-shrink-0 transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-white text-[#8E8E93] group-hover:text-black flex items-center justify-center flex-shrink-0 transition-colors">
                         <Play className="w-4 h-4 fill-current ml-0.5" />
                       </div>
                     </div>
@@ -715,6 +919,7 @@ export const LibraryModal = ({ isOpen, onClose }) => {
             )}
           </div>
         )}
+        </div>
       </div>
 
       <PlaylistSheet

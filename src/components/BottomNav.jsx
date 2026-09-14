@@ -6,7 +6,7 @@ export const BottomNav = ({ activeView, setActiveView, onOpenProfile, onOpenFrie
   const { user } = useAuth();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-md border-t border-[#1C1C1E] px-3 sm:px-4 pt-1.5 pb-3 sm:pb-3.5 select-none flex items-center justify-center">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-md border-t border-[#1C1C1E] px-3 sm:px-4 pt-1.5 pb-3 sm:pb-3.5 select-none flex items-center justify-center md:hidden">
       <div className="w-full max-w-md flex items-center justify-between px-2 sm:px-6">
         {/* Feed / For You */}
         <button
@@ -91,7 +91,14 @@ export const BottomNav = ({ activeView, setActiveView, onOpenProfile, onOpenFrie
         >
           <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-[#121212]">
             {user?.avatar ? (
-              <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+              <img
+                src={user.avatar}
+                alt="Profile"
+                onError={(e) => {
+                  e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
+                }}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <User className="w-3.5 h-3.5 text-[#8E8E93]" />
             )}

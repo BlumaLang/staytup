@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { api } from '../api/endpoints';
 import { usePlayer } from '../context/PlayerContext';
-import { get500x500Image, extractDominantColor, extractEdgeColors } from '../utils/media';
+import { get500x500Image } from '../utils/media';
 import { MarqueeText } from './MarqueeText';
 import {
   Heart,
@@ -17,6 +17,7 @@ import {
 import { ArtistSheet } from './ArtistSheet';
 import { PlaylistSheet } from './PlaylistSheet';
 import { SongDetailsModal } from './SongDetailsModal';
+import confetti from 'canvas-confetti';
 
 export const SongCard = ({ track, isActive }) => {
   const {
@@ -43,32 +44,11 @@ export const SongCard = ({ track, isActive }) => {
   const [showPlaylistSheet, setShowPlaylistSheet] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [themeRgb, setThemeRgb] = useState('25, 25, 30');
-  const [topRgb, setTopRgb] = useState('25, 25, 30');
-  const [bottomRgb, setBottomRgb] = useState('15, 15, 18');
 
   const videoId = String(track.videoId || track.video_id || track.id || '');
   const isLiked = likedTrackIds.has(videoId);
 
   const highResImage = get500x500Image(track.image || track.thumbnail || track.artwork_url);
-
-  useEffect(() => {
-    let isMounted = true;
-    extractDominantColor(highResImage).then((rgb) => {
-      if (isMounted && rgb) {
-        setThemeRgb(rgb);
-      }
-    });
-    extractEdgeColors(highResImage).then((edges) => {
-      if (isMounted && edges) {
-        setTopRgb(edges.topRgb);
-        setBottomRgb(edges.bottomRgb);
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [highResImage]);
 
   const formatTime = (secs) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -89,6 +69,32 @@ export const SongCard = ({ track, isActive }) => {
       await navigator.clipboard.writeText(text);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  const handleLikeClick = (e) => {
+    e.stopPropagation();
+    const willLike = !isLiked;
+    toggleLike(track);
+
+    if (willLike) {
+      try {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+        confetti({
+          particleCount: 38,
+          spread: 70,
+          startVelocity: 24,
+          origin: { x, y },
+          colors: ['#22C55E', '#10B981', '#4ADE80', '#A7F3D0', '#FFFFFF', '#FACC15'],
+          ticks: 180,
+          gravity: 1.15,
+          scalar: 0.85,
+          disableForReducedMotion: true,
+        });
+      } catch (err) {}
     }
   };
 
@@ -183,65 +189,50 @@ export const SongCard = ({ track, isActive }) => {
   const artistText = `${track.artist || 'Unknown Artist'}${track.album ? ` • ${track.album}` : ''}`;
 
   return (
-    <div className="relative w-full h-full flex flex-col justify-between snap-card overflow-hidden bg-black select-none">
-      {/* Dynamic Ambient Background: deep dark ambient with expanded black at top and bottom */}
-      <div
-        className="absolute inset-0 pointer-events-none transition-colors duration-700 ease-out"
-        style={{
-          background: `linear-gradient(to bottom, #000000 0%, #000000 15%, rgba(${topRgb}, 0.22) 35%, rgba(${themeRgb}, 0.18) 50%, rgba(${bottomRgb}, 0.22) 65%, #000000 85%, #000000 100%)`,
-        }}
-      />
+    <div className="relative w-full h-full flex flex-col justify-between overflow-hidden bg-black select-none">
+      {/* Blurred Album Artwork Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <img
+          src={highResImage}
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full object-cover blur-3xl scale-125 opacity-35 transition-opacity duration-700 ease-out"
+        />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/85" />
+      </div>
 
       {/* Top Header Area */}
       <div className="h-8 sm:h-12 flex-shrink-0 bg-transparent z-10" />
 
-      {/* Center 500x500 Artwork Card — Subtle, Edge-Focused Blending (Artwork Crystal Clear) */}
-      <div className="relative z-10 flex-1 w-full max-w-lg mx-auto px-0 sm:px-4 py-0 flex flex-col items-center justify-center my-auto">
-        <div
-          className="relative w-full aspect-square overflow-hidden bg-black flex items-center justify-center group shadow-none border-0"
-          style={{
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 1.5%, black 98.5%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 1.5%, black 98.5%, transparent 100%)',
-          }}
-        >
+      {/* Center 500x500 Artwork Card — Full Width, Pure & Clean */}
+      <div className="relative z-10 flex-1 w-full max-w-md sm:max-w-lg lg:max-w-xl mx-auto px-3 sm:px-6 py-2 flex flex-col items-center justify-center my-auto">
+        <div className="relative w-full aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121212] flex items-center justify-center group shadow-2xl border border-white/10">
           <img
             src={highResImage}
             alt={track.title}
+            onError={(e) => {
+              e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+            }}
             className={`w-full h-full object-cover transition-opacity duration-300 ${
               isLoadingStream ? 'opacity-40' : 'opacity-100'
             }`}
           />
 
-          {/* Subtle Top Edge Blend: narrow edge-only feather to blend without obscuring the artwork */}
-          <div
-            className="absolute inset-x-0 top-0 h-7 pointer-events-none transition-colors duration-700"
-            style={{
-              background: 'linear-gradient(to bottom, #000000 0%, rgba(0, 0, 0, 0.4) 40%, transparent 100%)',
-            }}
-          />
-
-          {/* Subtle Bottom Edge Blend: narrow edge-only feather to blend without obscuring the artwork */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-8 pointer-events-none transition-colors duration-700"
-            style={{
-              background: 'linear-gradient(to top, #000000 0%, rgba(0, 0, 0, 0.45) 40%, transparent 100%)',
-            }}
-          />
-
-          {/* Centered Play / Pause Button — Modern, Clean & Tactile */}
+          {/* Centered Play / Pause Tap Area — Immediately hidden while playing for clean, unobstructed artwork */}
           <div
             onClick={togglePlay}
-            className="absolute inset-0 flex items-center justify-center cursor-pointer transition-all duration-200"
+            className="absolute inset-0 flex items-center justify-center cursor-pointer"
           >
             <div
-              className={`w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-black/80 hover:scale-105 active:scale-95 transition-all ${
-                isPlaying && !isLoadingStream ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'
+              className={`w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-200 shadow-lg ${
+                isActive && isPlaying && !isLoadingStream
+                  ? 'opacity-0 scale-90 pointer-events-none'
+                  : 'opacity-100 scale-100'
               }`}
             >
-              {isLoadingStream ? (
+              {isActive && isLoadingStream ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : isPlaying ? (
-                <Pause className="w-6 h-6 fill-white text-white" />
               ) : (
                 <Play className="w-6 h-6 fill-white text-white ml-0.5" />
               )}
@@ -254,7 +245,7 @@ export const SongCard = ({ track, isActive }) => {
       <div className="relative z-20 pb-[5.5rem] sm:pb-24 px-4 sm:px-5 w-full max-w-xl mx-auto">
         {/* Lyrics preview slot — Fixed height ensures cover artwork NEVER shifts vertically whether lyrics exist or not */}
         <div className="h-7 mb-2 flex items-center">
-          {currentLyricLine ? (
+          {isActive && currentLyricLine ? (
             <div
               onClick={() => setIsLyricsDrawerOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C1C1E]/90 border border-[#2C2C2E] hover:border-white/40 text-white text-xs cursor-pointer transition-colors max-w-full animate-in fade-in duration-150"
@@ -304,15 +295,21 @@ export const SongCard = ({ track, isActive }) => {
 
           {/* Right Column: Love and More Buttons Side-by-Side */}
           <div className="flex items-center gap-2 flex-shrink-0 pb-0.5">
-            {/* Love / Like Button — Blue Filled Heart only, Circle remains standard dark */}
+            {/* Love / Like Button — Green Filled Heart with Confetti Burst */}
             <button
-              onClick={() => toggleLike(track)}
-              className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-[#2C2C2E] flex items-center justify-center transition-all active:scale-75"
+              onClick={handleLikeClick}
+              className={`w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border flex items-center justify-center transition-all active:scale-75 cursor-pointer ${
+                isLiked
+                  ? 'border-[#22C55E]/40 shadow-[0_0_12px_rgba(34,197,94,0.25)]'
+                  : 'border-[#2C2C2E] hover:border-white/20'
+              }`}
               title={isLiked ? 'Unlike' : 'Like'}
             >
               <Heart
-                className={`w-5 h-5 transition-transform ${
-                  isLiked ? 'fill-[#3B82F6] text-[#3B82F6] stroke-[#3B82F6] scale-110' : 'stroke-white text-transparent'
+                className={`w-5 h-5 transition-transform duration-200 ${
+                  isLiked
+                    ? 'fill-[#22C55E] text-[#22C55E] stroke-[#22C55E] scale-110'
+                    : 'stroke-white text-transparent'
                 }`}
               />
             </button>
@@ -332,6 +329,7 @@ export const SongCard = ({ track, isActive }) => {
         <div className="w-full mt-2">
           <div
             onClick={(e) => {
+              if (!isActive) return;
               const rect = e.currentTarget.getBoundingClientRect();
               const clickX = e.clientX - rect.left;
               const newProgress = Math.max(0, Math.min(1, clickX / rect.width));
@@ -341,12 +339,12 @@ export const SongCard = ({ track, isActive }) => {
           >
             <div
               className="h-full bg-white rounded-full relative"
-              style={{ width: `${progressPercent}%` }}
+              style={{ width: `${isActive ? progressPercent : 0}%` }}
             />
           </div>
           <div className="flex justify-between text-[11px] text-[#8E8E93] mt-1.5 font-mono">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{isActive ? formatTime(currentTime) : '0:00'}</span>
+            <span>{formatTime(isActive ? duration : (track.duration || track.duration_seconds || 0))}</span>
           </div>
         </div>
       </div>

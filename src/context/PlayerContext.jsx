@@ -35,12 +35,20 @@ export const PlayerProvider = ({ children }) => {
   // Queue Modal state
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
 
+  // Sleep Timer state
+  const [sleepTimerMode, setSleepTimerMode] = useState(null); // 'time' | 'end_of_track' | null
+  const [sleepTimerRemaining, setSleepTimerRemaining] = useState(0); // in seconds
+  const [isSleepTimerModalOpen, setIsSleepTimerModalOpen] = useState(false);
+  const sleepTimerEndOfTrackRef = useRef(false);
+
   // Active track
   const currentTrack = queue[currentIndex] || null;
 
   // Keep refs in sync for handlers without stale closures
   const currentIndexRef = useRef(currentIndex);
   const queueRef = useRef(queue);
+  const activeTrackLoadIdRef = useRef(0);
+  const activeLyricsLoadIdRef = useRef(0);
 
   useEffect(() => {
     currentIndexRef.current = currentIndex;
@@ -50,8 +58,8 @@ export const PlayerProvider = ({ children }) => {
     queueRef.current = queue;
   }, [queue]);
 
-  // Fetch lyrics when track changes
-  const fetchLyrics = useCallback(async (track) => {
+  // Fetch lyrics when track changes with request cancellation
+  const fetchLyrics = useCallback(async (track, loadId) => {
     if (!track) {
       setLyrics(null);
       return;
@@ -60,36 +68,60 @@ export const PlayerProvider = ({ children }) => {
     try {
       const vid = track.videoId || track.video_id || track.id || '';
       const data = await api.getLyrics(track.title, track.artist || '', vid);
-      setLyrics(data);
+      if (loadId === activeLyricsLoadIdRef.current) {
+        setLyrics(data);
+      }
     } catch (e) {
-      setLyrics({ has_lyrics: false, is_synced: false, synced_lyrics: [], plain_lyrics: '' });
+      if (loadId === activeLyricsLoadIdRef.current) {
+        setLyrics({ has_lyrics: false, is_synced: false, synced_lyrics: [], plain_lyrics: '' });
+      }
     } finally {
-      setIsLoadingLyrics(false);
+      if (loadId === activeLyricsLoadIdRef.current) {
+        setIsLoadingLyrics(false);
+      }
     }
   }, []);
 
-  // Play a track with stream resolution
+  // Play a track with stream resolution and strict race condition prevention
   const loadAndPlayTrack = useCallback(async (track, autoPlay = true) => {
     if (!track) return;
-    const videoId = track.videoId || track.video_id || track.id;
+    const rawId = track.videoId || track.video_id || track.id;
+    if (!rawId) return;
+    const videoId = String(rawId).replace(/^saavn_/, '');
     if (!videoId) return;
+
+    // Increment request ID so any in-flight requests for older songs are immediately cancelled
+    const currentLoadId = ++activeTrackLoadIdRef.current;
+    activeLyricsLoadIdRef.current = currentLoadId;
 
     setStreamError(null);
     setIsLoadingStream(true);
-    fetchLyrics(track);
+    fetchLyrics(track, currentLoadId);
 
     const audio = audioRef.current;
+    // Stop and clear previous audio immediately to prevent playing wrong song
     audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
     setCurrentTime(0);
 
     try {
       let streamUrl = streamCache.current.get(videoId);
       if (!streamUrl) {
         const res = await api.getStreamUrl(videoId);
-        streamUrl = res.stream_url || res.url || res.streamUrl;
+        // CRITICAL CHECK: if user has swiped to another track, discard this stream!
+        if (currentLoadId !== activeTrackLoadIdRef.current) {
+          return;
+        }
+        streamUrl = res?.stream_url || res?.url || res?.streamUrl;
         if (streamUrl) {
           streamCache.current.set(videoId, streamUrl);
         }
+      }
+
+      // Check again after cache lookup
+      if (currentLoadId !== activeTrackLoadIdRef.current) {
+        return;
       }
 
       if (!streamUrl) {
@@ -102,24 +134,42 @@ export const PlayerProvider = ({ children }) => {
       if (autoPlay) {
         try {
           await audio.play();
-          setIsPlaying(true);
+          if (currentLoadId === activeTrackLoadIdRef.current) {
+            setIsPlaying(true);
+          }
         } catch (playErr) {
-          console.warn('Autoplay prevented by browser:', playErr);
-          setIsPlaying(false);
+          if (currentLoadId === activeTrackLoadIdRef.current) {
+            setIsPlaying(false);
+            const resumeOnFirstInteraction = () => {
+              if (currentLoadId === activeTrackLoadIdRef.current) {
+                audio.play().then(() => {
+                  setIsPlaying(true);
+                }).catch(() => {});
+              }
+            };
+            window.addEventListener('click', resumeOnFirstInteraction, { once: true });
+            window.addEventListener('touchstart', resumeOnFirstInteraction, { once: true });
+            window.addEventListener('keydown', resumeOnFirstInteraction, { once: true });
+          }
         }
       }
     } catch (err) {
-      console.error('Failed to load stream:', err);
-      setStreamError('Failed to load audio stream');
-      setIsPlaying(false);
+      if (currentLoadId === activeTrackLoadIdRef.current) {
+        console.error('Failed to load stream for track:', track.title, err);
+        setStreamError('Failed to load audio stream');
+        setIsPlaying(false);
+      }
     } finally {
-      setIsLoadingStream(false);
+      if (currentLoadId === activeTrackLoadIdRef.current) {
+        setIsLoadingStream(false);
+      }
     }
   }, [fetchLyrics]);
 
   // Set new track or queue
   const playTrack = useCallback((track, newQueue = null) => {
     if (newQueue && newQueue.length > 0) {
+      queueRef.current = newQueue;
       setQueue(newQueue);
       const idx = newQueue.findIndex(
         t => (t.videoId || t.video_id || t.id) === (track.videoId || track.video_id || track.id)
@@ -128,6 +178,7 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(targetIdx);
       loadAndPlayTrack(newQueue[targetIdx], true);
     } else {
+      queueRef.current = [track];
       setQueue([track]);
       setCurrentIndex(0);
       loadAndPlayTrack(track, true);
@@ -145,36 +196,41 @@ export const PlayerProvider = ({ children }) => {
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
-    if (audio.paused) {
-      audio.play().catch(e => console.warn(e));
-      setIsPlaying(true);
-    } else {
+    if (!audio.src) return;
+
+    if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
+    } else {
+      audio.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.warn('Playback resume blocked:', err);
+      });
     }
-  }, []);
-
-  const seek = useCallback((timeInSeconds) => {
-    const audio = audioRef.current;
-    audio.currentTime = timeInSeconds;
-    setCurrentTime(timeInSeconds);
-  }, []);
+  }, [isPlaying]);
 
   const nextTrack = useCallback(() => {
     const q = queueRef.current;
-    if (q.length === 0) return;
-    const nextIdx = (currentIndexRef.current + 1) % q.length;
-    setCurrentIndex(nextIdx);
-    loadAndPlayTrack(q[nextIdx], true);
-  }, [loadAndPlayTrack]);
+    if (currentIndex < q.length - 1) {
+      jumpToIndex(currentIndex + 1);
+    }
+  }, [currentIndex, jumpToIndex]);
 
   const prevTrack = useCallback(() => {
-    const q = queueRef.current;
-    if (q.length === 0) return;
-    const prevIdx = (currentIndexRef.current - 1 + q.length) % q.length;
-    setCurrentIndex(prevIdx);
-    loadAndPlayTrack(q[prevIdx], true);
-  }, [loadAndPlayTrack]);
+    if (currentIndex > 0) {
+      jumpToIndex(currentIndex - 1);
+    }
+  }, [currentIndex, jumpToIndex]);
+
+  const seek = useCallback((timeInSeconds) => {
+    const audio = audioRef.current;
+    if (audio && !isNaN(timeInSeconds)) {
+      audio.currentTime = timeInSeconds;
+      setCurrentTime(timeInSeconds);
+    }
+  }, []);
+  const seekTo = seek;
 
   const setVolume = useCallback((val) => {
     const audio = audioRef.current;
@@ -194,19 +250,17 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [isMuted]);
 
-  // Load user favorites on start/user change
+  // Fetch user favorites on load
   useEffect(() => {
-    const userId = user?.id || localStorage.getItem('staytup_user_id');
-    if (!userId) return;
+    const userId = user?.id || user?.uid || localStorage.getItem('staytup_user_id') || 'guest_user';
     api.getFavorites(userId)
       .then(res => {
-        if (res && Array.isArray(res.favorites)) {
-          const ids = new Set(res.favorites.map(t => String(t.videoId || t.video_id || t.id)));
-          setLikedTrackIds(ids);
-        }
+        const tracks = Array.isArray(res) ? res : res.favorites || [];
+        const ids = new Set(tracks.map(t => t.videoId || t.video_id || t.id).filter(Boolean));
+        setLikedTrackIds(ids);
       })
       .catch(err => console.warn('Could not fetch favorites:', err));
-  }, [user?.id]);
+  }, [user?.id, user?.uid]);
 
   // Handle HTML5 Audio events
   useEffect(() => {
@@ -215,14 +269,18 @@ export const PlayerProvider = ({ children }) => {
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
 
-      // Record play to history once 5 seconds played
-      if (currentTrack && audio.currentTime > 5) {
+      // Record play to history once 1 second played
+      if (currentTrack && audio.currentTime > 1) {
         const trackId = currentTrack.videoId || currentTrack.video_id || currentTrack.id;
         if (trackId && !playRecordedRef.current.has(trackId)) {
           playRecordedRef.current.add(trackId);
-          const effectiveUserId = user?.id || localStorage.getItem('staytup_user_id') || 'explorer_' + Math.random().toString(36).substring(2, 8);
+          let effectiveUserId = user?.id || user?.uid || localStorage.getItem('staytup_user_id');
+          if (!effectiveUserId) {
+            effectiveUserId = 'user_' + Math.random().toString(36).substring(2, 10);
+            try { localStorage.setItem('staytup_user_id', effectiveUserId); } catch(e){}
+          }
           if (effectiveUserId) {
-            // Local PHP backend record
+            // 1. Local PHP backend record
             api.recordPlay({
               user_id: effectiveUserId,
               videoId: trackId,
@@ -233,10 +291,20 @@ export const PlayerProvider = ({ children }) => {
               duration: currentTrack.duration || Math.round(audio.duration || 0),
             }).catch(e => console.warn('Record play error:', e));
 
-            // Realtime Firebase Community & User History record
+            // 2. Realtime Firebase Community & User History record
             recordTrackHistoryToFirebase(effectiveUserId, currentTrack);
 
-            // Record artist into recent listening artists list for Queue personalization
+            // 3. LocalStorage persistence for instant offline & zero-latency history
+            try {
+              const savedHistory = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
+              const filtered = savedHistory.filter(t => {
+                const tid = t?.videoId || t?.video_id || t?.id;
+                return tid !== trackId;
+              });
+              localStorage.setItem('staytup_recently_played', JSON.stringify([currentTrack, ...filtered].slice(0, 50)));
+            } catch (e) {}
+
+            // 4. Record artist into recent listening artists list for Queue personalization
             if (currentTrack.artist) {
               try {
                 const recent = JSON.parse(localStorage.getItem('staytup_recent_artists') || '[]');
@@ -260,6 +328,15 @@ export const PlayerProvider = ({ children }) => {
     };
 
     const handleEnded = () => {
+      if (sleepTimerEndOfTrackRef.current) {
+        sleepTimerEndOfTrackRef.current = false;
+        setSleepTimerMode(null);
+        setSleepTimerRemaining(0);
+        const audio = audioRef.current;
+        if (audio) audio.pause();
+        setIsPlaying(false);
+        return;
+      }
       nextTrack();
     };
 
@@ -449,6 +526,47 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [currentTrack]);
 
+  // Sleep Timer countdown interval
+  useEffect(() => {
+    if (sleepTimerMode !== 'time' || sleepTimerRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setSleepTimerRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          const audio = audioRef.current;
+          if (audio) {
+            audio.pause();
+          }
+          setIsPlaying(false);
+          setSleepTimerMode(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [sleepTimerMode, sleepTimerRemaining]);
+
+  const setSleepTimer = useCallback((value) => {
+    if (value === 'end_of_track') {
+      setSleepTimerMode('end_of_track');
+      setSleepTimerRemaining(0);
+      sleepTimerEndOfTrackRef.current = true;
+    } else if (typeof value === 'number' && value > 0) {
+      setSleepTimerMode('time');
+      setSleepTimerRemaining(Math.round(value * 60));
+      sleepTimerEndOfTrackRef.current = false;
+    }
+  }, []);
+
+  const cancelSleepTimer = useCallback(() => {
+    setSleepTimerMode(null);
+    setSleepTimerRemaining(0);
+    sleepTimerEndOfTrackRef.current = false;
+  }, []);
+
   return (
     <PlayerContext.Provider
       value={{
@@ -471,10 +589,17 @@ export const PlayerProvider = ({ children }) => {
         setIsLyricsDrawerOpen,
         isQueueModalOpen,
         setIsQueueModalOpen,
+        sleepTimerMode,
+        sleepTimerRemaining,
+        isSleepTimerModalOpen,
+        setIsSleepTimerModalOpen,
+        setSleepTimer,
+        cancelSleepTimer,
         playTrack,
         jumpToIndex,
         togglePlay,
         seek,
+        seekTo,
         nextTrack,
         prevTrack,
         setVolume,

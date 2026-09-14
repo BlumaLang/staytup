@@ -2,8 +2,8 @@
  * Utility to ensure all JioSaavn and artist artwork URLs are upgraded to highest quality (500x500 px)
  */
 export function get500x500Image(url) {
-  if (!url || typeof url !== 'string') {
-    return 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop';
+  if (!url || typeof url !== 'string' || url.includes('unsplash.com')) {
+    return './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
   }
   return url
     .replace(/\/50x50\//g, '/500x500/')

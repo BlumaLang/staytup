@@ -119,6 +119,7 @@ export const generateDailyPersonalizedFeed = async (user, isForce = false) => {
   const addUniqueTracks = (trackList) => {
     if (!Array.isArray(trackList)) return;
     trackList.forEach(t => {
+      if (!t || t.type === 'album' || t.type === 'playlist') return;
       const vid = t.videoId || t.video_id || t.id;
       if (vid && !trackIdSet.has(vid)) {
         trackIdSet.add(vid);
@@ -128,12 +129,24 @@ export const generateDailyPersonalizedFeed = async (user, isForce = false) => {
   };
 
   try {
-    // 3a. Parallel fetch across all followed & listening artists (capped per artist to prevent single artist dominance)
-    const artistPromises = selectedArtists.map(artistName =>
-      api.search(`artist:"${artistName}"`, 'songs', 0, 10)
-        .then(res => (res?.tracks || res?.results || []).slice(0, 5))
-        .catch(() => [])
-    );
+    // 3a. Parallel fetch across all followed & listening artists using artist-page API (no dupes)
+    const artistPromises = selectedArtists.map(async (artistName) => {
+      try {
+        // Step 1: resolve artist name → artist ID (much more accurate than keyword search)
+        const artistRes = await api.searchArtists(artistName, 1);
+        const artistId = artistRes?.artists?.[0]?.id;
+        if (artistId) {
+          const songsRes = await api.getArtistSongs(artistId, 1, 10);
+          const tracks = (songsRes?.tracks || songsRes?.results || []).slice(0, 5);
+          if (tracks.length > 0) return tracks;
+        }
+        // Fallback: plain text search if artist ID not found
+        const fallbackRes = await api.search(artistName, 'songs', 0, 10);
+        return (fallbackRes?.tracks || fallbackRes?.results || []).slice(0, 5);
+      } catch {
+        return [];
+      }
+    });
 
     // 3b. Add trending hits in user language
     const trendingPromise = api.search(`lang:${userLang} hits`, 'songs', 0, 15)
@@ -201,8 +214,17 @@ export const replenishInfiniteDailyQueue = async (user, currentQueueLength = 0) 
   const offset = currentQueueLength + Math.floor(Math.random() * 10);
 
   try {
-    const res = await api.search(`artist:"${randomArtist}"`, 'songs', offset, 15);
-    return res.tracks || res.results || [];
+    // Resolve artist name → ID for accurate curated songs (no keyword-search dupes)
+    const artistRes = await api.searchArtists(randomArtist, 1).catch(() => null);
+    const artistId = artistRes?.artists?.[0]?.id;
+    if (artistId) {
+      const page = Math.floor(offset / 10) + 1;
+      const res = await api.getArtistSongs(artistId, page, 15);
+      return res?.tracks || res?.results || [];
+    }
+    // Fallback: plain name search
+    const res = await api.search(randomArtist, 'songs', offset, 15);
+    return res?.tracks || res?.results || [];
   } catch (e) {
     return [];
   }

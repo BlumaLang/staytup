@@ -306,6 +306,28 @@ try {
             }
             break;
         
+        // ==================== FRIENDS ====================
+        case 'friends':
+            require_once __DIR__ . '/routes/friends.php';
+            if ($subresource === 'search') {
+                FriendRoutes::handle('search', $method);
+            } elseif ($subresource === 'requests' && $id) {
+                FriendRoutes::handle('accept', $method, ['id' => $id]);
+            } elseif ($subresource === 'requests' && $subaction === 'decline' && $id) {
+                FriendRoutes::handle('decline', $method, ['id' => $id]);
+            } elseif ($subresource === 'requests') {
+                FriendRoutes::handle('requests', $method);
+            } elseif ($subresource && $id === 'remove') {
+                FriendRoutes::handle('remove', $method, ['id' => $subresource]);
+            } elseif ($subresource === 'send') {
+                FriendRoutes::handle('send', $method);
+            } elseif ($subresource) {
+                FriendRoutes::handle('list', $method);
+            } else {
+                FriendRoutes::handle('list', $method);
+            }
+            break;
+        
         // ==================== SPOTIFY IMPORT ====================
         case 'spotify':
         case 'import':

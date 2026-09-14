@@ -191,9 +191,25 @@ export const ArtistSheet = ({ artistName, artistId, isOpen, onClose }) => {
       {/* Main Fullscreen Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-5 sm:px-8 py-6 no-scrollbar max-w-2xl mx-auto w-full space-y-8 pb-20">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-28 text-[#8E8E93]">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm font-medium">Loading {displayName}...</p>
+          <div className="space-y-6 animate-in fade-in duration-150">
+            {/* Hero Skeleton */}
+            <div className="flex flex-col items-center text-center pt-2 pb-4">
+              <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-[#1C1C20] animate-pulse mb-4" />
+              <div className="h-6 bg-[#24242A] rounded-md w-48 mb-2 animate-pulse" />
+              <div className="h-3.5 bg-[#1C1C20] rounded-md w-28 animate-pulse" />
+            </div>
+            {/* Tracks Skeleton */}
+            <div className="space-y-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3.5 p-2.5 bg-[#121214] rounded-xl animate-pulse">
+                  <div className="w-12 h-12 rounded-xl bg-[#1C1C20] flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 bg-[#24242A] rounded w-2/5" />
+                    <div className="h-3 bg-[#1C1C20] rounded w-1/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <>
@@ -374,7 +390,7 @@ export const ArtistSheet = ({ artistName, artistId, isOpen, onClose }) => {
                         >
                           <Heart
                             className={`w-4 h-4 ${
-                              isLiked ? 'fill-[#2563EB] stroke-[#2563EB]' : 'stroke-[#8E8E93] hover:stroke-white'
+                              isLiked ? 'fill-[#22C55E] stroke-[#22C55E]' : 'stroke-[#8E8E93] hover:stroke-white'
                             }`}
                           />
                         </button>

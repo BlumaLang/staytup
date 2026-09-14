@@ -1,5 +1,11 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+} from 'firebase/auth';
 import {
   getDatabase,
   ref,
@@ -35,28 +41,51 @@ try {
 
 export { app, auth, database };
 
-let isAuthRestricted = false;
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 /**
- * Ensure an authenticated session exists (anonymous or existing)
+ * Sign in with Google Popup via Firebase
+ */
+export const signInWithGoogle = async () => {
+  if (!auth) throw new Error('Firebase Auth is not initialized');
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (err) {
+    console.error('Firebase Google Sign-In error:', err);
+    throw err;
+  }
+};
+
+/**
+ * Sign out from Firebase
+ */
+export const signOutFirebase = async () => {
+  if (!auth) return;
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.warn('Firebase signOut error:', err);
+  }
+};
+
+/**
+ * Listen for Firebase Auth State Changes
+ */
+export const onFirebaseAuthStateChanged = (callback) => {
+  if (!auth) return () => {};
+  return onAuthStateChanged(auth, callback);
+};
+
+/**
+ * Check if a user is currently authenticated
  */
 export const ensureFirebaseAuth = async () => {
-  if (!auth || isAuthRestricted) return null;
-  try {
-    if (!auth.currentUser) {
-      const cred = await signInAnonymously(auth);
-      return cred.user;
-    }
-    return auth.currentUser;
-  } catch (err) {
-    if (
-      err?.code === 'auth/admin-restricted-operation' ||
-      err?.message?.includes('admin-restricted-operation')
-    ) {
-      isAuthRestricted = true;
-    }
-    return null;
-  }
+  if (!auth) return null;
+  return auth.currentUser || null;
 };
 
 /**
@@ -128,6 +157,25 @@ export const recordTrackHistoryToFirebase = async (userId, track) => {
   } catch (err) {
     console.warn('Firebase history record error:', err);
   }
+};
+
+/**
+ * Fetch specific user's listening history from Firebase
+ */
+export const getUserHistoryFromFirebase = async (userId) => {
+  if (!database || !userId) return [];
+  try {
+    const snapshot = await get(ref(database, `users/${userId}/history`));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const tracks = Object.values(data);
+      tracks.sort((a, b) => (b.playedAt || 0) - (a.playedAt || 0));
+      return tracks;
+    }
+  } catch (err) {
+    console.warn('Firebase get user history error:', err);
+  }
+  return [];
 };
 
 /**

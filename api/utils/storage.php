@@ -336,6 +336,31 @@ class Storage {
                     foreach ($history as $track) {
                         $vid = $track['videoId'] ?? $track['video_id'] ?? $track['id'] ?? null;
                         if (!$vid) continue;
+
+                        $realArt = '';
+                        foreach (['image', 'thumbnail', 'artwork_url'] as $k) {
+                            if (!empty($track[$k]) && is_string($track[$k]) && strpos($track[$k], 'unsplash.com') === false) {
+                                $realArt = $track[$k];
+                                break;
+                            }
+                        }
+                        if (empty($realArt)) {
+                            if (strlen($vid) === 11) {
+                                $realArt = "https://i.ytimg.com/vi/{$vid}/hqdefault.jpg";
+                            } else {
+                                require_once __DIR__ . '/../services/jiosaavn.php';
+                                $sDetails = JioSaavnService::getSongDetails($vid);
+                                if (!empty($sDetails['image'])) {
+                                    $realArt = $sDetails['image'];
+                                }
+                            }
+                        }
+                        if (!empty($realArt)) {
+                            $track['image'] = $realArt;
+                            $track['thumbnail'] = $realArt;
+                            $track['artwork_url'] = $realArt;
+                        }
+
                         if (!isset($historyTracksMap[$vid])) {
                             $historyTracksMap[$vid] = [
                                 'track' => $track,
@@ -359,7 +384,20 @@ class Storage {
                 return $item['track'];
             }, array_slice($historyTracksMap, 0, 30));
 
-            $firstCover = $topTracks[0]['artwork_url'] ?? $topTracks[0]['thumbnail'] ?? 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&q=80';
+            $firstCover = '';
+            foreach (['image', 'thumbnail', 'artwork_url'] as $k) {
+                if (!empty($topTracks[0][$k]) && is_string($topTracks[0][$k]) && strpos($topTracks[0][$k], 'unsplash.com') === false) {
+                    $firstCover = $topTracks[0][$k];
+                    break;
+                }
+            }
+            if (empty($firstCover)) {
+                $fVid = $topTracks[0]['videoId'] ?? $topTracks[0]['video_id'] ?? $topTracks[0]['id'] ?? '';
+                if (strlen($fVid) === 11) {
+                    $firstCover = "https://i.ytimg.com/vi/{$fVid}/hqdefault.jpg";
+                }
+            }
+
             $historyBasedPlaylists[] = [
                 'id' => 'public_pl_community_top',
                 'name' => 'Staytup Community Top Tracks',
@@ -399,21 +437,41 @@ class Storage {
                 if (!empty($plTracks) && is_array($plTracks)) {
                     foreach ($plTracks as &$t) {
                         $tVid = $t['videoId'] ?? $t['video_id'] ?? $t['id'] ?? null;
-                        $tArt = $t['artwork_url'] ?? $t['thumbnail'] ?? $t['image'] ?? null;
-                        if (empty($tArt) || strpos($tArt, 'unsplash.com') !== false) {
-                            if ($tVid && strlen($tVid) === 11) {
-                                $tArt = "https://i.ytimg.com/vi/{$tVid}/hqdefault.jpg";
+                        $tArt = '';
+                        foreach (['image', 'thumbnail', 'artwork_url'] as $k) {
+                            if (!empty($t[$k]) && is_string($t[$k]) && strpos($t[$k], 'unsplash.com') === false) {
+                                $tArt = $t[$k];
+                                break;
                             }
                         }
-                        $t['artwork_url'] = $tArt;
-                        $t['thumbnail'] = $tArt;
-                        $t['image'] = $tArt;
+                        if (empty($tArt) && !empty($tVid)) {
+                            if (strlen($tVid) === 11) {
+                                $tArt = "https://i.ytimg.com/vi/{$tVid}/hqdefault.jpg";
+                            } else {
+                                require_once __DIR__ . '/../services/jiosaavn.php';
+                                $sDetails = JioSaavnService::getSongDetails($tVid);
+                                if (!empty($sDetails['image'])) {
+                                    $tArt = $sDetails['image'];
+                                }
+                            }
+                        }
+                        if (!empty($tArt)) {
+                            $t['artwork_url'] = $tArt;
+                            $t['thumbnail'] = $tArt;
+                            $t['image'] = $tArt;
+                        }
                     }
                     unset($t);
                     $p['tracks'] = $plTracks;
 
-                    $firstCover = $plTracks[0]['artwork_url'] ?? $plTracks[0]['thumbnail'] ?? null;
-                    if (empty($firstCover) || strpos($firstCover, 'unsplash.com') !== false) {
+                    $firstCover = '';
+                    foreach (['image', 'thumbnail', 'artwork_url'] as $k) {
+                        if (!empty($plTracks[0][$k]) && is_string($plTracks[0][$k]) && strpos($plTracks[0][$k], 'unsplash.com') === false) {
+                            $firstCover = $plTracks[0][$k];
+                            break;
+                        }
+                    }
+                    if (empty($firstCover)) {
                         $firstVid = $plTracks[0]['videoId'] ?? $plTracks[0]['video_id'] ?? $plTracks[0]['id'] ?? null;
                         if ($firstVid && strlen($firstVid) === 11) {
                             $firstCover = "https://i.ytimg.com/vi/{$firstVid}/hqdefault.jpg";
@@ -434,6 +492,147 @@ class Storage {
 
         self::writeJson($publicPath, $result);
         return $result;
+    }
+
+    // ==================== FRIENDS ====================
+    
+    public static function getFriends($userId) {
+        $dir = self::getUserDir($userId);
+        return self::readJson($dir . '/friends.json') ?? [];
+    }
+    
+    public static function addFriend($userId, $friendId, $friendData) {
+        $dir = self::getUserDir($userId);
+        $path = $dir . '/friends.json';
+        $friends = self::readJson($path) ?? [];
+        
+        if (!isset($friends[$friendId])) {
+            $friends[$friendId] = $friendData;
+            self::writeJson($path, $friends);
+            return true;
+        }
+        return false;
+    }
+    
+    public static function removeFriend($userId, $friendId) {
+        $dir = self::getUserDir($userId);
+        $path = $dir . '/friends.json';
+        $friends = self::readJson($path) ?? [];
+        
+        if (isset($friends[$friendId])) {
+            unset($friends[$friendId]);
+            self::writeJson($path, $friends);
+            return true;
+        }
+        return false;
+    }
+    
+    public static function isFriend($userId, $friendId) {
+        $friends = self::getFriends($userId);
+        return isset($friends[$friendId]);
+    }
+    
+    public static function getFriendRequests($userId) {
+        $dir = self::getUserDir($userId);
+        return self::readJson($dir . '/friend_requests.json') ?? [];
+    }
+    
+    public static function sendFriendRequest($fromUserId, $toUserId, $fromUserData) {
+        $dir = self::getUserDir($toUserId);
+        $path = $dir . '/friend_requests.json';
+        $requests = self::readJson($path) ?? [];
+        
+        foreach ($requests as $req) {
+            if ($req['from_user_id'] === $fromUserId) {
+                return false;
+            }
+        }
+        
+        $requests[] = [
+            'id' => uniqid('fr_', true),
+            'from_user_id' => $fromUserId,
+            'name' => $fromUserData['username'] ?? $fromUserData['displayName'] ?? 'Unknown',
+            'avatar' => $fromUserData['avatar'] ?? '',
+            'created_at' => time(),
+        ];
+        
+        self::writeJson($path, $requests);
+        return true;
+    }
+    
+    public static function acceptFriendRequest($userId, $requestId) {
+        $dir = self::getUserDir($userId);
+        $path = $dir . '/friend_requests.json';
+        $requests = self::readJson($path) ?? [];
+        
+        $found = null;
+        foreach ($requests as $i => $req) {
+            if ($req['id'] === $requestId) {
+                $found = $req;
+                unset($requests[$i]);
+                break;
+            }
+        }
+        
+        if ($found) {
+            self::writeJson($path, array_values($requests));
+            return $found;
+        }
+        return null;
+    }
+    
+    public static function declineFriendRequest($userId, $requestId) {
+        $dir = self::getUserDir($userId);
+        $path = $dir . '/friend_requests.json';
+        $requests = self::readJson($path) ?? [];
+        
+        $found = false;
+        foreach ($requests as $i => $req) {
+            if ($req['id'] === $requestId) {
+                unset($requests[$i]);
+                $found = true;
+                break;
+            }
+        }
+        
+        if ($found) {
+            self::writeJson($path, array_values($requests));
+        }
+        return $found;
+    }
+    
+    public static function searchUsers($query, $limit = 20) {
+        $usersDir = self::getDataDir() . '/users';
+        if (!is_dir($usersDir)) return [];
+        
+        $results = [];
+        $query = strtolower(trim($query));
+        
+        $userFolders = scandir($usersDir);
+        foreach ($userFolders as $u) {
+            if ($u === '.' || $u === '..' || $u === 'guest_user') continue;
+            
+            $profileFile = $usersDir . '/' . $u . '/profile.json';
+            $profile = self::readJson($profileFile);
+            
+            if (!$profile) continue;
+            
+            $username = strtolower($profile['username'] ?? '');
+            $displayName = strtolower($profile['displayName'] ?? '');
+            
+            if (strpos($username, $query) !== false || strpos($displayName, $query) !== false) {
+                $results[] = [
+                    'id' => $u,
+                    'username' => $profile['username'] ?? 'Unknown',
+                    'displayName' => $profile['displayName'] ?? $profile['username'] ?? 'Unknown',
+                    'avatar' => $profile['avatar'] ?? MEMOJI_AVATARS[0],
+                ];
+                
+                if (count($results) >= $limit) break;
+            }
+        }
+        
+        return $results;
     }
 
     // ==================== ARTIST IMAGE CACHE (DATABASE) ====================

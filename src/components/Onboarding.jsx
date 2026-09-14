@@ -266,16 +266,9 @@ export const Onboarding = ({ onComplete }) => {
           <div>
             {/* Step 2: Clean Artists Selection */}
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-                  Pick your favorite artists
-                </h2>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  selectedArtists.length >= 3 ? 'bg-white text-black' : 'bg-[#1C1C1E] text-[#8E8E93]'
-                }`}>
-                  {selectedArtists.length}/3 minimum
-                </span>
-              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
+                Pick your favorite artists
+              </h2>
               <p className="text-xs sm:text-sm text-[#8E8E93]">
                 {remainingToSelect > 0
                   ? `Select at least ${remainingToSelect} more artist${remainingToSelect > 1 ? 's' : ''} to build your personalized sound feed.`
@@ -353,14 +346,19 @@ export const Onboarding = ({ onComplete }) => {
             <button
               onClick={handleFinish}
               disabled={isSubmitting || selectedArtists.length < 3}
-              className="flex-1 py-4 rounded-2xl bg-white hover:bg-gray-200 active:scale-[0.98] transition-all text-black font-bold text-base flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex-1 py-4 px-3 sm:px-4 rounded-2xl bg-white hover:bg-gray-200 active:scale-[0.98] transition-all text-black font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Start Listening</span>
-                  <ArrowRight className="w-5 h-5 text-black" />
+                  {selectedArtists.length < 3 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-black/10 font-semibold whitespace-nowrap">
+                      {selectedArtists.length}/3 minimum
+                    </span>
+                  )}
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
                 </>
               )}
             </button>

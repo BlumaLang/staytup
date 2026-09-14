@@ -11,7 +11,6 @@ import {
   ChevronUp,
   ChevronDown,
   Sparkles,
-  Trash2,
 } from 'lucide-react';
 
 export const QueueModal = () => {
@@ -39,6 +38,28 @@ export const QueueModal = () => {
   const nowPlaying = currentTrack || queue[currentIndex] || null;
   const upNextTracks = queue.slice(currentIndex + 1);
 
+  const getTrackArtwork = (t) => {
+    const candidate = [t?.image, t?.thumbnail, t?.artwork_url].find(
+      (url) => typeof url === 'string' && url.trim().length > 0 && !url.includes('unsplash.com')
+    );
+    if (candidate) return get500x500Image(candidate);
+    const vid = t?.videoId || t?.video_id || t?.id;
+    if (vid && String(vid).length === 11) {
+      return `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
+    }
+    return './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+  };
+
+  const moveQueueItem = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= queue.length || fromIndex === toIndex) return;
+    setQueue((prev) => {
+      const updated = [...prev];
+      const [movedItem] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, movedItem);
+      return updated;
+    });
+  };
+
   const handleLoadMoreToQueue = async () => {
     setIsLoadingMore(true);
     try {
@@ -62,16 +83,12 @@ export const QueueModal = () => {
 
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 h-full h-[100dvh] w-full flex flex-col bg-black text-white animate-in slide-in-from-bottom duration-300 select-none overflow-hidden">
-      {/* Top Header — Clean, Cardless, X Close Icon (No drum/music icon) */}
-      <div className="px-6 pt-4 sm:pt-5 pb-3.5 border-b border-[#1C1C1E] flex items-center justify-between bg-black z-10 flex-shrink-0">
-        <div>
+      {/* Top Header — Clean, Cardless */}
+      <div className="px-6 pt-4 sm:pt-5 pb-3.5 border-b border-[#1C1C1E] bg-black z-10 flex-shrink-0">
+        <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
           <h2 className="text-xl font-bold tracking-tight text-white">
             Playback Queue
           </h2>
-          <p className="text-xs text-[#8E8E93] mt-0.5">
-            {queue.length} Tracks in Queue
-          </p>
-        </div>
 
         <div className="flex items-center gap-2">
           {queue.length > 1 && (
@@ -92,85 +109,70 @@ export const QueueModal = () => {
           </button>
         </div>
       </div>
+    </div>
 
-      {/* Main Full-Width Scrollable Queue (No bounded cards, No bottom safe-area padding) */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 no-scrollbar w-full space-y-6 pb-4">
-        {/* 1. Now Playing Section — Clean Cardless Row with Up/Down Track Change Controls */}
+      {/* Main Full-Width Scrollable Queue */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 no-scrollbar max-w-4xl mx-auto w-full space-y-6 pb-6">
+        {/* 1. Now Playing Section — Styled same as next songs rows */}
         {nowPlaying && (
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#8E8E93] px-1">
               Now Playing
             </h3>
-            <div className="flex items-center justify-between py-2.5 px-2 rounded-xl bg-white/[0.04] transition-colors">
-              <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                <div className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-black flex-shrink-0">
+            <div className="flex items-center justify-between py-3 px-1 sm:px-2 hover:bg-[#121212] rounded-xl transition-colors group">
+              <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="w-5 flex items-end justify-center gap-[2px] h-3.5 flex-shrink-0">
+                  <span className={`w-[2.5px] bg-white rounded-full ${isPlaying ? 'animate-music-bar-1' : 'h-1'}`} />
+                  <span className={`w-[2.5px] bg-white rounded-full ${isPlaying ? 'animate-music-bar-2' : 'h-2.5'}`} />
+                  <span className={`w-[2.5px] bg-white rounded-full ${isPlaying ? 'animate-music-bar-3' : 'h-3.5'}`} />
+                </div>
+
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/5 relative">
                   <img
-                    src={get500x500Image(
-                      nowPlaying.thumbnail ||
-                        nowPlaying.image ||
-                        nowPlaying.artwork_url
-                    )}
+                    src={getTrackArtwork(nowPlaying)}
                     alt={nowPlaying.title}
+                    onError={(e) => {
+                      e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+                    }}
                     className="w-full h-full object-cover"
                   />
-                  {isPlaying && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-0.5">
-                      <div className="w-1 h-3.5 bg-white animate-pulse" />
-                      <div className="w-1 h-5 bg-white animate-pulse delay-75" />
-                      <div className="w-1 h-2.5 bg-white animate-pulse delay-150" />
-                    </div>
-                  )}
                 </div>
 
                 <div className="min-w-0 text-left">
-                  <h4 className="font-bold text-sm sm:text-base text-white line-clamp-1">
+                  <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                     {nowPlaying.title}
-                  </h4>
+                  </p>
                   <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5">
                     {nowPlaying.artist}
                   </p>
                 </div>
               </div>
 
-              {/* Up Arrow, Play/Pause, Down Arrow Track Changers */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={prevTrack}
-                  disabled={currentIndex <= 0}
-                  className="w-8 h-8 rounded-full bg-[#121212] hover:bg-[#1C1C1E] disabled:opacity-25 disabled:hover:bg-[#121212] flex items-center justify-center text-white transition-colors"
-                  title="Previous track"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {nowPlaying.duration > 0 && (
+                  <span className="text-xs text-[#8E8E93] font-mono hidden sm:inline-block mr-1">
+                    {formatDuration(nowPlaying.duration)}
+                  </span>
+                )}
 
                 <button
                   type="button"
                   onClick={togglePlay}
-                  className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+                  className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+                  title={isPlaying ? 'Pause' : 'Play'}
                 >
                   {isPlaying ? (
-                    <Pause className="w-4 h-4 fill-black" />
+                    <Pause className="w-3.5 h-3.5 fill-black" />
                   ) : (
-                    <Play className="w-4 h-4 fill-black ml-0.5" />
+                    <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
                   )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={nextTrack}
-                  disabled={currentIndex >= queue.length - 1}
-                  className="w-8 h-8 rounded-full bg-[#121212] hover:bg-[#1C1C1E] disabled:opacity-25 disabled:hover:bg-[#121212] flex items-center justify-center text-white transition-colors"
-                  title="Next track"
-                >
-                  <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* 2. Up Next List — Edge-to-Edge Clean Rows (No Cards) */}
+        {/* 2. Up Next List — Edge-to-Edge Clean Rows */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#8E8E93]">
@@ -198,25 +200,29 @@ export const QueueModal = () => {
                 const trackId =
                   track.videoId || track.video_id || track.id || absoluteIdx;
 
+                const isFirstUpNext = relativeIdx === 0;
+                const isLastUpNext = relativeIdx === upNextTracks.length - 1;
+
                 return (
                   <div
                     key={`${trackId}-${absoluteIdx}`}
                     onClick={() => jumpToIndex(absoluteIdx)}
                     className="flex items-center justify-between py-3 px-1 sm:px-2 hover:bg-[#121212] rounded-xl cursor-pointer transition-colors group"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
                       <span className="w-5 text-center text-xs font-bold text-[#8E8E93] group-hover:text-white flex-shrink-0">
                         {relativeIdx + 1}
                       </span>
-                      <img
-                        src={get500x500Image(
-                          track.thumbnail ||
-                            track.image ||
-                            track.artwork_url
-                        )}
-                        alt={track.title}
-                        className="w-11 h-11 rounded-xl object-cover bg-black flex-shrink-0"
-                      />
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/5 relative">
+                        <img
+                          src={getTrackArtwork(track)}
+                          alt={track.title}
+                          onError={(e) => {
+                            e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+                          }}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div className="min-w-0 text-left">
                         <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                           {track.title}
@@ -227,23 +233,52 @@ export const QueueModal = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {track.duration > 0 && (
-                        <span className="text-xs text-[#8E8E93] font-mono hidden sm:inline-block mr-1">
+                        <span className="text-xs text-[#8E8E93] font-mono hidden sm:inline-block mr-2">
                           {formatDuration(track.duration)}
                         </span>
                       )}
 
+                      {/* Up Arrow for reordering */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveQueueItem(absoluteIdx, absoluteIdx - 1);
+                        }}
+                        disabled={isFirstUpNext}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white hover:bg-[#1C1C1E] disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+                        title="Move track up"
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </button>
+
+                      {/* Down Arrow for reordering */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveQueueItem(absoluteIdx, absoluteIdx + 1);
+                        }}
+                        disabled={isLastUpNext}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white hover:bg-[#1C1C1E] disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+                        title="Move track down"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+
+                      {/* X Button for delete */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFromQueue(absoluteIdx);
                         }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white hover:bg-[#1C1C1E] transition-colors"
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-red-400 hover:bg-red-500/10 transition-colors ml-1"
                         title="Remove from queue"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

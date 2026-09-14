@@ -79,6 +79,9 @@ export const api = {
   getPlaylists: (userId) =>
     apiRequest(`/playlists?user_id=${encodeURIComponent(userId)}`),
 
+  getPlaylist: (playlistId) =>
+    apiRequest(`/playlist/${encodeURIComponent(playlistId)}`),
+
   getPublicPlaylists: () =>
     apiRequest('/playlists/public'),
 
@@ -98,4 +101,26 @@ export const api = {
     apiRequest(`/playlists/${encodeURIComponent(playlistId)}/tracks/${encodeURIComponent(videoId)}?user_id=${encodeURIComponent(userId)}`, {
       method: 'DELETE'
     }),
+
+  // Friends
+  searchUsers: (query, limit = 20) =>
+    apiRequest(`/friends/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+
+  getFriends: () =>
+    apiRequest('/friends'),
+
+  getFriendRequests: () =>
+    apiRequest('/friends/requests'),
+
+  sendFriendRequest: (toUserId) =>
+    apiRequest('/friends/send', { method: 'POST', body: { to_user_id: toUserId } }),
+
+  acceptFriendRequest: (requestId) =>
+    apiRequest(`/friends/requests/${encodeURIComponent(requestId)}`, { method: 'POST' }),
+
+  declineFriendRequest: (requestId) =>
+    apiRequest(`/friends/requests/${encodeURIComponent(requestId)}/decline`, { method: 'POST' }),
+
+  removeFriend: (friendId) =>
+    apiRequest(`/friends/${encodeURIComponent(friendId)}/remove`, { method: 'DELETE' }),
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, X, Check, ArrowRight } from 'lucide-react';
 
@@ -7,6 +7,13 @@ export const LoginModal = ({ isOpen, onClose }) => {
   const [username, setUsername] = useState(user?.username || '');
   const [selectedAvatarIndex, setSelectedAvatarIndex] = useState(user?.avatarIndex || 0);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      setUsername(user.username || '');
+      setSelectedAvatarIndex(user.avatarIndex || 0);
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -17,18 +24,6 @@ export const LoginModal = ({ isOpen, onClose }) => {
     setIsLoading(true);
     try {
       await login(username, selectedAvatarIndex);
-      onClose();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGuest = async () => {
-    setIsLoading(true);
-    try {
-      await login('Music Explorer', Math.floor(Math.random() * MEMOJI_AVATARS.length));
       onClose();
     } catch (err) {
       console.error(err);
@@ -131,16 +126,6 @@ export const LoginModal = ({ isOpen, onClose }) => {
               </>
             )}
           </button>
-
-          <div className="pt-2 text-center">
-            <button
-              type="button"
-              onClick={handleGuest}
-              className="text-xs text-[#8E8E93] hover:text-white transition-colors underline"
-            >
-              Continue as Guest
-            </button>
-          </div>
         </form>
       </div>
     </div>

@@ -1,49 +1,86 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ArrowRight, Phone } from 'lucide-react';
+import { ArrowRight, Phone, AlertCircle } from 'lucide-react';
 
 export const LoginPage = ({ onComplete }) => {
-  const { login, MEMOJI_AVATARS } = useAuth();
+  const { loginWithGoogle, finalizeGoogleLogin } = useAuth();
   const [step, setStep] = useState(1); // 1: Google login / Auth, 2: Phone number for friends
+  const [pendingProfile, setPendingProfile] = useState(null);
   const [contactNo, setContactNo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    setTimeout(async () => {
-      await login('Alex Rivera', 2);
-      setIsLoading(false);
-      setStep(2); // Proceed to contact prompt
-    }, 600);
-  };
+    setErrorMessage('');
 
-  const handleGuest = async () => {
-    setIsLoading(true);
-    setTimeout(async () => {
-      await login('Music Explorer', Math.floor(Math.random() * MEMOJI_AVATARS.length));
-      setIsLoading(false);
+    try {
+      const { profile, existingProfile } = await loginWithGoogle();
+
+      const existingPhone = profile.phone || existingProfile?.phone || localStorage.getItem('staytup_contact_no');
+      
+      // If user already had a saved contact number or profile setup, finalize immediately
+      if (existingPhone || (existingProfile && existingProfile.username)) {
+        await finalizeGoogleLogin(profile, existingPhone || '');
+        onComplete?.();
+        return;
+      }
+
+      // Otherwise, proceed to Step 2 to allow adding phone number for friends blend
+      setPendingProfile(profile);
       setStep(2);
-    }, 400);
-  };
-
-  const handleSaveContact = () => {
-    if (contactNo.trim()) {
-      localStorage.setItem('staytup_contact_no', contactNo.trim());
+    } catch (err) {
+      console.warn('Google Sign In:', err);
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        // User voluntarily closed the popup, do not show an aggressive error
+        return;
+      } else if (err?.code === 'auth/popup-blocked') {
+        setErrorMessage('Sign-in popup was blocked by your browser. Please enable popups for this site and try again.');
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        setErrorMessage('Domain not authorized in Firebase. Please add this domain to Firebase Console > Authentication > Settings > Authorized domains.');
+      } else {
+        setErrorMessage(err?.message || 'Google sign-in could not be completed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
-    onComplete();
   };
 
-  const handleSkipContact = () => {
-    onComplete();
+  const handleSaveContact = async () => {
+    if (!pendingProfile) return;
+    setIsLoading(true);
+    try {
+      await finalizeGoogleLogin(pendingProfile, contactNo.trim());
+      onComplete?.();
+    } catch (err) {
+      console.error('Error saving contact:', err);
+      onComplete?.();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSkipContact = async () => {
+    if (!pendingProfile) return;
+    setIsLoading(true);
+    try {
+      await finalizeGoogleLogin(pendingProfile, '');
+      onComplete?.();
+    } catch (err) {
+      console.error('Error skipping contact:', err);
+      onComplete?.();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 h-full h-[100dvh] w-full flex flex-col justify-between bg-black/95 backdrop-blur-2xl animate-in slide-in-from-bottom duration-300 select-none overflow-hidden">
-      {/* Content Area - Clean without header, matching lyrics drawer height */}
+      {/* Content Area */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 sm:px-8 max-w-sm sm:max-w-md mx-auto w-full my-auto">
         {step === 1 ? (
           <div className="text-center w-full flex flex-col items-center">
-            {/* Pure Logo Without Card/Container */}
+            {/* Pure Logo */}
             <div className="flex justify-center -mb-8 sm:-mb-10">
               <img
                 src="./assets/staytup_logo.32975537674b053888ade6460fa37f97.png"
@@ -57,9 +94,17 @@ export const LoginPage = ({ onComplete }) => {
                 Sound Without Limits
               </h2>
               <p className="text-xs sm:text-sm text-[#8E8E93] leading-relaxed max-w-xs mx-auto">
-                Sign in to sync your favorites, blend playlists with friends, and discover endless music.
+                Sign in with Google to sync your favorites, blend playlists with friends, and discover endless music.
               </p>
             </div>
+
+            {/* Error Message Alert */}
+            {errorMessage && (
+              <div className="mb-4 w-full p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start gap-2.5 text-left animate-in fade-in duration-200">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{errorMessage}</span>
+              </div>
+            )}
 
             {/* Google Sign In Button */}
             <div className="space-y-3 pt-2 w-full">
@@ -67,7 +112,7 @@ export const LoginPage = ({ onComplete }) => {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white text-black font-semibold text-sm flex items-center justify-center gap-3 hover:bg-gray-200 active:scale-[0.98] transition-all disabled:opacity-60"
+                className="w-full py-3.5 px-4 rounded-2xl bg-white text-black font-semibold text-sm flex items-center justify-center gap-3 hover:bg-gray-200 active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer shadow-lg"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -94,15 +139,6 @@ export const LoginPage = ({ onComplete }) => {
                     <span>Continue with Google</span>
                   </>
                 )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleGuest}
-                disabled={isLoading}
-                className="w-full py-3.5 px-4 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] hover:border-white/30 text-white font-semibold text-sm flex items-center justify-center transition-all active:scale-[0.98]"
-              >
-                Continue as Guest
               </button>
             </div>
           </div>
@@ -142,17 +178,24 @@ export const LoginPage = ({ onComplete }) => {
               <button
                 type="button"
                 onClick={handleSaveContact}
-                disabled={contactNo.length < 10}
-                className="w-full py-3.5 rounded-xl bg-white hover:bg-gray-200 active:scale-[0.98] text-black font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                disabled={contactNo.length < 10 || isLoading}
+                className="w-full py-3.5 rounded-xl bg-white hover:bg-gray-200 active:scale-[0.98] text-black font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
               >
-                <span>Find & Sync Friends</span>
-                <ArrowRight className="w-4 h-4 text-black" />
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>Find & Sync Friends</span>
+                    <ArrowRight className="w-4 h-4 text-black" />
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={handleSkipContact}
-                className="w-full text-center text-xs text-[#8E8E93] hover:text-white transition-colors py-2"
+                disabled={isLoading}
+                className="w-full text-center text-xs text-[#8E8E93] hover:text-white transition-colors py-2 cursor-pointer"
               >
                 Skip for now
               </button>
