@@ -17,6 +17,8 @@ import AlbumPage from './pages/AlbumPage';
 import PlaylistPage from './pages/PlaylistPage';
 import FriendsPage from './pages/FriendsPage';
 import ProfilePage from './pages/ProfilePage';
+import UserProfilePage from './pages/UserProfilePage';
+import BlendPage from './pages/BlendPage';
 
 // Inner component to handle service worker notification navigation
 function NotificationNavigationHandler() {
@@ -57,7 +59,9 @@ export default function App() {
     currentPath.includes('/track/') ||
     currentPath.includes('/album/') ||
     currentPath.includes('/artist/') ||
-    currentPath.includes('/playlist/');
+    currentPath.includes('/playlist/') ||
+    currentPath.includes('/user/') ||
+    currentPath.includes('/blend/');
 
   // 1. Splash screen
   if (showSplash) {
@@ -92,6 +96,8 @@ export default function App() {
           <Route path="/album/:id" element={<AlbumPage />} />
           <Route path="/playlist/:id" element={<PlaylistPage />} />
           <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/user/:id" element={<UserProfilePage />} />
+          <Route path="/blend/:id" element={<BlendPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           {/* Catch-all redirect to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -16,6 +16,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { getArtistUrl, shareContent } from '../utils/canonicalUrl';
+import { ArtistAvatar } from '../components/ArtistAvatar';
 
 export default function ArtistPage() {
   const { id } = useParams();
@@ -104,10 +105,7 @@ export default function ArtistPage() {
 
   const artistData = info?.artist || {};
   const displayName = artistData.name || artistIdentifier || 'Artist Profile';
-  const displayImage =
-    artistData.image ||
-    artistData.thumbnail ||
-    'https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg';
+  const displayImage = artistData.image || artistData.thumbnail || '';
 
   // Check initial follow status
   useEffect(() => {
@@ -222,19 +220,24 @@ export default function ArtistPage() {
           {/* Hero Banner with Dynamic Artwork */}
           <div className="relative w-full h-72 sm:h-96 overflow-hidden flex items-end px-6 sm:px-10 pb-8 bg-gradient-to-b from-[#1E1E24] to-black">
             <div className="absolute inset-0 z-0">
-              <img
-                src={get500x500Image(displayImage)}
-                alt={displayName}
-                className="w-full h-full object-cover blur-md opacity-35 scale-105"
-              />
+              {displayImage ? (
+                <img
+                  src={get500x500Image(displayImage)}
+                  alt={displayName}
+                  className="w-full h-full object-cover blur-md opacity-35 scale-105"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-b from-[#1E1E24] to-black opacity-60" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
             </div>
 
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-end gap-6 w-full">
-              <img
-                src={get500x500Image(displayImage)}
-                alt={displayName}
-                className="w-32 h-32 sm:w-44 sm:h-44 rounded-full object-cover shadow-2xl border-2 border-white/20 flex-shrink-0"
+              <ArtistAvatar
+                name={displayName}
+                image={displayImage}
+                size="hero"
+                className="w-32 h-32 sm:w-44 sm:h-44 border-2 border-white/20 shadow-2xl flex-shrink-0"
               />
               <div className="space-y-2">
                 <div className="flex items-center gap-2">

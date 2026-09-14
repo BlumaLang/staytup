@@ -46,6 +46,18 @@ export const getPlaylistUrl = (playlistOrId) => {
   return `${getAppBaseUrl()}/playlist/${encodeURIComponent(id)}`;
 };
 
+export const getUserUrl = (userOrId) => {
+  if (!userOrId) return `${getAppBaseUrl()}/friends`;
+  const id = typeof userOrId === 'string' ? userOrId : userOrId.id || userOrId.username || '';
+  return `${getAppBaseUrl()}/user/${encodeURIComponent(id)}`;
+};
+
+export const getBlendUrl = (blendOrId) => {
+  if (!blendOrId) return `${getAppBaseUrl()}/friends`;
+  const id = typeof blendOrId === 'string' ? blendOrId : blendOrId.id || '';
+  return `${getAppBaseUrl()}/blend/${encodeURIComponent(id)}`;
+};
+
 /**
  * Native Web Share API with clipboard fallback
  */

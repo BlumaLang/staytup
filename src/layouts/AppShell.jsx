@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { DesktopSidebar } from '../components/DesktopSidebar';
 import { DesktopRightPanel } from '../components/DesktopRightPanel';
+import { UserAvatar } from '../components/UserAvatar';
 import { BottomNav } from '../components/BottomNav';
 import { Miniplayer } from '../components/Miniplayer';
 import { FullPlayerView } from '../components/FullPlayerView';
@@ -197,20 +198,7 @@ export const AppShell = () => {
             className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full bg-[#18181B] hover:bg-[#222226] border border-white/5 transition-colors cursor-pointer"
             title="Profile"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-black flex items-center justify-center">
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt="Profile"
-                  onError={(e) => {
-                    e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
-                  }}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-3.5 h-3.5 text-[#8E8E93]" />
-              )}
-            </div>
+            <UserAvatar user={user} size="xs" className="w-6 h-6" />
             <span className="text-xs font-semibold text-white max-w-[80px] truncate">
               {user?.username || 'Profile'}
             </span>

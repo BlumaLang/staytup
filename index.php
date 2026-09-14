@@ -169,6 +169,14 @@ if (file_exists($indexHtml)) {
     } elseif (preg_match('#^/playlist/([^/]+)#i', $route, $m)) {
         $playlistId = urldecode($m[1]);
         $metaTitle = htmlspecialchars('Playlist ' . $playlistId . ' | Staytup Music');
+    } elseif (preg_match('#^/user/([^/]+)#i', $route, $m)) {
+        $userId = urldecode($m[1]);
+        $metaTitle = htmlspecialchars($userId . ' — Listener Profile | Staytup Music');
+        $metaDesc = htmlspecialchars('Check out ' . $userId . '\'s music profile, playlists, and listening activity on Staytup.');
+    } elseif (preg_match('#^/blend/([^/]+)#i', $route, $m)) {
+        $blendId = urldecode($m[1]);
+        $metaTitle = htmlspecialchars('Friend Blend — Shared Daily Music Mix | Staytup');
+        $metaDesc = htmlspecialchars('A personalized daily shared music mix combining listening profiles on Staytup.');
     }
 
     // Dynamic metadata tags

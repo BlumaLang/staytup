@@ -4,6 +4,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
 import { get500x500Image } from '../utils/media';
 import { replenishInfiniteDailyQueue } from '../services/dailyFeedService';
+import { ArtistAvatar } from './ArtistAvatar';
 import {
   X,
   Heart,
@@ -176,13 +177,20 @@ export const DesktopRightPanel = ({ onClose }) => {
                 }
                 className="p-3 rounded-xl bg-[#151518] hover:bg-[#1B1B1F] border border-white/5 cursor-pointer transition-colors group flex items-center justify-between"
               >
-                <div className="min-w-0 flex-1 pr-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E93] block">
-                    Artist
-                  </span>
-                  <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors truncate block mt-0.5">
-                    {currentTrack.artist}
-                  </span>
+                <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                  <ArtistAvatar
+                    name={currentTrack.artist}
+                    size="sm"
+                    className="w-9 h-9 border border-white/10 flex-shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E93] block">
+                      Artist
+                    </span>
+                    <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors truncate block mt-0.5">
+                      {currentTrack.artist}
+                    </span>
+                  </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-[#8E8E93] group-hover:text-white group-hover:translate-x-0.5 transition-all flex-shrink-0" />
               </div>

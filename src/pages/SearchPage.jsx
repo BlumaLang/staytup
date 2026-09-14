@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/endpoints';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
+import { ArtistAvatar } from '../components/ArtistAvatar';
 import {
   Search,
   X,
@@ -496,13 +497,12 @@ export default function SearchPage() {
                             onClick={() => navigate(`/artist/${encodeURIComponent(name)}`)}
                             className="bg-[#121214] hover:bg-[#18181C] p-4 rounded-2xl transition-all cursor-pointer group flex flex-col items-center text-center border border-white/5"
                           >
-                            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden mb-3 bg-black shadow-lg">
-                              <img
-                                src={get500x500Image(artist.image)}
-                                alt={name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            </div>
+                            <ArtistAvatar
+                              name={name}
+                              image={artist.image}
+                              size="2xl"
+                              className="w-28 h-28 sm:w-32 sm:h-32 mb-3 shadow-lg group-hover:scale-105 transition-transform duration-300"
+                            />
                             <h4 className="text-sm font-bold text-white truncate w-full">{name}</h4>
                             <p className="text-xs text-[#8E8E93] mt-0.5">Artist</p>
                           </div>
@@ -658,13 +658,12 @@ export default function SearchPage() {
                       onClick={() => navigate(`/artist/${encodeURIComponent(name)}`)}
                       className="bg-[#121214] hover:bg-[#18181C] p-4 rounded-2xl transition-all cursor-pointer group flex flex-col items-center text-center border border-white/5"
                     >
-                      <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden mb-3 bg-black shadow-lg">
-                        <img
-                          src={get500x500Image(artist.image)}
-                          alt={name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
+                      <ArtistAvatar
+                        name={name}
+                        image={artist.image}
+                        size="2xl"
+                        className="w-28 h-28 sm:w-32 sm:h-32 mb-3 shadow-lg group-hover:scale-105 transition-transform duration-300"
+                      />
                       <h4 className="text-sm font-bold text-white truncate w-full">{name}</h4>
                       <p className="text-xs text-[#8E8E93] mt-0.5">Artist</p>
                     </div>

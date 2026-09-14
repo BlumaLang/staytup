@@ -845,19 +845,29 @@ class JioSaavnService {
             return $cached;
         }
 
+        $artistName = !ctype_digit((string)$cleanKey) ? $cleanKey : '';
+
         // If not numeric, search first to get real ID and 500x500 image
         if (!ctype_digit((string)$artistId)) {
             $search = self::searchArtists((string)$artistId, 1);
             if (!empty($search['artists'][0])) {
                 $found = $search['artists'][0];
                 $img = $found['image'] ?? '';
+                $artistName = $found['name'] ?? $artistName;
                 if (!empty($img) && !str_contains($img, 'default') && !str_contains($img, 'share-image')) {
                     $res = [
-                        'image' => self::getBestImage($img),
-                        'id'    => $found['id'],
+                        'id'               => (string)$found['id'],
+                        'name'             => $artistName,
+                        'image'            => self::getBestImage($img),
+                        'image_source'     => 'jiosaavn_search',
+                        'image_status'     => 'resolved',
+                        'image_updated_at' => time(),
                     ];
                     Storage::setCachedArtistImage($cleanKey, $res);
                     Storage::setCachedArtistImage($found['id'], $res);
+                    if (!empty($artistName)) {
+                        Storage::setCachedArtistImage($artistName, $res);
+                    }
                     return $res;
                 }
                 $artistId = $found['id'];
@@ -870,6 +880,10 @@ class JioSaavnService {
             'n'        => 1,
         ]);
         
+        if ($data && !empty($data['name'])) {
+            $artistName = $data['name'];
+        }
+
         if ($data && !empty($data['image'])) {
             $candidate = self::getBestImage($data['image']);
             if (!empty($candidate) && !str_contains($candidate, 'default') && !str_contains($candidate, 'share-image')) {
@@ -879,23 +893,45 @@ class JioSaavnService {
         
         // Fallback: get artwork from artist's top hit song
         if (!$bestImage) {
-            $cleanName = !ctype_digit((string)$cleanKey) ? $cleanKey : ($data['name'] ?? '');
+            $cleanName = !empty($artistName) ? $artistName : $cleanKey;
             if (!empty($cleanName)) {
                 $searchSong = self::searchSongs("{$cleanName} hits", 1, 1);
                 if (!empty($searchSong['results'][0]['image'])) {
-                    $bestImage = self::getBestImage($searchSong['results'][0]['image']);
+                    $songImg = self::getBestImage($searchSong['results'][0]['image']);
+                    if (!empty($songImg) && !str_contains($songImg, 'default') && !str_contains($songImg, 'share-image')) {
+                        $bestImage = $songImg;
+                    }
                 }
             }
         }
         
-        if (!$bestImage) return null;
+        if (!$bestImage) {
+            // Record deterministic status so we don't spam repeated requests
+            $unresolved = [
+                'id'               => (string)$artistId,
+                'name'             => $artistName ?: $cleanKey,
+                'image'            => '',
+                'image_source'     => 'unresolved',
+                'image_status'     => 'missing',
+                'image_updated_at' => time(),
+            ];
+            Storage::setCachedArtistImage($cleanKey, $unresolved);
+            return null;
+        }
         
         $res = [
-            'image' => $bestImage,
-            'id'    => $artistId,
+            'id'               => (string)$artistId,
+            'name'             => $artistName ?: $cleanKey,
+            'image'            => $bestImage,
+            'image_source'     => 'jiosaavn_page',
+            'image_status'     => 'resolved',
+            'image_updated_at' => time(),
         ];
         Storage::setCachedArtistImage($cleanKey, $res);
         Storage::setCachedArtistImage($artistId, $res);
+        if (!empty($artistName)) {
+            Storage::setCachedArtistImage($artistName, $res);
+        }
         return $res;
     }
     

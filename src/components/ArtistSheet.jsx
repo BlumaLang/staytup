@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { X, Play, Users, Music2, Sparkles, Heart, Check, UserPlus } from 'lucide-react';
+import { ArtistAvatar } from './ArtistAvatar';
 
 export const ArtistSheet = ({ artistName, artistId, isOpen, onClose }) => {
   const { user } = useAuth();
@@ -68,7 +69,7 @@ export const ArtistSheet = ({ artistName, artistId, isOpen, onClose }) => {
 
   const artistData = info?.artist || {};
   const displayName = artistData.name || artistName || 'Artist Profile';
-  const displayImage = artistData.image || artistData.thumbnail || 'https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg';
+  const displayImage = artistData.image || artistData.thumbnail || '';
 
   // Check initial follow status from localStorage and user profile
   useEffect(() => {
@@ -228,10 +229,10 @@ export const ArtistSheet = ({ artistName, artistId, isOpen, onClose }) => {
                   }}
                   title="Click to cycle geometric shape"
                 >
-                  <img
-                    src={get500x500Image(displayImage)}
-                    alt={displayName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  <ArtistAvatar
+                    name={displayName}
+                    image={displayImage}
+                    className="w-full h-full !rounded-none object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
               </div>

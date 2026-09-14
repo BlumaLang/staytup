@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, Search, Library, Users, User } from 'lucide-react';
+import { Home, Search, Library, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { UserAvatar } from './UserAvatar';
 
 export const BottomNav = ({ activeView, setActiveView, onOpenProfile }) => {
   const { user } = useAuth();
@@ -48,22 +49,11 @@ export const BottomNav = ({ activeView, setActiveView, onOpenProfile }) => {
           className="flex flex-col items-center justify-center gap-1 group py-1 px-2 min-w-[54px] cursor-pointer"
         >
           <div
-            className={`w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-[#1A1A1E] transition-transform duration-150 ${
+            className={`w-5 h-5 rounded-full overflow-hidden flex items-center justify-center transition-transform duration-150 ${
               activeView === 'profile' ? 'ring-2 ring-white scale-105' : 'ring-1 ring-white/20'
             }`}
           >
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt="Profile"
-                onError={(e) => {
-                  e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
-                }}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <User className="w-3.5 h-3.5 text-[#8E8E93]" />
-            )}
+            <UserAvatar user={user} size="xs" className="w-5 h-5 text-[9px]" />
           </div>
           <span
             className={`text-[10px] tracking-tight transition-colors duration-150 ${

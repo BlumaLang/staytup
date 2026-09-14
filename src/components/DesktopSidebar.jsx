@@ -18,6 +18,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
+import { ArtistAvatar } from './ArtistAvatar';
 
 export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpenFriends }) => {
   const { user } = useAuth();
@@ -312,13 +313,11 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
                     isArtistActive ? 'bg-white/12 text-white' : 'hover:bg-white/5 text-white'
                   }`}
                 >
-                  <img
-                    src={get500x500Image(img)}
-                    alt={name}
-                    onError={(e) => {
-                      e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97-BlN4ymNU.png';
-                    }}
-                    className="w-9 h-9 rounded-full object-cover bg-black flex-shrink-0 border border-white/10 shadow-sm"
+                  <ArtistAvatar
+                    name={name}
+                    image={img}
+                    size="sm"
+                    className="w-9 h-9 flex-shrink-0 border border-white/10 shadow-sm"
                   />
                   {!isCollapsed && (
                     <div className="min-w-0 flex-1">

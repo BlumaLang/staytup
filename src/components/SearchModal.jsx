@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api/endpoints';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
-import { Search, X, Play, User, ArrowLeft, Disc3, ListMusic } from 'lucide-react';
+import { Search, X, Play, ArrowLeft, Disc3, ListMusic } from 'lucide-react';
 import { ArtistSheet } from './ArtistSheet';
 import { AlbumSheet } from './AlbumSheet';
+import { ArtistAvatar } from './ArtistAvatar';
 
 const TRENDING_TAGS = [
   'Arijit Singh',
@@ -506,22 +507,12 @@ export const SearchModal = ({ isOpen, onClose }) => {
                       className="flex items-center justify-between py-2.5 px-2 hover:bg-[#121212] rounded-xl cursor-pointer transition-colors group"
                     >
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-11 h-11 rounded-full overflow-hidden bg-[#1C1C1E] flex-shrink-0 border border-white/5">
-                          {item.image && !item.image.includes('default') ? (
-                            <img
-                              src={get500x500Image(item.image)}
-                              alt={item.title}
-                              onError={(e) => {
-                                e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
-                              }}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[#8E8E93]">
-                              <User className="w-5 h-5" />
-                            </div>
-                          )}
-                        </div>
+                        <ArtistAvatar
+                          name={item.title}
+                          image={item.image}
+                          size="sm"
+                          className="w-11 h-11 border border-white/10"
+                        />
                         <div className="min-w-0 text-left">
                           <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
                             {item.title}
@@ -768,16 +759,12 @@ export const SearchModal = ({ isOpen, onClose }) => {
                       onClick={() => setSelectedArtist({ name: artist.name || artist.title, id: artist.id })}
                       className="cursor-pointer flex flex-col items-center text-center group transition-transform active:scale-95"
                     >
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mb-2 bg-[#121212] group-hover:ring-2 group-hover:ring-white transition-all flex-shrink-0">
-                        <img
-                          src={get500x500Image(artist.image || artist.thumbnail)}
-                          alt={artist.name || artist.title}
-                          onError={(e) => {
-                            e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
-                          }}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <ArtistAvatar
+                        name={artist.name || artist.title}
+                        image={artist.image || artist.thumbnail}
+                        size="xl"
+                        className="w-20 h-20 sm:w-24 sm:h-24 mb-2 group-hover:ring-2 group-hover:ring-white transition-all"
+                      />
                       <span className="font-bold text-xs text-white line-clamp-1 group-hover:text-white">
                         {artist.name || artist.title}
                       </span>
