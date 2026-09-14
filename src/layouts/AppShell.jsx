@@ -2,15 +2,20 @@ import React, { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { DesktopSidebar } from '../components/DesktopSidebar';
 import { BottomNav } from '../components/BottomNav';
+import { Miniplayer } from '../components/Miniplayer';
+import { FullPlayerView } from '../components/FullPlayerView';
 import { QueueModal } from '../components/QueueModal';
 import { SleepTimerModal } from '../components/SleepTimerModal';
 import { LyricsDrawer } from '../components/LyricsDrawer';
 import { LoginModal } from '../components/LoginModal';
+import { usePlayer } from '../context/PlayerContext';
 
 export const AppShell = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentTrack } = usePlayer();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false);
 
   // Map route pathname to active nav item
   const getActiveView = () => {
@@ -49,6 +54,7 @@ export const AppShell = () => {
   };
 
   const isForYou = location.pathname === '/foryou';
+  const hasTrack = !!currentTrack;
 
   return (
     <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex font-sans select-none">
@@ -63,7 +69,15 @@ export const AppShell = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
         {/* Routed Page Content */}
-        <main className={`flex-1 w-full h-full relative overflow-y-auto ${isForYou ? 'overflow-hidden p-0' : 'pb-24 md:pb-24 no-scrollbar'}`}>
+        <main
+          className={`flex-1 w-full h-full relative overflow-y-auto ${
+            isForYou
+              ? 'overflow-hidden p-0'
+              : hasTrack
+              ? 'pb-36 lg:pb-28 no-scrollbar'
+              : 'pb-20 lg:pb-6 no-scrollbar'
+          }`}
+        >
           <Outlet />
         </main>
 
@@ -80,6 +94,17 @@ export const AppShell = () => {
         <LoginModal
           isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
+        />
+
+        {/* Persistent Miniplayer (hidden on /foryou to avoid double-player clash) */}
+        {!isForYou && (
+          <Miniplayer onExpand={() => setIsFullPlayerOpen(true)} />
+        )}
+
+        {/* Full Player Overlay */}
+        <FullPlayerView
+          isOpen={isFullPlayerOpen}
+          onClose={() => setIsFullPlayerOpen(false)}
         />
 
         {/* Bottom Navigation Bar — mobile only */}
