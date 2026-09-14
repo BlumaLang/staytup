@@ -2,7 +2,8 @@
 /**
  * Staytup Music — Front Controller & SPA Shell Server
  * Routes /api/* to the PHP backend.
- * Serves static Vite assets and routes all client-side pages to dist/index.html.
+ * Serves static Vite assets, injects Open Graph meta tags for deep links,
+ * and routes all client-side pages to dist/index.html.
  */
 
 // Detect base path reliably
@@ -38,18 +39,18 @@ if (preg_match('#^/api(/|$)#i', $route) || preg_match('#/api(/|$)#i', $uri)) {
 
 // ==================== 2. STATIC FILES ====================
 $mimeTypes = [
-    'js'   => 'application/javascript',
-    'css'  => 'text/css',
-    'json' => 'application/json',
+    'js'          => 'application/javascript',
+    'css'         => 'text/css',
+    'json'        => 'application/json',
     'webmanifest' => 'application/manifest+json',
-    'png'  => 'image/png',
-    'jpg'  => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'svg'  => 'image/svg+xml',
-    'ico'  => 'image/x-icon',
-    'woff' => 'font/woff',
-    'woff2'=> 'font/woff2',
-    'ttf'  => 'font/ttf'
+    'png'         => 'image/png',
+    'jpg'         => 'image/jpeg',
+    'jpeg'        => 'image/jpeg',
+    'svg'         => 'image/svg+xml',
+    'ico'         => 'image/x-icon',
+    'woff'        => 'font/woff',
+    'woff2'       => 'font/woff2',
+    'ttf'         => 'font/ttf'
 ];
 
 $cleanPath = ltrim($route, '/');
@@ -86,21 +87,76 @@ if ($route === '/manifest.json' || $route === '/manifest.webmanifest') {
 // Service worker handler
 if (in_array($route, ['/sw.js', '/service-worker.js', '/registerSW.js'])) {
     header('Content-Type: application/javascript');
-    $swFile = __DIR__ . '/dist' . $route;
+    $swFile = file_exists(__DIR__ . '/dist' . $route) 
+        ? __DIR__ . '/dist' . $route 
+        : __DIR__ . '/public/sw.js';
     if (file_exists($swFile)) {
+        header('Service-Worker-Allowed: /');
         readfile($swFile);
         exit;
     }
 }
 
-// ==================== 3. SPA CLIENT-SIDE FALLBACK ====================
-// Serve dist/index.html for all frontend routes with dynamic base href
+// ==================== 3. SPA CLIENT-SIDE FALLBACK WITH OPEN GRAPH METADATA ====================
 $indexHtml = __DIR__ . '/dist/index.html';
 if (file_exists($indexHtml)) {
     header('Content-Type: text/html; charset=utf-8');
     $content = file_get_contents($indexHtml);
     $baseHref = ($basePath ?: '') . '/';
-    $content = preg_replace('/<head>/i', "<head>\n    <base href=\"{$baseHref}\" />", $content, 1);
+
+    // Default metadata
+    $metaTitle = "Staytup Music — Sound Without Limits";
+    $metaDesc = "Fast, ad-free music streaming platform with synchronized lyrics, trending hits, and social listening.";
+    $metaImage = "https://staytupnow.web.app/icon.png";
+    $metaUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+
+    // Check for song deep link: /song/:id or /track/:id
+    if (preg_match('#^/(?:song|track)/([a-zA-Z0-9_\-]+)#i', $route, $m)) {
+        $songId = $m[1];
+        if (file_exists(__DIR__ . '/api/services/jiosaavn.php')) {
+            try {
+                require_once __DIR__ . '/api/services/jiosaavn.php';
+                $cleanId = preg_replace('/^saavn_/', '', $songId);
+                $track = JioSaavnService::getTrackDetails($cleanId);
+                if ($track && !empty($track['title'])) {
+                    $metaTitle = htmlspecialchars($track['title'] . ' - ' . $track['artist'] . ' | Staytup Music');
+                    $metaDesc = htmlspecialchars('Listen to ' . $track['title'] . ' by ' . $track['artist'] . ' on Staytup Music.');
+                    if (!empty($track['image'])) {
+                        $metaImage = htmlspecialchars($track['image']);
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+    } elseif (preg_match('#^/artist/([^/]+)#i', $route, $m)) {
+        $artistName = urldecode($m[1]);
+        $metaTitle = htmlspecialchars($artistName . ' — Music, Songs & Albums | Staytup');
+        $metaDesc = htmlspecialchars('Listen to top hits, albums, and popular tracks by ' . $artistName . ' on Staytup Music.');
+    } elseif (preg_match('#^/album/([^/]+)#i', $route, $m)) {
+        $albumId = urldecode($m[1]);
+        $metaTitle = htmlspecialchars('Album ' . $albumId . ' | Staytup Music');
+    } elseif (preg_match('#^/playlist/([^/]+)#i', $route, $m)) {
+        $playlistId = urldecode($m[1]);
+        $metaTitle = htmlspecialchars('Playlist ' . $playlistId . ' | Staytup Music');
+    }
+
+    // Dynamic metadata tags
+    $injectedTags = <<<HTML
+    <base href="{$baseHref}" />
+    <title>{$metaTitle}</title>
+    <meta property="og:title" content="{$metaTitle}" />
+    <meta property="og:description" content="{$metaDesc}" />
+    <meta property="og:image" content="{$metaImage}" />
+    <meta property="og:url" content="{$metaUrl}" />
+    <meta property="og:type" content="music.song" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{$metaTitle}" />
+    <meta name="twitter:description" content="{$metaDesc}" />
+    <meta name="twitter:image" content="{$metaImage}" />
+HTML;
+
+    $content = preg_replace('/<title>.*?<\/title>/i', '', $content, 1);
+    $content = preg_replace('/<head>/i', "<head>\n" . $injectedTags, $content, 1);
+
     echo $content;
     exit;
 }

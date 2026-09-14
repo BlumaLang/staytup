@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { SongDetailsModal } from './SongDetailsModal';
 import { PlaylistSheet } from './PlaylistSheet';
+import { getSongUrl, shareContent } from '../utils/canonicalUrl';
 
 export const FullPlayerView = ({ isOpen, onClose }) => {
   const {
@@ -91,15 +92,16 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
   };
 
   const handleShare = async () => {
-    const text = `Listen to ${currentTrack.title} by ${currentTrack.artist} on Staytup Music!`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: currentTrack.title, text, url: window.location.href });
-      } catch (err) {}
-    } else {
-      await navigator.clipboard.writeText(text);
+    if (!currentTrack) return;
+    const url = getSongUrl(currentTrack);
+    const result = await shareContent({
+      title: `${currentTrack.title} - ${currentTrack.artist}`,
+      text: `Listen to "${currentTrack.title}" by ${currentTrack.artist} on Staytup Music!`,
+      url,
+    });
+    if (result.success) {
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      setTimeout(() => setIsCopied(false), 2200);
     }
   };
 

@@ -10,7 +10,10 @@ import {
   Clock,
   ArrowLeft,
   ListMusic,
+  Share2,
+  Check,
 } from 'lucide-react';
+import { getPlaylistUrl, shareContent } from '../utils/canonicalUrl';
 
 const formatDuration = (seconds) => {
   if (!seconds || isNaN(seconds)) return '--:--';
@@ -27,8 +30,23 @@ export default function PlaylistPage() {
   const [playlist, setPlaylist] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shareToast, setShareToast] = useState(false);
 
   const playlistId = decodeURIComponent(id || '');
+
+  const handleShare = async () => {
+    if (!playlist) return;
+    const url = getPlaylistUrl(playlist);
+    const result = await shareContent({
+      title: `${playlistTitle} - Curated Playlist`,
+      text: `Listen to "${playlistTitle}" playlist on Staytup Music!`,
+      url,
+    });
+    if (result.success) {
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    }
+  };
 
   useEffect(() => {
     if (!playlistId) return;
@@ -165,6 +183,14 @@ export default function PlaylistPage() {
                   <Shuffle className="w-4 h-4" />
                   <span>Shuffle</span>
                 </button>
+                <button
+                  onClick={handleShare}
+                  className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm flex items-center gap-2 transition-colors cursor-pointer"
+                  title="Share Playlist"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
               </div>
             </div>
           </div>
@@ -233,6 +259,13 @@ export default function PlaylistPage() {
               })}
             </div>
           </div>
+        </div>
+      )}
+
+      {shareToast && (
+        <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#22C55E] text-black font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <Check className="w-4 h-4 stroke-[3]" />
+          <span>Playlist link copied to clipboard!</span>
         </div>
       )}
     </div>

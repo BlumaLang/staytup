@@ -13,7 +13,9 @@ import {
   Sparkles,
   Disc3,
   Users,
+  Share2,
 } from 'lucide-react';
+import { getArtistUrl, shareContent } from '../utils/canonicalUrl';
 
 export default function ArtistPage() {
   const { id } = useParams();
@@ -27,8 +29,22 @@ export default function ArtistPage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersOffset, setFollowersOffset] = useState(0);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
 
   const artistIdentifier = decodeURIComponent(id || '');
+
+  const handleShare = async () => {
+    const url = getArtistUrl(displayName || artistIdentifier);
+    const result = await shareContent({
+      title: `${displayName} - Artist Profile`,
+      text: `Listen to "${displayName}" on Staytup Music!`,
+      url,
+    });
+    if (result.success) {
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    }
+  };
 
   useEffect(() => {
     if (!artistIdentifier) return;
@@ -260,6 +276,15 @@ export default function ArtistPage() {
                       </span>
                     )}
                   </button>
+
+                  <button
+                    onClick={handleShare}
+                    className="px-4 py-2.5 rounded-full text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center gap-2 transition-colors cursor-pointer"
+                    title="Share Artist"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Share</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -350,6 +375,13 @@ export default function ArtistPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {shareToast && (
+        <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#22C55E] text-black font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <Check className="w-4 h-4 stroke-[3]" />
+          <span>Artist link copied to clipboard!</span>
         </div>
       )}
     </div>

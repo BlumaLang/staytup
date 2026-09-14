@@ -10,7 +10,10 @@ import {
   Clock,
   ArrowLeft,
   Disc3,
+  Share2,
+  Check,
 } from 'lucide-react';
+import { getAlbumUrl, shareContent } from '../utils/canonicalUrl';
 
 const formatDuration = (seconds) => {
   if (!seconds || isNaN(seconds)) return '--:--';
@@ -27,8 +30,23 @@ export default function AlbumPage() {
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shareToast, setShareToast] = useState(false);
 
   const albumId = decodeURIComponent(id || '');
+
+  const handleShare = async () => {
+    if (!album) return;
+    const url = getAlbumUrl(album);
+    const result = await shareContent({
+      title: `${albumTitle} - ${albumArtist}`,
+      text: `Check out "${albumTitle}" by ${albumArtist} on Staytup Music!`,
+      url,
+    });
+    if (result.success) {
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 2500);
+    }
+  };
 
   useEffect(() => {
     if (!albumId) return;
@@ -166,6 +184,14 @@ export default function AlbumPage() {
                   <Shuffle className="w-4 h-4" />
                   <span>Shuffle</span>
                 </button>
+                <button
+                  onClick={handleShare}
+                  className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm flex items-center gap-2 transition-colors cursor-pointer"
+                  title="Share Album"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
               </div>
             </div>
           </div>
@@ -234,6 +260,13 @@ export default function AlbumPage() {
               })}
             </div>
           </div>
+        </div>
+      )}
+
+      {shareToast && (
+        <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#22C55E] text-black font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <Check className="w-4 h-4 stroke-[3]" />
+          <span>Album link copied to clipboard!</span>
         </div>
       )}
     </div>
