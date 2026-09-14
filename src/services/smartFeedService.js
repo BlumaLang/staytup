@@ -407,12 +407,12 @@ export const loadSmartFeed = async (user = null) => {
 
   // Step H: Curated Mood & Vibe Playlists
   const moodMixes = [
-    { id: 'mood_lofi', title: 'Chill & Lo-Fi', subtitle: 'Slowed beats & cozy acoustics', image: 'https://c.saavncdn.com/editorial/ChillLoFi_20241010120522_500x500.jpg', query: 'chill lofi hindi' },
-    { id: 'mood_punjabi', title: 'Punjabi Hits', subtitle: 'Hustle, drip & high-energy beats', image: 'https://c.saavncdn.com/editorial/PunjabiHits2024_20241009101737_500x500.jpg', query: 'punjabi hits 2026' },
-    { id: 'mood_romantic', title: 'Romantic Melodies', subtitle: 'Soulful love songs for the heart', image: 'https://c.saavncdn.com/editorial/RomanticMelodies_20241010120649_500x500.jpg', query: 'romantic hindi hits' },
-    { id: 'mood_retro', title: 'Bollywood Classics', subtitle: 'Golden 90s & 2000s timeless hits', image: 'https://c.saavncdn.com/editorial/BollywoodClassics_20241010120523_500x500.jpg', query: '90s bollywood hits' },
-    { id: 'mood_party', title: 'Club & Dance Bangers', subtitle: 'Nonstop party & festival drops', image: 'https://c.saavncdn.com/editorial/ClubAndDance_20241010120524_500x500.jpg', query: 'party hindi dance songs' },
-    { id: 'mood_indie', title: 'Indie Pop Discovery', subtitle: 'Fresh acoustic voices & stories', image: 'https://c.saavncdn.com/editorial/IndiePop_20241010120525_500x500.jpg', query: 'indian indie pop' },
+    { id: 'mood_lofi', title: 'Chill & Lo-Fi', subtitle: 'Slowed beats & cozy acoustics', image: 'https://i.pinimg.com/736x/81/72/26/817226cbcea560a00430ec74c97c9358.jpg', query: 'chill lofi hindi' },
+    { id: 'mood_punjabi', title: 'Punjabi Hits', subtitle: 'Hustle, drip & high-energy beats', image: 'https://i.pinimg.com/1200x/b0/99/60/b09960b3cc975e1f0a85ec3e423ff35b.jpg', query: 'punjabi hits 2026' },
+    { id: 'mood_romantic', title: 'Romantic Melodies', subtitle: 'Soulful love songs for the heart', image: 'https://i.pinimg.com/736x/fe/81/a9/fe81a9e69e2a9f402463582cf0ddae93.jpg', query: 'romantic hindi hits' },
+    { id: 'mood_retro', title: 'Bollywood Classics', subtitle: 'Golden 90s & 2000s timeless hits', image: 'https://i.pinimg.com/736x/24/22/f6/2422f6c3694bbc2c7bcb2def37dca470.jpg', query: '90s bollywood hits' },
+    { id: 'mood_party', title: 'Club & Dance Bangers', subtitle: 'Nonstop party & festival drops', image: 'https://i.pinimg.com/736x/df/a0/93/dfa093f4376b1402f8a9b09ae9223405.jpg', query: 'party hindi dance songs' },
+    { id: 'mood_indie', title: 'Indie Pop Discovery', subtitle: 'Fresh acoustic voices & stories', image: 'https://i.pinimg.com/736x/e7/b3/1f/e7b31fb612f78536804721cedbe6ca07.jpg', query: 'indian indie pop' },
   ];
 
   // Step I: Today's Biggest Hits (Curated tracks from trending)
