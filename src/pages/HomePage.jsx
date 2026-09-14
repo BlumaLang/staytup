@@ -51,16 +51,6 @@ export default function HomePage() {
     };
   }, [user]);
 
-  // Greeting helper
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  const displayName = user?.username || user?.displayName?.split(' ')[0] || '';
-
   // Quick Jump cards derived from smartFeed (Spotify 6-Pack Grid)
   const quickCards = [];
   if (smartFeed.trendingOnApp?.[0]) {
@@ -113,56 +103,25 @@ export default function HomePage() {
       onPlay: () => navigate(`/playlist/${encodeURIComponent(p.id)}`),
     });
   }
-  if (quickCards.length < 5 && smartFeed.trendingOnApp?.length > 1) {
-    for (let i = 1; i < smartFeed.trendingOnApp.length && quickCards.length < 5; i++) {
-      const t = smartFeed.trendingOnApp[i];
-      quickCards.push({
-        title: t.title,
-        subtitle: t.artist || 'Trending',
-        image: get500x500Image(t.image || t.thumbnail || t.artwork_url),
-        onClick: () => playTrack(t, smartFeed.trendingOnApp),
-        onPlay: () => playTrack(t, smartFeed.trendingOnApp),
-      });
+  if (quickCards.length < 5 && smartFeed.todaysHits?.length > 0) {
+    for (let i = 0; i < smartFeed.todaysHits.length && quickCards.length < 5; i++) {
+      const t = smartFeed.todaysHits[i];
+      if (!quickCards.some(q => q.title === t.title)) {
+        quickCards.push({
+          title: t.title,
+          subtitle: t.artist || 'Top Hit',
+          image: get500x500Image(t.image || t.thumbnail || t.artwork_url),
+          onClick: () => playTrack(t, smartFeed.todaysHits),
+          onPlay: () => playTrack(t, smartFeed.todaysHits),
+        });
+      }
     }
   }
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
-      {/* Smart Welcome & Filter Chips Bar (Spotify Clean Sticky Header) */}
-      <div className="sticky top-0 z-20 px-4 sm:px-8 pt-4 pb-3 bg-[#121212]/90 backdrop-blur-xl border-b border-white/[0.04]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-1">
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <span>{getGreeting()}{displayName ? `, ${displayName}` : ''}</span>
-          </h1>
-
-          {/* Filter Chips Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            {[
-              { id: 'all', label: 'All' },
-              { id: 'music', label: 'Music' },
-              { id: 'podcasts', label: 'Podcasts' },
-            ].map((chip) => {
-              const isActive = activeFilter === chip.id;
-              return (
-                <button
-                  key={chip.id}
-                  onClick={() => setActiveFilter(chip.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? 'bg-white text-black shadow-md'
-                      : 'bg-[#242424] hover:bg-[#2A2A2A] text-[#B3B3B3] hover:text-white'
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* Main Content View (Full Width) */}
-      <div className="flex-1 px-4 sm:px-8 py-6 w-full space-y-10">
+      <div className="flex-1 px-4 sm:px-8 py-5 sm:py-6 w-full space-y-10">
         {/* ========================================================================= */}
         {/* QUICK JUMP 6-PACK GRID (Spotify Signature Desktop Dashboard Grid)         */}
         {/* ========================================================================= */}

@@ -1,11 +1,7 @@
 import React from 'react';
 import { Home, Search, Library, Users } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { UserAvatar } from './UserAvatar';
 
-export const BottomNav = ({ activeView, setActiveView, onOpenProfile }) => {
-  const { user } = useAuth();
-
+export const BottomNav = ({ activeView, setActiveView }) => {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'search', label: 'Search', icon: Search },
@@ -42,27 +38,6 @@ export const BottomNav = ({ activeView, setActiveView, onOpenProfile }) => {
             </button>
           );
         })}
-
-        {/* Profile */}
-        <button
-          onClick={onOpenProfile}
-          className="flex flex-col items-center justify-center gap-1 group py-1 px-2 min-w-[54px] cursor-pointer"
-        >
-          <div
-            className={`w-5 h-5 rounded-full overflow-hidden flex items-center justify-center transition-transform duration-150 ${
-              activeView === 'profile' ? 'ring-2 ring-white scale-105' : 'ring-1 ring-white/20'
-            }`}
-          >
-            <UserAvatar user={user} size="xs" className="w-5 h-5 text-[9px]" />
-          </div>
-          <span
-            className={`text-[10px] tracking-tight transition-colors duration-150 ${
-              activeView === 'profile' ? 'text-white font-bold' : 'text-[#8E8E93] font-medium'
-            }`}
-          >
-            Profile
-          </span>
-        </button>
       </div>
     </nav>
   );

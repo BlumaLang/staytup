@@ -376,6 +376,21 @@ export const loadSmartFeed = async (user = null) => {
   // Step E: Popular Playlists (5–8 items)
   const popularPlaylists = getPopularPlaylists(searchPlaylists, 8);
 
+  // Step F: Jump Back In (User's recently played or listening history, fallback to trending)
+  let jumpBackIn = [];
+  try {
+    const recents = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
+    if (Array.isArray(recents) && recents.length > 0) {
+      jumpBackIn = recents.slice(0, 10);
+    } else if (Array.isArray(userHistory) && userHistory.length > 0) {
+      jumpBackIn = userHistory.slice(0, 10);
+    }
+  } catch (e) {}
+
+  if (jumpBackIn.length === 0 && Array.isArray(rawTrending) && rawTrending.length > 4) {
+    jumpBackIn = rawTrending.slice(4, 12);
+  }
+
   // Step G: Curated Popular Artists
   const popularArtists = [
     { name: 'Arijit Singh', id: 'Arijit Singh', image: 'https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg' },
@@ -401,7 +416,7 @@ export const loadSmartFeed = async (user = null) => {
   ];
 
   // Step I: Today's Biggest Hits (Curated tracks from trending)
-  const todaysHits = rawTrending.slice(0, 8);
+  const todaysHits = Array.isArray(rawTrending) && rawTrending.length > 0 ? rawTrending.slice(0, 10) : [];
 
   return {
     trendingOnApp: trendingOnApp.length > 0 ? trendingOnApp : null,
