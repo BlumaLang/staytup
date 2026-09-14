@@ -249,10 +249,10 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => navigate('/settings')}
-                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
+                title="Settings"
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white flex items-center justify-center transition-transform active:scale-95 cursor-pointer flex-shrink-0"
               >
-                <Settings className="w-3.5 h-3.5" />
-                Settings
+                <Settings className="w-4 h-4" />
               </button>
             </div>
           </div>
