@@ -425,11 +425,15 @@ export default function HomePage() {
                 onClick={() => navigate(`/search?q=${encodeURIComponent(mood.query)}`)}
                 className="w-32 sm:w-48 flex-shrink-0 p-2.5 sm:p-3.5 rounded-xl bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer flex flex-col justify-between select-none relative"
               >
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black shadow-md mb-2 sm:mb-3">
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#222] shadow-md mb-2 sm:mb-3">
                   <img
                     src={mood.image}
                     alt={mood.title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentNode.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
+                    }}
                   />
                   <div className="absolute right-2 bottom-2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
                     <Play className="w-4 h-4 fill-black ml-0.5" />

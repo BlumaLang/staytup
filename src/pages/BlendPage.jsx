@@ -209,14 +209,9 @@ export default function BlendPage() {
       <div className="min-h-full bg-black text-white px-4 sm:px-6 py-6 max-w-4xl mx-auto select-none">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Blend
-            </h1>
-            <p className="text-xs sm:text-sm text-[#8E8E93] mt-0.5">
-              Shared mixes combining music taste between friends.
-            </p>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Blend
+          </h1>
 
           <button
             onClick={handleOpenInviteModal}
@@ -242,45 +237,73 @@ export default function BlendPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {allBlends.map((b) => {
               const membersList = b.members || [];
-              const memberNames = membersList.map((m) => m.name || m.username).filter(Boolean);
+              const memberNames = membersList.map((m) => m.name || m.username || m.displayName).filter(Boolean);
               const namesLabel = memberNames.length > 0 ? memberNames.join(' + ') : b.title || 'Shared Blend';
+
+              // Build gradient colors per blend
+              const gradColors = [
+                'from-emerald-600/80 to-teal-900/90',
+                'from-purple-600/80 to-indigo-900/90',
+                'from-rose-600/80 to-pink-900/90',
+                'from-orange-600/80 to-amber-900/90',
+              ];
+              const gradIdx = (b.id || '').charCodeAt(0) % gradColors.length;
+              const grad = gradColors[gradIdx];
 
               return (
                 <div
                   key={b.id}
                   onClick={() => navigate(`/blend/${b.id}`)}
-                  className="bg-[#141417] hover:bg-[#1C1C20] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all cursor-pointer group flex items-center justify-between gap-3"
+                  className={`relative rounded-2xl overflow-hidden cursor-pointer group transition-transform active:scale-[0.98] bg-gradient-to-br ${grad} border border-white/10 hover:border-white/20`}
+                  style={{ minHeight: '160px' }}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* Member Avatars Stack */}
-                    <div className="flex items-center -space-x-2 flex-shrink-0">
-                      {membersList.slice(0, 3).map((m, idx) => (
-                        <UserAvatar
-                          key={idx}
-                          user={m}
-                          size="sm"
-                          className="ring-2 ring-[#141417]"
-                        />
-                      ))}
+                  {/* Background texture */}
+                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,_white,_transparent_60%)]" />
+
+                  {/* Content */}
+                  <div className="relative z-10 p-5 flex flex-col justify-between h-full" style={{ minHeight: '160px' }}>
+                    {/* Top: avatars + match score badge */}
+                    <div className="flex items-start justify-between">
+                      {/* Stacked avatars */}
+                      <div className="flex items-center -space-x-2.5">
+                        {membersList.slice(0, 3).map((m, idx) => (
+                          <UserAvatar
+                            key={idx}
+                            user={m}
+                            size="sm"
+                            className="ring-2 ring-black/40 shadow-lg"
+                          />
+                        ))}
+                      </div>
+                      {/* Match score badge */}
+                      {b.matchScore && (
+                        <span className="text-[10px] font-black text-white bg-white/20 backdrop-blur-sm border border-white/20 px-2 py-0.5 rounded-full">
+                          {b.matchScore}% match
+                        </span>
+                      )}
                     </div>
 
-                    {/* Member Names */}
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors truncate">
+                    {/* Bottom: names + stats + open button */}
+                    <div className="mt-4">
+                      <h3 className="text-base font-extrabold text-white leading-tight truncate max-w-full">
                         {namesLabel}
                       </h3>
-                      <p className="text-[11px] text-[#8E8E93] mt-0.5">
-                        {(b.tracks || []).length} songs • {b.matchScore || 85}% match
+                      <p className="text-xs text-white/60 mt-0.5">
+                        {(b.tracks || []).length > 0 ? `${(b.tracks || []).length} songs` : 'Blend'} • Shared Mix
                       </p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
+                          Taste Blend
+                        </span>
+                        <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-1">
+                          Open →
+                        </span>
+                      </div>
                     </div>
                   </div>
-
-                  <span className="text-xs text-[#8E8E93] group-hover:text-white transition-colors flex-shrink-0">
-                    Open →
-                  </span>
                 </div>
               );
             })}
