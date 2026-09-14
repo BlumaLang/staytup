@@ -376,16 +376,32 @@ export const loadSmartFeed = async (user = null) => {
   // Step E: Popular Playlists (5–8 items)
   const popularPlaylists = getPopularPlaylists(searchPlaylists, 8);
 
-  // Step F: Jump back in (User's personal history if distinct)
-  const jumpBackIn = [];
-  for (const track of userHistory) {
-    const vid = String(track.videoId || track.video_id || track.id || '');
-    if (vid && !seenIds.has(vid)) {
-      seenIds.add(vid);
-      jumpBackIn.push(track);
-      if (jumpBackIn.length >= 6) break;
-    }
-  }
+  // Step G: Curated Popular Artists
+  const popularArtists = [
+    { name: 'Arijit Singh', id: 'Arijit Singh', image: 'https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg' },
+    { name: 'Karan Aujla', id: 'Karan Aujla', image: '' },
+    { name: 'Diljit Dosanjh', id: 'Diljit Dosanjh', image: '' },
+    { name: 'Shreya Ghoshal', id: 'Shreya Ghoshal', image: '' },
+    { name: 'Pritam', id: 'Pritam', image: '' },
+    { name: 'AP Dhillon', id: 'AP Dhillon', image: '' },
+    { name: 'Sidhu Moose Wala', id: 'Sidhu Moose Wala', image: '' },
+    { name: 'Badshah', id: 'Badshah', image: '' },
+    { name: 'Anuv Jain', id: 'Anuv Jain', image: '' },
+    { name: 'Atif Aslam', id: 'Atif Aslam', image: '' },
+  ];
+
+  // Step H: Curated Mood & Vibe Playlists
+  const moodMixes = [
+    { id: 'mood_lofi', title: 'Chill & Lo-Fi', subtitle: 'Slowed beats & cozy acoustics', image: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500&auto=format&fit=crop&q=80', query: 'chill lofi hindi' },
+    { id: 'mood_punjabi', title: 'Punjabi Hits', subtitle: 'Hustle, drip & high-energy beats', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80', query: 'punjabi hits 2026' },
+    { id: 'mood_romantic', title: 'Romantic Melodies', subtitle: 'Soulful love songs for the heart', image: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=500&auto=format&fit=crop&q=80', query: 'romantic hindi hits' },
+    { id: 'mood_retro', title: 'Bollywood Classics', subtitle: 'Golden 90s & 2000s timeless hits', image: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=500&auto=format&fit=crop&q=80', query: '90s bollywood hits' },
+    { id: 'mood_party', title: 'Club & Dance Bangers', subtitle: 'Nonstop party & festival drops', image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=500&auto=format&fit=crop&q=80', query: 'party hindi dance songs' },
+    { id: 'mood_indie', title: 'Indie Pop Discovery', subtitle: 'Fresh acoustic voices & stories', image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500&auto=format&fit=crop&q=80', query: 'indian indie pop' },
+  ];
+
+  // Step I: Today's Biggest Hits (Curated tracks from trending)
+  const todaysHits = rawTrending.slice(0, 8);
 
   return {
     trendingOnApp: trendingOnApp.length > 0 ? trendingOnApp : null,
@@ -394,5 +410,8 @@ export const loadSmartFeed = async (user = null) => {
     popularAlbums: popularAlbums.length > 0 ? popularAlbums : null,
     popularPlaylists: popularPlaylists.length > 0 ? popularPlaylists : null,
     jumpBackIn: jumpBackIn.length > 0 ? jumpBackIn : null,
+    popularArtists,
+    moodMixes,
+    todaysHits: todaysHits.length > 0 ? todaysHits : null,
   };
 };

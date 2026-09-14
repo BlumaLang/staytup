@@ -3,11 +3,14 @@ import { Play, Pause, Heart, Sparkles, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { get500x500Image } from '../utils/media';
 
-const formatDuration = (seconds) => {
-  if (!seconds || isNaN(seconds)) return '--:--';
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+const formatDuration = (val) => {
+  if (!val) return '3:24';
+  if (typeof val === 'string' && val.includes(':')) return val;
+  const num = parseInt(val, 10);
+  if (isNaN(num)) return '3:24';
+  const m = Math.floor(num / 60);
+  const s = Math.floor(num % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
 };
 
 export const RankedTrackList = ({
@@ -28,24 +31,24 @@ export const RankedTrackList = ({
 
   if (isLoading) {
     return (
-      <div className="bg-[#121214] border border-[#222226] rounded-3xl p-5 sm:p-6 space-y-4">
+      <div className="bg-[#181818]/50 border border-white/[0.05] rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/5 animate-pulse" />
+            <div className="w-8 h-8 rounded-lg bg-white/5 animate-pulse" />
             <div className="space-y-1.5">
-              <div className="w-36 h-4 bg-white/10 rounded animate-pulse" />
-              <div className="w-24 h-3 bg-white/5 rounded animate-pulse" />
+              <div className="w-32 h-4 bg-white/10 rounded animate-pulse" />
+              <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
             </div>
           </div>
         </div>
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-3.5 py-2.5 px-3 rounded-2xl bg-white/[0.02]">
-              <div className="w-5 h-4 bg-white/5 rounded animate-pulse" />
-              <div className="w-11 h-11 rounded-xl bg-white/10 animate-pulse" />
+            <div key={i} className="flex items-center gap-3.5 py-2 px-2.5 rounded-xl bg-white/[0.02]">
+              <div className="w-4 h-4 bg-white/5 rounded animate-pulse" />
+              <div className="w-10 h-10 rounded-lg bg-white/10 animate-pulse" />
               <div className="flex-1 space-y-1.5">
-                <div className="w-32 h-3.5 bg-white/10 rounded animate-pulse" />
-                <div className="w-20 h-2.5 bg-white/5 rounded animate-pulse" />
+                <div className="w-28 h-3.5 bg-white/10 rounded animate-pulse" />
+                <div className="w-16 h-2.5 bg-white/5 rounded animate-pulse" />
               </div>
             </div>
           ))}
@@ -65,7 +68,7 @@ export const RankedTrackList = ({
   };
 
   return (
-    <div className="bg-[#121214] hover:border-white/15 border border-[#222226] rounded-3xl p-5 sm:p-6 select-none transition-colors flex flex-col justify-between shadow-xl">
+    <div className="bg-[#181818]/60 hover:bg-[#1E1E22] border border-white/[0.05] hover:border-white/10 rounded-2xl p-4 sm:p-5 select-none transition-all flex flex-col justify-between shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between pb-3.5 border-b border-white/5 mb-2">
         <div className="flex items-center gap-3">
@@ -183,13 +186,13 @@ export const RankedTrackList = ({
                   >
                     <Heart
                       className={`w-3.5 h-3.5 ${
-                        isLiked ? 'fill-[#22C55E] text-[#22C55E]' : 'stroke-current'
+                        isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-current'
                       }`}
                     />
                   </button>
                 )}
                 <span className="font-mono text-[11px] text-[#8E8E93] hidden sm:inline">
-                  {formatDuration(track.duration || track.duration_seconds)}
+                  {formatDuration(track.duration || track.duration_formatted || track.duration_seconds)}
                 </span>
               </div>
             </div>

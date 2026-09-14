@@ -16,12 +16,12 @@ export const MediaCard = ({
   return (
     <div
       onClick={onClick || onPlay}
-      className="group p-3 sm:p-3.5 bg-[#121214] hover:bg-[#18181C] border border-[#222226] hover:border-white/20 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between select-none relative"
+      className="group p-3 sm:p-3.5 bg-[#181818]/60 hover:bg-[#282828] border border-transparent hover:border-white/5 rounded-xl cursor-pointer transition-all duration-300 flex flex-col justify-between select-none relative"
     >
       {/* Artwork Container */}
       <div
-        className={`relative w-full aspect-square overflow-hidden bg-black mb-3 ${
-          isRound ? 'rounded-full' : 'rounded-xl'
+        className={`relative w-full aspect-square overflow-hidden bg-black mb-3 shadow-md ${
+          isRound ? 'rounded-full' : 'rounded-lg'
         }`}
       >
         <img
@@ -40,7 +40,7 @@ export const MediaCard = ({
               e.stopPropagation();
               onPlay();
             }}
-            className="absolute bottom-2.5 right-2.5 w-11 h-11 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-2xl shadow-[#22C55E]/40 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
+            className="absolute bottom-2.5 right-2.5 w-11 h-11 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-10"
             title="Play"
           >
             <Play className="w-5 h-5 fill-black ml-0.5" />
@@ -60,7 +60,7 @@ export const MediaCard = ({
           {title}
         </p>
         {subtitle && (
-          <p className="text-xs text-[#8E8E93] line-clamp-1 mt-0.5">
+          <p className="text-xs text-[#A7A7A7] line-clamp-2 mt-1 font-medium leading-tight">
             {subtitle}
           </p>
         )}

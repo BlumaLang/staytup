@@ -88,7 +88,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
 
   return (
     <aside
-      className={`hidden lg:flex flex-col h-full bg-[#0F0F12] border border-[#1E1E24] rounded-2xl flex-shrink-0 select-none relative z-30 transition-all duration-300 ease-in-out shadow-2xl overflow-hidden ${
+      className={`hidden lg:flex flex-col h-full bg-[#121212] border border-white/[0.06] rounded-xl flex-shrink-0 select-none relative z-30 transition-all duration-300 ease-in-out shadow-2xl overflow-hidden ${
         isCollapsed ? 'w-[76px]' : 'w-[260px] xl:w-[280px]'
       }`}
     >

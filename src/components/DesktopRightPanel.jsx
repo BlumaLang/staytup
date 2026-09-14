@@ -76,9 +76,9 @@ export const DesktopRightPanel = ({ onClose }) => {
   };
 
   return (
-    <aside className="w-[300px] xl:w-[330px] 2xl:w-[360px] h-full bg-[#0F0F12] border-l border-[#1E1E24] flex flex-col flex-shrink-0 select-none z-20 overflow-hidden">
+    <aside className="w-[300px] xl:w-[330px] 2xl:w-[360px] h-full bg-[#121212] flex flex-col flex-shrink-0 select-none z-20 overflow-hidden">
       {/* Panel Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#0F0F12]/80 backdrop-blur-md flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#121212]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <Music2 className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
           <h3 className="text-xs font-bold uppercase tracking-wider text-white truncate">

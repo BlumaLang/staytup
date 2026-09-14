@@ -86,7 +86,7 @@ export const AppShell = () => {
   return (
     <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex flex-col font-sans select-none">
       {/* Top Application Bar (Desktop ≥ 1024px) — Spotify Navigation Header */}
-      <header className="hidden lg:flex items-center justify-between px-5 py-2.5 bg-[#08080A] border-b border-[#1C1C1E] z-40 flex-shrink-0">
+      <header className="hidden lg:flex items-center justify-between px-5 py-2.5 bg-black z-40 flex-shrink-0">
         {/* Left: History navigation */}
         <div className="flex items-center gap-2 w-[220px]">
           <button
@@ -207,7 +207,7 @@ export const AppShell = () => {
       </header>
 
       {/* Body: Sidebar + Main Content View + Desktop Right Panel (Spotify 3-Pane Layout) */}
-      <div className="flex-1 flex w-full h-full overflow-hidden relative min-w-0 lg:p-2 lg:pt-0 lg:gap-2 bg-black">
+      <div className="flex-1 flex w-full h-full overflow-hidden relative min-w-0 lg:px-2 lg:pb-2 lg:pt-1.5 lg:gap-2 bg-black">
         {/* Desktop Sidebar (visible on lg+) */}
         <DesktopSidebar
           activeView={getActiveView()}
@@ -218,7 +218,7 @@ export const AppShell = () => {
 
         {/* Routed Page Content Area (Center Pane) */}
         <main
-          className={`flex-1 w-full h-full relative overflow-y-auto lg:rounded-2xl lg:bg-[#0F0F12] lg:border lg:border-[#1E1E24] shadow-2xl min-w-0 ${
+          className={`flex-1 w-full h-full relative overflow-y-auto lg:rounded-xl lg:bg-[#121212] lg:border lg:border-white/[0.06] shadow-2xl min-w-0 ${
             hasTrack ? 'pb-36 lg:pb-28 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
           }`}
         >
@@ -227,7 +227,7 @@ export const AppShell = () => {
 
         {/* Spotify Desktop Right Panel: Now Playing (top) + Queue List (bottom) */}
         {showNowPlayingSide && (
-          <div className="hidden xl:flex h-full lg:rounded-2xl lg:overflow-hidden lg:border lg:border-[#1E1E24] shadow-2xl flex-shrink-0">
+          <div className="hidden xl:flex h-full lg:rounded-xl lg:overflow-hidden lg:border lg:border-white/[0.06] shadow-2xl flex-shrink-0">
             <DesktopRightPanel onClose={() => setShowNowPlayingSide(false)} />
           </div>
         )}

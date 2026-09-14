@@ -6,23 +6,46 @@ import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import {
   Play,
+  Pause,
   Heart,
   Check,
   UserPlus,
   ArrowLeft,
-  Sparkles,
-  Disc3,
-  Users,
   Share2,
+  BadgeCheck,
+  Disc3,
+  Sparkles,
 } from 'lucide-react';
 import { getArtistUrl, shareContent } from '../utils/canonicalUrl';
 import { ArtistAvatar } from '../components/ArtistAvatar';
+
+const formatDuration = (val) => {
+  if (!val) return '3:20';
+  if (typeof val === 'string' && val.includes(':')) return val;
+  const num = parseInt(val, 10);
+  if (isNaN(num)) return '3:20';
+  const m = Math.floor(num / 60);
+  const s = Math.floor(num % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+};
+
+// Deterministic play count generator for realistic Spotify-like stream metrics
+const getTrackPlays = (trackId, index) => {
+  let hash = 0;
+  const str = String(trackId || `track_${index}`);
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const base = Math.abs(hash) % 80000000 + 5000000;
+  return base.toLocaleString();
+};
 
 export default function ArtistPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { playTrack, likedTrackIds, toggleLike } = usePlayer();
+  const { playTrack, currentTrack, isPlaying, likedTrackIds, toggleLike } = usePlayer();
 
   const [info, setInfo] = useState(null);
   const [songs, setSongs] = useState([]);
@@ -31,6 +54,8 @@ export default function ArtistPage() {
   const [followersOffset, setFollowersOffset] = useState(0);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [shareToast, setShareToast] = useState(false);
+  const [showAllTracks, setShowAllTracks] = useState(false);
+  const [discographyTab, setDiscographyTab] = useState('all'); // 'all' | 'albums' | 'singles'
 
   const artistIdentifier = decodeURIComponent(id || '');
 
@@ -53,13 +78,14 @@ export default function ArtistPage() {
     let isMounted = true;
     setIsLoading(true);
     setIsBioExpanded(false);
+    setShowAllTracks(false);
 
     const cleanArtistName = artistIdentifier.split(',')[0].split('&')[0].trim();
 
     Promise.allSettled([
       api.getArtistInfo(artistIdentifier),
       api.search(`artist:"${cleanArtistName}"`, 'songs', 0, 30),
-      api.search(`artist:"${cleanArtistName}"`, 'albums', 0, 10),
+      api.search(`artist:"${cleanArtistName}"`, 'albums', 0, 16),
     ]).then(([infoRes, songsRes, albumsRes]) => {
       if (!isMounted) return;
 
@@ -170,24 +196,54 @@ export default function ArtistPage() {
     artistData.follower_count || artistData.fan_count || artistData.monthly_listeners || 0,
     10
   );
-  let baseDisplayCount = '35M+';
+  let baseDisplayCount = '35,420,119';
   if (rawFollowers > 0) {
     const finalCount = Math.max(0, rawFollowers + followersOffset);
-    if (finalCount >= 1000000) {
-      baseDisplayCount = (finalCount / 1000000).toFixed(1) + 'M';
-    } else if (finalCount >= 1000) {
-      baseDisplayCount = (finalCount / 1000).toFixed(1) + 'K';
-    } else {
-      baseDisplayCount = finalCount.toLocaleString();
-    }
+    baseDisplayCount = finalCount.toLocaleString();
   } else {
     if (displayName.toLowerCase().includes('arijit'))
-      baseDisplayCount = isFollowing ? '38.4M+' : '38.4M';
+      baseDisplayCount = isFollowing ? '38,489,120' : '38,412,890';
+    else if (displayName.toLowerCase().includes('karan'))
+      baseDisplayCount = isFollowing ? '18,290,410' : '18,245,100';
     else if (displayName.toLowerCase().includes('shreya'))
-      baseDisplayCount = isFollowing ? '32.1M+' : '32.1M';
+      baseDisplayCount = isFollowing ? '32,150,000' : '32,110,400';
     else if (displayName.toLowerCase().includes('diljit'))
-      baseDisplayCount = isFollowing ? '25.6M+' : '25.6M';
-    else baseDisplayCount = isFollowing ? '15.2M+' : '15.1M';
+      baseDisplayCount = isFollowing ? '25,640,120' : '25,600,000';
+    else baseDisplayCount = isFollowing ? '15,220,000' : '15,190,000';
+  }
+
+  // Parse bio
+  let parsedBio = '';
+  if (artistData.bio) {
+    if (typeof artistData.bio === 'string' && artistData.bio.startsWith('[')) {
+      try {
+        const arr = JSON.parse(artistData.bio);
+        if (Array.isArray(arr)) {
+          parsedBio = arr.map((item) => item.text || item.title || '').filter(Boolean).join('\n\n');
+        }
+      } catch (e) {
+        parsedBio = artistData.bio;
+      }
+    } else if (Array.isArray(artistData.bio)) {
+      parsedBio = artistData.bio
+        .map((item) => (typeof item === 'object' ? item.text || '' : item))
+        .filter(Boolean)
+        .join('\n\n');
+    } else {
+      parsedBio = String(artistData.bio);
+    }
+  }
+
+  if (!parsedBio || parsedBio.trim().length === 0) {
+    if (displayName.toLowerCase().includes('arijit')) {
+      parsedBio =
+        "Arijit Singh is an internationally acclaimed Indian playback singer and music composer. Widely regarded as one of the most versatile vocalists in modern Indian music, he has delivered iconic chartbusters across Hindi, Bengali, and global cinema.";
+    } else if (displayName.toLowerCase().includes('karan')) {
+      parsedBio =
+        "Karan Aujla is a globally renowned Indian singer, rapper, and songwriter known for defining modern Punjabi music. With chart-topping hits like '52 Bars', 'Softly', and 'Winning Speech', he commands tens of millions of monthly listeners worldwide.";
+    } else {
+      parsedBio = `${displayName} is one of the most streamed artists on Staytup Music. Explore their top hits, official albums, and discography below.`;
+    }
   }
 
   const handlePlayArtist = (startIndex = 0) => {
@@ -195,194 +251,351 @@ export default function ArtistPage() {
     playTrack(songs[startIndex], songs);
   };
 
+  const isCurrentArtistPlaying =
+    isPlaying &&
+    songs.some((s) => (currentTrack?.videoId || currentTrack?.id) === (s.videoId || s.id));
+
+  // Discography filtering
+  const rawAlbums = info?.albums || [];
+  const filteredAlbums = rawAlbums.filter((album) => {
+    if (discographyTab === 'albums') {
+      const type = (album.type || '').toLowerCase();
+      return type === 'album' || !type.includes('single');
+    }
+    if (discographyTab === 'singles') {
+      const type = (album.type || '').toLowerCase();
+      return type.includes('single') || type.includes('ep');
+    }
+    return true;
+  });
+
+  const displayedSongs = showAllTracks ? songs.slice(0, 10) : songs.slice(0, 5);
+
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
-      {/* Top Bar with Back Button */}
-      <div className="sticky top-0 z-20 px-4 sm:px-8 py-3 bg-black/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-        <span className="text-sm font-bold truncate max-w-[200px] sm:max-w-md">{displayName}</span>
-        <div className="w-16" />
-      </div>
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
+      {/* Mobile-Only Floating Back Button (Desktop has global top-bar buttons) */}
+      <button
+        onClick={() => navigate(-1)}
+        className="lg:hidden absolute top-4 left-4 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95 shadow-lg"
+        title="Go back"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
 
       {isLoading ? (
-        <div className="py-24 flex flex-col items-center justify-center text-[#8E8E93]">
-          <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="py-32 flex flex-col items-center justify-center text-[#8E8E93]">
+          <div className="w-10 h-10 border-2 border-[#1ED760] border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-sm font-semibold text-white">Loading artist profile...</p>
         </div>
       ) : (
         <div className="flex-1 w-full">
-          {/* Hero Banner with Dynamic Artwork */}
-          <div className="relative w-full h-72 sm:h-96 overflow-hidden flex items-end px-6 sm:px-10 pb-8 bg-gradient-to-b from-[#1E1E24] to-black">
+          {/* ========================================================================= */}
+          {/* SPOTIFY IMMERSIVE FULL-BLEED PHOTOGRAPHIC HERO BANNER                      */}
+          {/* ========================================================================= */}
+          <div className="relative w-full h-72 sm:h-80 md:h-[340px] lg:h-[380px] overflow-hidden flex flex-col justify-end p-6 sm:p-8 md:p-10 bg-[#181818]">
+            {/* Background Artist Photography */}
             <div className="absolute inset-0 z-0">
               {displayImage ? (
                 <img
                   src={get500x500Image(displayImage)}
                   alt={displayName}
-                  className="w-full h-full object-cover blur-md opacity-35 scale-105"
+                  className="w-full h-full object-cover object-top opacity-50 scale-105 filter brightness-90"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-b from-[#1E1E24] to-black opacity-60" />
+                <div className="w-full h-full bg-gradient-to-b from-[#282828] to-[#121212]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              {/* Spotify Gradient Overlay Fade */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/50 to-transparent" />
             </div>
 
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-end gap-6 w-full">
-              <ArtistAvatar
-                name={displayName}
-                image={displayImage}
-                size="hero"
-                className="w-32 h-32 sm:w-44 sm:h-44 border-2 border-white/20 shadow-2xl flex-shrink-0"
-              />
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-bold uppercase tracking-wider">
-                    Verified Artist
-                  </span>
-                  <span className="text-xs text-[#8E8E93]">{baseDisplayCount} monthly listeners</span>
-                </div>
-                <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-                  {displayName}
-                </h1>
-                <div className="flex items-center gap-3 pt-2">
-                  <button
-                    onClick={() => handlePlayArtist(0)}
-                    disabled={songs.length === 0}
-                    className="px-6 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-sm flex items-center gap-2 transition-transform active:scale-95 cursor-pointer shadow-xl disabled:opacity-50"
-                  >
-                    <Play className="w-4 h-4 fill-black" />
-                    <span>Play</span>
-                  </button>
-
-                  <button
-                    onClick={toggleFollow}
-                    className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all border cursor-pointer ${
-                      isFollowing
-                        ? 'bg-transparent border-white/40 text-white hover:border-white'
-                        : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
-                    }`}
-                  >
-                    {isFollowing ? (
-                      <span className="flex items-center gap-1.5">
-                        <Check className="w-4 h-4 text-[#22C55E]" />
-                        <span>Following</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5">
-                        <UserPlus className="w-4 h-4" />
-                        <span>Follow</span>
-                      </span>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={handleShare}
-                    className="px-4 py-2.5 rounded-full text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center gap-2 transition-colors cursor-pointer"
-                    title="Share Artist"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Share</span>
-                  </button>
-                </div>
+            {/* Bottom Content within Hero */}
+            <div className="relative z-10 space-y-2 max-w-4xl">
+              {/* Verified Badge */}
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-white tracking-wide">
+                <BadgeCheck className="w-5 h-5 fill-[#3D91F4] text-white flex-shrink-0" />
+                <span>Verified Artist</span>
               </div>
+
+              {/* Massive Artist Name */}
+              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight leading-none drop-shadow-lg">
+                {displayName}
+              </h1>
+
+              {/* Monthly Listeners */}
+              <p className="text-xs sm:text-sm text-white/90 font-medium drop-shadow pt-1">
+                {baseDisplayCount} monthly listeners
+              </p>
             </div>
           </div>
 
-          {/* Artist Content (Top Songs, Discography, About) */}
-          <div className="px-6 sm:px-10 py-8 space-y-10">
-            {/* Top Songs */}
-            <div>
-              <h2 className="text-xl font-bold text-white mb-4">Popular Tracks</h2>
-              {songs.length === 0 ? (
-                <p className="text-xs text-[#8E8E93]">No tracks found for this artist.</p>
+          {/* ========================================================================= */}
+          {/* SPOTIFY ACTION CONTROLS ROW (Big Green Play Button, Follow, Share)        */}
+          {/* ========================================================================= */}
+          <div className="px-6 sm:px-10 py-5 flex items-center gap-6 bg-gradient-to-b from-[#121212] to-[#121212]">
+            {/* Iconic Green Play Button */}
+            <button
+              onClick={() => handlePlayArtist(0)}
+              disabled={songs.length === 0}
+              className="w-14 h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+              title={isCurrentArtistPlaying ? 'Pause' : 'Play'}
+            >
+              {isCurrentArtistPlaying ? (
+                <Pause className="w-6 h-6 fill-black" />
               ) : (
-                <div className="space-y-1">
-                  {songs.slice(0, 10).map((track, i) => {
+                <Play className="w-6 h-6 fill-black ml-1" />
+              )}
+            </button>
+
+            {/* Follow Button */}
+            <button
+              onClick={toggleFollow}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer hover:scale-105 ${
+                isFollowing
+                  ? 'border-white/40 text-white hover:border-white bg-transparent'
+                  : 'border-white/30 text-white hover:border-white bg-transparent'
+              }`}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+
+            {/* Share / More Button */}
+            <button
+              onClick={handleShare}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[#B3B3B3] hover:text-white transition-colors cursor-pointer"
+              title="Share Artist"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* MAIN ARTIST CONTENT (Popular Songs, Discography, About)                    */}
+          {/* ========================================================================= */}
+          <div className="px-6 sm:px-10 pb-16 space-y-12">
+            {/* 1. Popular Tracks Section */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">Popular</h2>
+
+              {songs.length === 0 ? (
+                <p className="text-xs text-[#8E8E93]">No popular tracks available.</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {displayedSongs.map((track, i) => {
                     const vid = String(track.videoId || track.video_id || track.id || '');
                     const isLiked = likedTrackIds.has(vid);
+                    const isTrackCurrent =
+                      (currentTrack?.videoId || currentTrack?.id) === vid;
+                    const isTrackPlaying = isTrackCurrent && isPlaying;
+                    const plays = getTrackPlays(vid, i);
+
                     return (
                       <div
                         key={vid || i}
                         onClick={() => handlePlayArtist(i)}
-                        className="flex items-center justify-between py-2.5 px-3 hover:bg-[#141416] rounded-xl cursor-pointer transition-colors group"
+                        className={`flex items-center justify-between py-2 px-3 sm:px-4 rounded-lg cursor-pointer transition-colors group ${
+                          isTrackCurrent ? 'bg-white/10' : 'hover:bg-white/5'
+                        }`}
                       >
-                        <div className="flex items-center gap-4 min-w-0 pr-3">
-                          <span className="w-5 text-center text-xs font-mono text-[#8E8E93] group-hover:hidden">
-                            {i + 1}
-                          </span>
-                          <Play className="w-4 h-4 text-white hidden group-hover:block ml-0.5" />
+                        {/* Index / Play Button / Equalizer */}
+                        <div className="flex items-center gap-4 min-w-0 pr-4 flex-1">
+                          <div className="w-5 flex items-center justify-center flex-shrink-0">
+                            {isTrackPlaying ? (
+                              <div className="flex items-end gap-0.5 h-3.5">
+                                <span className="w-0.5 h-full bg-[#1ED760] animate-pulse" />
+                                <span className="w-0.5 h-2/3 bg-[#1ED760] animate-pulse delay-75" />
+                                <span className="w-0.5 h-4/5 bg-[#1ED760] animate-pulse delay-150" />
+                              </div>
+                            ) : (
+                              <>
+                                <span
+                                  className={`text-sm font-mono group-hover:hidden ${
+                                    isTrackCurrent ? 'text-[#1ED760] font-bold' : 'text-[#B3B3B3]'
+                                  }`}
+                                >
+                                  {i + 1}
+                                </span>
+                                <Play className="w-4 h-4 text-white hidden group-hover:block fill-white ml-0.5" />
+                              </>
+                            )}
+                          </div>
+
+                          {/* Song Thumbnail */}
                           <img
                             src={get500x500Image(track.thumbnail || track.image)}
                             alt={track.title}
-                            className="w-11 h-11 rounded-lg object-cover bg-black flex-shrink-0"
+                            className="w-10 h-10 rounded object-cover bg-black flex-shrink-0 shadow-sm"
                           />
-                          <div className="min-w-0 text-left">
-                            <p className="font-semibold text-sm text-white line-clamp-1 group-hover:text-white">
+
+                          {/* Title & Artist */}
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`font-semibold text-sm truncate leading-tight ${
+                                isTrackCurrent ? 'text-[#1ED760]' : 'text-white'
+                              }`}
+                            >
                               {track.title}
                             </p>
-                            <p className="text-xs text-[#8E8E93] line-clamp-1">{track.artist}</p>
+                            <p className="text-xs text-[#B3B3B3] truncate mt-0.5">
+                              {track.artist || displayName}
+                            </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 text-xs font-mono text-[#8E8E93]">
+                        {/* Stream / Plays Count (Hidden on mobile) */}
+                        <div className="hidden md:block w-36 text-right text-xs text-[#B3B3B3] font-mono pr-6">
+                          {plays}
+                        </div>
+
+                        {/* Right: Heart + Duration */}
+                        <div className="flex items-center gap-3 text-xs text-[#B3B3B3] flex-shrink-0">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleLike(track);
                             }}
-                            className="text-[#8E8E93] hover:text-white transition-colors"
+                            className="w-8 h-8 rounded-full flex items-center justify-center hover:text-white transition-colors cursor-pointer"
+                            title={isLiked ? 'Unlike' : 'Like'}
                           >
                             <Heart
                               className={`w-4 h-4 ${
-                                isLiked ? 'fill-[#22C55E] text-[#22C55E]' : 'stroke-current'
+                                isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-current'
                               }`}
                             />
                           </button>
-                          <span>{track.duration_formatted || ''}</span>
+                          <span className="font-mono w-10 text-right">
+                            {formatDuration(track.duration || track.duration_formatted)}
+                          </span>
                         </div>
                       </div>
                     );
                   })}
+
+                  {/* See more / Show less Button */}
+                  {songs.length > 5 && (
+                    <button
+                      onClick={() => setShowAllTracks((prev) => !prev)}
+                      className="mt-2 px-3 py-1.5 text-xs font-bold text-[#B3B3B3] hover:text-white transition-colors cursor-pointer uppercase tracking-wider"
+                    >
+                      {showAllTracks ? 'Show less' : 'See more'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Discography / Albums */}
-            {info?.albums && info.albums.length > 0 && (
+            {/* ========================================================================= */}
+            {/* 2. DISCOGRAPHY SECTION (Spotify Clean Cards + Filter Pills)               */}
+            {/* ========================================================================= */}
+            {rawAlbums.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-white mb-4">Discography</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
-                  {info.albums.map((album, idx) => (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <h2 className="text-2xl font-bold text-white">Discography</h2>
+
+                  {/* Discography Filter Pills */}
+                  <div className="flex items-center gap-2">
+                    {[
+                      { id: 'all', label: 'Popular releases' },
+                      { id: 'albums', label: 'Albums' },
+                      { id: 'singles', label: 'Singles and EPs' },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setDiscographyTab(tab.id)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                          discographyTab === tab.id
+                            ? 'bg-white text-black'
+                            : 'bg-[#282828] text-white hover:bg-[#333333]'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Spotify Album Cards Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {filteredAlbums.map((album, idx) => (
                     <div
                       key={album.id || idx}
                       onClick={() => navigate(`/album/${encodeURIComponent(album.id)}`)}
-                      className="p-4 rounded-2xl bg-[#121214] hover:bg-[#1A1A1E] border border-[#222226] hover:border-white/20 transition-all cursor-pointer group"
+                      className="p-3.5 rounded-lg bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer relative flex flex-col justify-between select-none"
                     >
-                      <img
-                        src={get500x500Image(album.image || album.thumbnail)}
-                        alt={album.title || album.name}
-                        className="w-full aspect-square rounded-xl object-cover mb-3 group-hover:scale-105 transition-transform"
-                      />
-                      <p className="font-bold text-sm text-white truncate group-hover:text-white">
-                        {album.title || album.name}
-                      </p>
-                      <p className="text-xs text-[#8E8E93] mt-0.5">{album.year || 'Album'}</p>
+                      {/* Album Cover Art Container */}
+                      <div className="relative w-full aspect-square rounded-md overflow-hidden bg-black shadow-md mb-3">
+                        <img
+                          src={get500x500Image(album.image || album.thumbnail)}
+                          alt={album.title || album.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+
+                        {/* Floating Green Play Button on Hover */}
+                        <div className="absolute right-2 bottom-2 w-11 h-11 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                          <Play className="w-5 h-5 fill-black ml-0.5" />
+                        </div>
+                      </div>
+
+                      {/* Album Title & Year */}
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-white truncate leading-tight group-hover:text-white">
+                          {album.title || album.name}
+                        </p>
+                        <p className="text-xs text-[#A7A7A7] mt-1 font-medium">
+                          {album.year || '2024'} • {album.type || 'Album'}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* ========================================================================= */}
+            {/* 3. ABOUT THE ARTIST SECTION (Spotify Visual Bio Card)                     */}
+            {/* ========================================================================= */}
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">About</h2>
+              <div
+                onClick={() => setIsBioExpanded((prev) => !prev)}
+                className="relative rounded-2xl overflow-hidden h-72 sm:h-80 md:h-96 group cursor-pointer p-6 sm:p-10 flex flex-col justify-end bg-[#181818] border border-white/5 transition-all shadow-xl"
+              >
+                {/* Background Artwork */}
+                <div className="absolute inset-0 z-0">
+                  {displayImage ? (
+                    <img
+                      src={get500x500Image(displayImage)}
+                      alt={displayName}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter brightness-75"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                </div>
+
+                {/* Card Content */}
+                <div className="relative z-10 space-y-2 max-w-2xl">
+                  <span className="text-sm font-bold text-white tracking-wide block">
+                    {baseDisplayCount} monthly listeners
+                  </span>
+                  <p
+                    className={`text-sm text-[#CCCCCC] leading-relaxed transition-all ${
+                      isBioExpanded ? '' : 'line-clamp-3'
+                    }`}
+                  >
+                    {parsedBio}
+                  </p>
+                  <span className="text-xs font-bold text-white/80 group-hover:text-white underline block pt-1">
+                    {isBioExpanded ? 'Show less' : 'Read more'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Share Toast */}
       {shareToast && (
-        <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#22C55E] text-black font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-24 sm:bottom-12 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#1ED760] text-black font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
           <Check className="w-4 h-4 stroke-[3]" />
           <span>Artist link copied to clipboard!</span>
         </div>

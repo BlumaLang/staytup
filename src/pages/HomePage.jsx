@@ -6,6 +6,7 @@ import { loadSmartFeed } from '../services/smartFeedService';
 import { RankedTrackList } from '../components/RankedTrackList';
 import { MediaCard } from '../components/MediaCard';
 import { MediaRail } from '../components/MediaRail';
+import { ArtistAvatar } from '../components/ArtistAvatar';
 import { get500x500Image } from '../utils/media';
 import { Flame, TrendingUp, Sparkles, Disc3, ListMusic, History, Radio, Play, Pause, Heart } from 'lucide-react';
 
@@ -22,6 +23,9 @@ export default function HomePage() {
     popularAlbums: null,
     popularPlaylists: null,
     jumpBackIn: null,
+    popularArtists: null,
+    moodMixes: null,
+    todaysHits: null,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,7 +61,7 @@ export default function HomePage() {
 
   const displayName = user?.username || user?.displayName?.split(' ')[0] || '';
 
-  // Quick Jump cards derived from smartFeed
+  // Quick Jump cards derived from smartFeed (Spotify 6-Pack Grid)
   const quickCards = [];
   if (smartFeed.trendingOnApp?.[0]) {
     const t = smartFeed.trendingOnApp[0];
@@ -123,10 +127,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
-      {/* Smart Welcome & Filter Chips Bar */}
-      <div className="sticky top-0 z-20 px-4 sm:px-8 pt-4 pb-3 bg-black/85 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2.5">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
+      {/* Smart Welcome & Filter Chips Bar (Spotify Clean Sticky Header) */}
+      <div className="sticky top-0 z-20 px-4 sm:px-8 pt-4 pb-3 bg-[#121212]/90 backdrop-blur-xl border-b border-white/[0.04]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-1">
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
             <span>{getGreeting()}{displayName ? `, ${displayName}` : ''}</span>
           </h1>
@@ -146,7 +150,7 @@ export default function HomePage() {
                   className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                     isActive
                       ? 'bg-white text-black shadow-md'
-                      : 'bg-[#18181A] hover:bg-[#222226] text-[#8E8E93] hover:text-white border border-[#28282C]'
+                      : 'bg-[#242424] hover:bg-[#2A2A2A] text-[#B3B3B3] hover:text-white'
                   }`}
                 >
                   {chip.label}
@@ -158,69 +162,76 @@ export default function HomePage() {
       </div>
 
       {/* Main Content View (Full Width) */}
-      <div className="flex-1 px-4 sm:px-8 py-6 w-full space-y-9">
+      <div className="flex-1 px-4 sm:px-8 py-6 w-full space-y-10">
         {/* ========================================================================= */}
         {/* QUICK JUMP 6-PACK GRID (Spotify Signature Desktop Dashboard Grid)         */}
         {/* ========================================================================= */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
-          {/* Card 1: Liked Songs */}
+          {/* 1. Liked Songs Dashboard Tile */}
           <div
             onClick={() => navigate('/library?tab=favorites')}
-            className="group relative flex items-center bg-[#151518] hover:bg-[#202025] rounded-xl overflow-hidden transition-all duration-200 cursor-pointer border border-white/[0.04] hover:border-white/10 shadow-md"
+            className="group flex items-center gap-3 bg-[#1A1A1A]/80 hover:bg-[#282828] transition-all duration-200 rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-3"
           >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 bg-gradient-to-br from-purple-700 via-indigo-600 to-blue-700 flex items-center justify-center shadow-md">
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-gradient-to-br from-[#450af5] to-[#c4efd9] flex items-center justify-center shadow-md">
+              <Heart className="w-6 h-6 fill-white text-white" />
             </div>
-            <div className="flex-1 min-w-0 px-3 py-1.5">
-              <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight">
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-xs sm:text-sm text-white truncate leading-tight group-hover:text-white">
                 Liked Songs
               </p>
-              <p className="text-[10px] sm:text-xs text-[#8E8E93] truncate mt-0.5">
-                {likedTrackIds.size} {likedTrackIds.size === 1 ? 'song' : 'songs'}
+              <p className="text-[10px] sm:text-xs text-[#A7A7A7] truncate mt-0.5">
+                {likedTrackIds.size} {likedTrackIds.size === 1 ? 'track' : 'tracks'}
               </p>
             </div>
-            <div className="pr-3 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
+            <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
                 <Play className="w-4 h-4 fill-black ml-0.5" />
               </div>
             </div>
           </div>
 
-          {/* Cards 2-6: Dynamic Quick Hits */}
+          {/* 2-6. Dynamic Top Content Tiles */}
           {isLoading ? (
-            [...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 sm:h-14 rounded-xl bg-white/5 animate-pulse" />
+            [1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 bg-[#1A1A1A]/50 rounded-md overflow-hidden animate-pulse h-14 sm:h-16"
+              >
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/5 flex-shrink-0" />
+                <div className="space-y-1.5 flex-1 pr-3">
+                  <div className="w-3/4 h-3.5 bg-white/10 rounded" />
+                  <div className="w-1/2 h-2.5 bg-white/5 rounded" />
+                </div>
+              </div>
             ))
           ) : (
             quickCards.map((item, idx) => (
               <div
                 key={idx}
                 onClick={item.onClick}
-                className="group relative flex items-center bg-[#151518] hover:bg-[#202025] rounded-xl overflow-hidden transition-all duration-200 cursor-pointer border border-white/[0.04] hover:border-white/10 shadow-md"
+                className="group flex items-center gap-3 bg-[#1A1A1A]/80 hover:bg-[#282828] transition-all duration-200 rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-3"
               >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 bg-black overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="flex-1 min-w-0 px-3 py-1.5">
-                  <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-14 h-14 sm:w-16 sm:h-16 object-cover flex-shrink-0 shadow-md"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-xs sm:text-sm text-white truncate leading-tight group-hover:text-white">
                     {item.title}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-[#8E8E93] truncate mt-0.5">
+                  <p className="text-[10px] sm:text-xs text-[#A7A7A7] truncate mt-0.5">
                     {item.subtitle}
                   </p>
                 </div>
-                <div className="pr-3 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
+                <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 flex-shrink-0">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       if (item.onPlay) item.onPlay();
                       else item.onClick();
                     }}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#22C55E] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform cursor-pointer"
+                    className="w-9 h-9 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform cursor-pointer"
                     title={`Play ${item.title}`}
                   >
                     <Play className="w-4 h-4 fill-black ml-0.5" />
@@ -235,12 +246,12 @@ export default function HomePage() {
         {/* SECTION 1: TOP DUAL-RANKED LISTS (Trending on This App vs Popular Right Now) */}
         {/* ========================================================================= */}
         {(isLoading || smartFeed.trendingOnApp || smartFeed.popularRightNow) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
             {/* Left: Trending on This App */}
             {(isLoading || smartFeed.trendingOnApp) && (
               <RankedTrackList
-                title="Trending on This App"
-                subtitle="Most played & saved by Staytup listeners"
+                title="Trending on Staytup"
+                subtitle="Most played & saved by community listeners"
                 icon={Flame}
                 iconColor="text-rose-400"
                 iconBg="bg-rose-500/15"
@@ -260,8 +271,8 @@ export default function HomePage() {
                 title="Popular Right Now"
                 subtitle="Top songs currently topping the charts"
                 icon={TrendingUp}
-                iconColor="text-[#22C55E]"
-                iconBg="bg-[#22C55E]/15"
+                iconColor="text-[#1ED760]"
+                iconBg="bg-[#1ED760]/15"
                 tracks={smartFeed.popularRightNow || []}
                 onPlayTrack={playTrack}
                 currentTrack={currentTrack}
@@ -275,7 +286,88 @@ export default function HomePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* SECTION 2: NEW RELEASES (Fresh music prioritized within last 30 days)     */}
+        {/* SECTION 2: TODAY'S BIGGEST HITS                                           */}
+        {/* ========================================================================= */}
+        {(isLoading || (smartFeed.todaysHits && smartFeed.todaysHits.length > 0)) && (
+          <MediaRail
+            title="Today's Biggest Hits"
+            subtitle="The biggest tracks streaming right now"
+            action={
+              <Link
+                to="/search"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                Explore
+              </Link>
+            }
+          >
+            {isLoading ? (
+              [1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="w-38 sm:w-48 flex-shrink-0">
+                  <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
+                  <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
+                  <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
+                </div>
+              ))
+            ) : (
+              smartFeed.todaysHits.map((track, idx) => (
+                <div key={track.videoId || track.id || idx} className="w-38 sm:w-48 flex-shrink-0">
+                  <MediaCard
+                    image={track.image || track.thumbnail || track.artwork_url}
+                    title={track.title}
+                    subtitle={track.artist}
+                    onPlay={() => playTrack(track, smartFeed.todaysHits)}
+                  />
+                </div>
+              ))
+            )}
+          </MediaRail>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SECTION 3: TRENDING ARTISTS (Spotify Round Artist Cards)                  */}
+        {/* ========================================================================= */}
+        {smartFeed.popularArtists && smartFeed.popularArtists.length > 0 && (
+          <MediaRail
+            title="Trending Artists"
+            subtitle="Explore today's most popular voices"
+            action={
+              <Link
+                to="/search"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                Show all
+              </Link>
+            }
+          >
+            {smartFeed.popularArtists.map((artist, idx) => (
+              <div
+                key={artist.id || idx}
+                onClick={() => navigate(`/artist/${encodeURIComponent(artist.name)}`)}
+                className="w-36 sm:w-44 flex-shrink-0 p-3.5 rounded-xl bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer flex flex-col items-center text-center select-none"
+              >
+                <div className="relative mb-3">
+                  <ArtistAvatar
+                    name={artist.name}
+                    image={artist.image}
+                    size="xl"
+                    className="w-28 h-28 sm:w-32 sm:h-32 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute right-1 bottom-1 w-10 h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                    <Play className="w-5 h-5 fill-black ml-0.5" />
+                  </div>
+                </div>
+                <p className="font-bold text-sm text-white truncate w-full group-hover:text-white tracking-tight">
+                  {artist.name}
+                </p>
+                <span className="text-xs text-[#A7A7A7] mt-1 font-medium">Artist</span>
+              </div>
+            ))}
+          </MediaRail>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SECTION 4: NEW RELEASES (Fresh music prioritized within last 30 days)     */}
         {/* ========================================================================= */}
         {(isLoading || (smartFeed.newReleases && smartFeed.newReleases.length > 0)) && (
           <MediaRail
@@ -284,7 +376,7 @@ export default function HomePage() {
             action={
               <Link
                 to="/search"
-                className="text-xs font-bold text-[#8E8E93] hover:text-white transition-colors"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
               >
                 Discover more
               </Link>
@@ -293,7 +385,7 @@ export default function HomePage() {
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="w-38 sm:w-48 flex-shrink-0">
-                  <div className="aspect-square rounded-2xl bg-white/5 animate-pulse mb-3" />
+                  <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
                 </div>
@@ -324,7 +416,52 @@ export default function HomePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* SECTION 3: POPULAR ALBUMS                                                 */}
+        {/* SECTION 5: CURATED MOODS & VIBES                                          */}
+        {/* ========================================================================= */}
+        {smartFeed.moodMixes && smartFeed.moodMixes.length > 0 && (
+          <MediaRail
+            title="Moods & Vibes"
+            subtitle="Soundtracks curated for your rhythm and energy"
+            action={
+              <Link
+                to="/search"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                Browse all
+              </Link>
+            }
+          >
+            {smartFeed.moodMixes.map((mood) => (
+              <div
+                key={mood.id}
+                onClick={() => navigate(`/search?q=${encodeURIComponent(mood.query)}`)}
+                className="w-40 sm:w-48 flex-shrink-0 p-3.5 rounded-xl bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer flex flex-col justify-between select-none relative"
+              >
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-black shadow-md mb-3">
+                  <img
+                    src={mood.image}
+                    alt={mood.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                    <Play className="w-4 h-4 fill-black ml-0.5" />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-white truncate group-hover:text-white tracking-tight">
+                    {mood.title}
+                  </p>
+                  <p className="text-xs text-[#A7A7A7] line-clamp-2 mt-1 font-medium leading-tight">
+                    {mood.subtitle}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </MediaRail>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SECTION 6: POPULAR ALBUMS                                                 */}
         {/* ========================================================================= */}
         {(isLoading || (smartFeed.popularAlbums && smartFeed.popularAlbums.length > 0)) && (
           <MediaRail
@@ -332,8 +469,8 @@ export default function HomePage() {
             subtitle="Top full-length albums and curated records"
             action={
               <Link
-                to="/search?type=albums"
-                className="text-xs font-bold text-[#8E8E93] hover:text-white transition-colors"
+                to="/search"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
               >
                 Show all
               </Link>
@@ -342,7 +479,7 @@ export default function HomePage() {
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="w-38 sm:w-48 flex-shrink-0">
-                  <div className="aspect-square rounded-2xl bg-white/5 animate-pulse mb-3" />
+                  <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
                 </div>
@@ -364,7 +501,7 @@ export default function HomePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* SECTION 4: POPULAR PLAYLISTS                                              */}
+        {/* SECTION 7: POPULAR PLAYLISTS                                              */}
         {/* ========================================================================= */}
         {(isLoading || (smartFeed.popularPlaylists && smartFeed.popularPlaylists.length > 0)) && (
           <MediaRail
@@ -373,7 +510,7 @@ export default function HomePage() {
             action={
               <Link
                 to="/library?tab=playlists"
-                className="text-xs font-bold text-[#8E8E93] hover:text-white transition-colors"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
               >
                 Browse all
               </Link>
@@ -382,7 +519,7 @@ export default function HomePage() {
             {isLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="w-38 sm:w-48 flex-shrink-0">
-                  <div className="aspect-square rounded-2xl bg-white/5 animate-pulse mb-3" />
+                  <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
                   <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
                   <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
                 </div>
@@ -404,7 +541,7 @@ export default function HomePage() {
         )}
 
         {/* ========================================================================= */}
-        {/* SECTION 5: JUMP BACK IN (Personal user history, strictly deduplicated)     */}
+        {/* SECTION 8: JUMP BACK IN (Personal user history, strictly deduplicated)     */}
         {/* ========================================================================= */}
         {!isLoading && smartFeed.jumpBackIn && smartFeed.jumpBackIn.length > 0 && (
           <MediaRail
@@ -413,7 +550,7 @@ export default function HomePage() {
             action={
               <Link
                 to="/library?tab=history"
-                className="text-xs font-bold text-[#8E8E93] hover:text-white transition-colors"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
               >
                 View history
               </Link>
