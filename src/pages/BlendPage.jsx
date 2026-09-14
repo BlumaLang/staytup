@@ -207,8 +207,8 @@ export default function BlendPage() {
   if (!isDetailMode || !blend) {
     return (
       <div className="min-h-full bg-black text-white px-4 sm:px-6 py-6 max-w-4xl mx-auto select-none">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        {/* Header — hidden on mobile (AppShell shows "Blend" in top bar already) */}
+        <div className="hidden lg:flex items-center justify-between gap-4 mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             Blend
           </h1>
@@ -216,6 +216,17 @@ export default function BlendPage() {
           <button
             onClick={handleOpenInviteModal}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-md flex-shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Create Blend</span>
+          </button>
+        </div>
+
+        {/* Mobile-only: Create Blend button (title is in AppShell top bar) */}
+        <div className="flex lg:hidden items-center justify-end mb-5">
+          <button
+            onClick={handleOpenInviteModal}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-md"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Create Blend</span>
