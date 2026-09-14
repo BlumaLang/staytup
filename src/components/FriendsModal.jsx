@@ -6,7 +6,6 @@ import {
   Music2,
   Play,
   UserPlus,
-  Sparkles,
   Check,
   Search,
   UserCheck,

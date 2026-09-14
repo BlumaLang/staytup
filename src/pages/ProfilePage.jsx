@@ -17,7 +17,6 @@ import {
   X,
   RefreshCw,
   CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 import { LoginModal } from '../components/LoginModal';
 import { updateService, CURRENT_BUILD } from '../services/updateService';
@@ -198,7 +197,7 @@ export default function ProfilePage() {
           <div className="divide-y divide-[#222226]">
             <div className="px-4 py-3.5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-white">Build Release</p>
                   <p className="text-xs text-[#8E8E93] font-mono truncate max-w-[170px] sm:max-w-xs">

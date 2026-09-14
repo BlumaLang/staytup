@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Heart, Sparkles, Flame } from 'lucide-react';
+import { Play, Pause, Heart, Flame } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { get500x500Image } from '../utils/media';
 

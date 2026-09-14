@@ -4,7 +4,7 @@ import { api } from '../api/endpoints';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
-import { X, Play, Users, Music2, Sparkles, Heart, Check, UserPlus } from 'lucide-react';
+import { X, Play, Users, Music2, Heart, Check, UserPlus } from 'lucide-react';
 import { ArtistAvatar } from './ArtistAvatar';
 
 export const ArtistSheet = ({ artistName, artistId, isOpen, onClose }) => {

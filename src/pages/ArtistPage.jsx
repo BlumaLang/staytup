@@ -14,7 +14,6 @@ import {
   Share2,
   BadgeCheck,
   Disc3,
-  Sparkles,
 } from 'lucide-react';
 import { getArtistUrl, shareContent } from '../utils/canonicalUrl';
 import { ArtistAvatar } from '../components/ArtistAvatar';

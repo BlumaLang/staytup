@@ -20,7 +20,6 @@ import {
   User,
   Heart,
   X,
-  Sparkles,
   PanelRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';

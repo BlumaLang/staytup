@@ -10,7 +10,7 @@ import {
   Play,
   Pause,
   Share2,
-  Sparkles,
+  Disc3,
   ArrowLeft,
   Heart,
   Music2,
@@ -156,7 +156,7 @@ export default function BlendPage() {
           <div className="flex-1 min-w-0 text-center sm:text-left">
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
               <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" />
+                <Disc3 className="w-3.5 h-3.5" />
                 <span>{blend?.matchScore || 78}% Match</span>
               </span>
               <span className="text-xs font-semibold text-[#8E8E93]">Daily Blend</span>

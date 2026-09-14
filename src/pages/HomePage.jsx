@@ -8,7 +8,7 @@ import { MediaCard } from '../components/MediaCard';
 import { MediaRail } from '../components/MediaRail';
 import { ArtistAvatar } from '../components/ArtistAvatar';
 import { get500x500Image } from '../utils/media';
-import { Flame, TrendingUp, Sparkles, Disc3, ListMusic, History, Radio, Play, Pause, Heart } from 'lucide-react';
+import { Flame, TrendingUp, Disc3, ListMusic, History, Radio, Play, Pause, Heart } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();

@@ -10,7 +10,8 @@ import {
   Pause,
   ChevronUp,
   ChevronDown,
-  Sparkles,
+  Plus,
+  RefreshCw,
 } from 'lucide-react';
 
 export const QueueModal = () => {
@@ -189,7 +190,7 @@ export const QueueModal = () => {
                 onClick={handleLoadMoreToQueue}
                 className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs inline-flex items-center gap-2 active:scale-95 transition-transform"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>Load Recommendations</span>
               </button>
             </div>
@@ -292,7 +293,7 @@ export const QueueModal = () => {
                   disabled={isLoadingMore}
                   className="px-6 py-2.5 rounded-full bg-[#121212] hover:bg-[#1C1C1E] border border-[#2C2C2E] hover:border-white/40 text-xs font-semibold text-white inline-flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                 >
-                  <Sparkles
+                  <RefreshCw
                     className={`w-3.5 h-3.5 ${
                       isLoadingMore ? 'animate-spin' : ''
                     }`}

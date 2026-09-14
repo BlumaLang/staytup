@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { updateService } from '../services/updateService';
 import { usePlayer } from '../context/PlayerContext';
-import { Sparkles, RefreshCw, X, ArrowRight } from 'lucide-react';
+import { ArrowUpCircle, RefreshCw, X, ArrowRight } from 'lucide-react';
 
 export default function UpdateManager() {
   const { isPlaying } = usePlayer();
@@ -99,7 +99,7 @@ export default function UpdateManager() {
         {/* Left: Sparkle Icon + Info */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black flex-shrink-0 shadow-lg shadow-emerald-500/20">
-            <Sparkles className="w-5 h-5" />
+            <ArrowUpCircle className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">

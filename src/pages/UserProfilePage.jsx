@@ -11,7 +11,7 @@ import {
   ArrowLeft,
   UserPlus,
   UserCheck,
-  Sparkles,
+  Disc3,
   Share2,
   Play,
   Heart,
@@ -211,7 +211,7 @@ export default function UserProfilePage() {
                   onClick={handleStartBlend}
                   className="px-5 py-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-105"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Disc3 className="w-4 h-4" />
                   <span>Start Blend</span>
                 </button>
               </div>

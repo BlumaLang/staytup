@@ -13,7 +13,7 @@ import {
   Disc3,
   ListMusic,
   Heart,
-  Sparkles,
+  Music2,
 } from 'lucide-react';
 
 const TRENDING_TAGS = [
@@ -791,7 +791,7 @@ export default function SearchPage() {
                       {cat.label}
                     </h3>
                     <div className="self-end opacity-40 group-hover:opacity-80 transition-opacity">
-                      <Sparkles className="w-6 h-6 text-white" />
+                      <Music2 className="w-6 h-6 text-white" />
                     </div>
                   </div>
                 ))}
