@@ -322,3 +322,5 @@ export const DoomPlayer = ({ onOpenLibrary }) => {
     </div>
   );
 };
+
+export default DoomPlayer;
