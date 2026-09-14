@@ -128,28 +128,35 @@ export default function ProfilePage() {
     async function load() {
       setLoading(true);
       try {
-        // Load liked tracks
         if (user?.id || user?.uid) {
           const [favs, hist] = await Promise.allSettled([
             api.getFavorites(user.id || user.uid),
             api.getHistory(user.id || user.uid),
           ]);
           if (alive) {
-            if (favs.status === 'fulfilled' && Array.isArray(favs.value)) {
-              setLikedTracks(favs.value.slice(0, 6));
+            // getFavorites returns { favorites: [...] } or plain array
+            if (favs.status === 'fulfilled') {
+              const raw = favs.value;
+              const list = Array.isArray(raw) ? raw : (raw?.favorites || raw?.tracks || raw?.data || []);
+              setLikedTracks(list.slice(0, 6));
             }
-            if (hist.status === 'fulfilled' && Array.isArray(hist.value)) {
-              setHistory(hist.value.slice(0, 6));
+            // getHistory returns { history: [...] } or plain array
+            if (hist.status === 'fulfilled') {
+              const raw = hist.value;
+              const list = Array.isArray(raw) ? raw : (raw?.history || raw?.tracks || raw?.data || []);
+              setHistory(list.slice(0, 6));
             }
           }
-        } else {
-          // Fallback: localStorage recently played
-          if (alive) {
-            try {
-              const raw = localStorage.getItem('staytup_recently_played');
-              if (raw) setHistory(JSON.parse(raw).slice(0, 6));
-            } catch {}
-          }
+        }
+        // Always try localStorage fallbacks
+        if (alive) {
+          try {
+            const raw = localStorage.getItem('staytup_recently_played');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              setHistory(prev => prev.length > 0 ? prev : parsed.slice(0, 6));
+            }
+          } catch {}
         }
 
         // Load blends
@@ -246,37 +253,62 @@ export default function ProfilePage() {
       {/* Music Content */}
       <div className="flex-1 px-4 sm:px-8 py-6 w-full max-w-5xl mx-auto space-y-5">
 
-        {/* Liked Songs */}
-        {(likedTracks.length > 0 || likedTrackIds.size > 0) && (
-          <SectionCard
-            title="Liked Songs"
-            icon={Heart}
-            count={likedTrackIds.size}
-            onViewAll={() => navigate('/library?tab=favorites')}
-          >
+        {/* Liked Songs — flat rows, no card wrapper */}
+        {likedTrackIds.size > 0 && (
+          <div>
+            {/* Section header */}
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-[#8E8E93]" />
+                <span className="text-sm font-bold text-white">Liked Songs</span>
+                <span className="text-xs text-[#8E8E93]">({likedTrackIds.size})</span>
+              </div>
+              <button
+                onClick={() => navigate('/library?tab=favorites')}
+                className="flex items-center gap-1 text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+              >
+                View all
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Track rows */}
             {loading ? (
               <div className="px-3 py-4 text-xs text-[#8E8E93]">Loading...</div>
             ) : likedTracks.length > 0 ? (
-              likedTracks.map((track, i) => (
-                <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayLiked} />
-              ))
+              <div className="space-y-0.5">
+                {likedTracks.map((track, i) => (
+                  <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayLiked} />
+                ))}
+              </div>
             ) : (
-              <div className="px-3 py-4 text-xs text-[#8E8E93]">Your liked tracks will appear here.</div>
+              <div className="px-3 py-4 text-xs text-[#8E8E93]">Couldn't load tracks — tap View all to open library.</div>
             )}
-          </SectionCard>
+          </div>
         )}
 
-        {/* Recently Played */}
+        {/* Recently Played — flat rows */}
         {history.length > 0 && (
-          <SectionCard
-            title="Recently Played"
-            icon={Clock}
-            onViewAll={() => navigate('/library?tab=history')}
-          >
-            {history.map((track, i) => (
-              <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayHistory} />
-            ))}
-          </SectionCard>
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#8E8E93]" />
+                <span className="text-sm font-bold text-white">Recently Played</span>
+              </div>
+              <button
+                onClick={() => navigate('/library?tab=history')}
+                className="flex items-center gap-1 text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+              >
+                View all
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-0.5">
+              {history.map((track, i) => (
+                <TrackRow key={track?.videoId || track?.id || i} track={track} index={i} onPlay={handlePlayHistory} />
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Active Blends */}
