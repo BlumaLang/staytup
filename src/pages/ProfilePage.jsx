@@ -1,164 +1,305 @@
 import React, { useState } from 'react';
-import { User, Edit3, Wifi, Shield, LogOut, Heart, Users, ListMusic, ChevronRight, Bell, Music2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usePlayer } from '../context/PlayerContext';
+import {
+  User,
+  Edit3,
+  Wifi,
+  LogOut,
+  Heart,
+  Users,
+  Shield,
+  FileText,
+  Instagram,
+  Mail,
+  Code2,
+  ExternalLink,
+  X,
+} from 'lucide-react';
+import { LoginModal } from '../components/LoginModal';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
+  const { likedTrackIds } = usePlayer();
 
-  const [streamWifiOnly, setStreamWifiOnly] = useState(false);
-  const [highQualityAudio, setHighQualityAudio] = useState(true);
-  const [socialListening, setSocialListening] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
+  const [streamWifiOnly, setStreamWifiOnly] = useState(
+    () => localStorage.getItem('staytup_setting_wifi') === 'true'
+  );
+  const [socialListening, setSocialListening] = useState(
+    () => localStorage.getItem('staytup_setting_social') !== 'false'
+  );
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [activeSubModal, setActiveSubModal] = useState(null); // 'terms' | 'privacy'
 
-  const displayName = user?.name || user?.displayName || 'Staytup Listener';
-  const displayEmail = user?.email || user?.phone || 'user@staytup.music';
+  const handleWifiToggle = () => {
+    const next = !streamWifiOnly;
+    setStreamWifiOnly(next);
+    localStorage.setItem('staytup_setting_wifi', String(next));
+  };
+
+  const handleSocialToggle = () => {
+    const next = !socialListening;
+    setSocialListening(next);
+    localStorage.setItem('staytup_setting_social', String(next));
+  };
 
   return (
-    <div className="w-full h-full overflow-y-auto p-6 md:p-8 space-y-8 text-white max-w-4xl mx-auto">
+    <div className="w-full min-h-full flex flex-col text-white select-none">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Profile &amp; Settings</h1>
-        <p className="text-sm text-[#8E8E93] mt-1">
-          Manage your account, preferences, audio quality, and privacy
-        </p>
+      <div className="sticky top-0 z-20 px-4 sm:px-8 py-4 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
+        <div className="w-full max-w-2xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Profile &amp; Settings</h1>
+        </div>
       </div>
 
-      {/* User Info Summary Card */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-950/30 via-[#18181B] to-[#121214] border border-[#27272A] flex flex-col sm:flex-row items-center sm:items-start gap-6 shadow-xl">
-        <div className="relative group">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-3xl shadow-lg border-2 border-white/20">
-            {displayName[0]?.toUpperCase() || 'U'}
+      {/* Main Content Area */}
+      <div className="flex-1 px-4 sm:px-6 py-6 max-w-2xl mx-auto w-full space-y-6">
+        {/* Profile Identity Header */}
+        <div className="flex flex-col items-center text-center pb-6 border-b border-[#1C1C1E]">
+          <div className="relative mb-3">
+            <img
+              src={user?.avatar || './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg'}
+              alt={user?.username || 'User avatar'}
+              onError={(e) => {
+                e.target.src = './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg';
+              }}
+              className="w-24 h-24 rounded-full object-cover border-2 border-white/20 bg-black shadow-xl"
+            />
           </div>
-          <button className="absolute bottom-0 right-0 p-2 rounded-full bg-[#22C55E] text-black shadow-md hover:scale-110 transition-transform">
+
+          <h3 className="font-extrabold text-2xl text-white tracking-tight leading-tight px-4">
+            {user?.username || user?.displayName || 'Staytup Listener'}
+          </h3>
+
+          <div className="flex items-center gap-2 mt-2 text-xs flex-wrap justify-center">
+            <span className="font-semibold text-[#22C55E]">{likedTrackIds.size} Liked Tracks</span>
+            <span className="text-[#444448]">•</span>
+            <span className="text-[#8E8E93]">Staytup Member</span>
+          </div>
+
+          {user?.email && (
+            <p className="text-xs text-[#8E8E93] mt-1 break-all px-4 max-w-xs">{user.email}</p>
+          )}
+
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="mt-4 px-6 py-2.5 rounded-full bg-white hover:bg-gray-200 text-black font-bold text-xs inline-flex items-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer"
+          >
             <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Profile</span>
           </button>
         </div>
 
-        <div className="flex-1 text-center sm:text-left space-y-1">
-          <h2 className="text-2xl font-bold text-white">{displayName}</h2>
-          <p className="text-sm text-[#8E8E93]">{displayEmail}</p>
-          <div className="pt-2 flex items-center justify-center sm:justify-start gap-6 text-xs text-[#8E8E93]">
-            <span><strong className="text-white">12</strong> Playlists</span>
-            <span><strong className="text-white">48</strong> Following</span>
-            <span><strong className="text-white">215</strong> Liked Songs</span>
+        {/* Playback Preferences */}
+        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
+          <div className="px-4 pt-3.5 pb-1">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
+              Playback
+            </h4>
           </div>
+          <div className="divide-y divide-[#222226]">
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Wifi className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white">Wi-Fi only streaming</p>
+                  <p className="text-xs text-[#8E8E93] mt-0.5">Save mobile data while on the move</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleWifiToggle}
+                className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${
+                  streamWifiOnly ? 'bg-white' : 'bg-[#2C2C2E]'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-transform ${
+                    streamWifiOnly ? 'translate-x-5 bg-black' : 'translate-x-0 bg-white'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Social & Friends */}
+        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
+          <div className="px-4 pt-3.5 pb-1">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
+              Social
+            </h4>
+          </div>
+          <div className="divide-y divide-[#222226]">
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Users className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white">Share Listening Activity</p>
+                  <p className="text-xs text-[#8E8E93] mt-0.5">Let friends see what you are playing</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleSocialToggle}
+                className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${
+                  socialListening ? 'bg-white' : 'bg-[#2C2C2E]'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-4 h-4 rounded-full transition-transform ${
+                    socialListening ? 'translate-x-5 bg-black' : 'translate-x-0 bg-white'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Developer & Contact */}
+        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
+          <div className="px-4 pt-3.5 pb-1">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
+              Developer &amp; Contact
+            </h4>
+          </div>
+          <div className="divide-y divide-[#222226]">
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Code2 className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Developer</p>
+                  <p className="text-xs text-[#8E8E93]">Lead Creator &amp; Engineer</p>
+                </div>
+              </div>
+              <a
+                href="https://instagram.com/animikh.04"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-mono font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
+              >
+                @animikh.04
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Instagram className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Official Instagram</p>
+                  <p className="text-xs text-[#8E8E93]">Community &amp; updates</p>
+                </div>
+              </div>
+              <a
+                href="https://instagram.com/staytup.india"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-mono font-medium text-[#8E8E93] hover:text-white transition-colors flex items-center gap-1"
+              >
+                @staytup.india
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            <div className="px-4 py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Mail className="w-4 h-4 text-[#8E8E93] flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-white">Support &amp; Inquiries</p>
+                </div>
+              </div>
+              <a
+                href="mailto:staytup.india@gmail.com"
+                className="text-xs font-mono text-[#8E8E93] hover:text-white transition-colors"
+              >
+                staytup.india@gmail.com
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Legal & Policies */}
+        <div className="bg-[#121214] border border-[#222226] rounded-2xl overflow-hidden">
+          <div className="px-4 pt-3.5 pb-1">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8E8E93]">
+              Legal &amp; Policies
+            </h4>
+          </div>
+          <div className="divide-y divide-[#222226]">
+            <button
+              type="button"
+              onClick={() => setActiveSubModal('terms')}
+              className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-[#8E8E93] group-hover:text-white" />
+                <p className="text-sm font-medium text-white">Terms &amp; Conditions</p>
+              </div>
+              <span className="text-xs text-[#8E8E93] group-hover:text-white">→</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubModal('privacy')}
+              className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Shield className="w-4 h-4 text-[#8E8E93] group-hover:text-white" />
+                <p className="text-sm font-medium text-white">Privacy Policy</p>
+              </div>
+              <span className="text-xs text-[#8E8E93] group-hover:text-white">→</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Log Out Button */}
+        <div className="pt-2">
+          <button
+            onClick={logout}
+            className="w-full py-3.5 rounded-2xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out of Staytup</span>
+          </button>
         </div>
       </div>
 
-      {/* Settings Section: Playback & Streaming */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-[#8E8E93] px-1">
-          Playback &amp; Streaming
-        </h3>
-        <div className="divide-y divide-[#27272A] rounded-2xl bg-[#18181B] border border-[#27272A] overflow-hidden">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Wifi className="w-5 h-5 text-[#8E8E93]" />
-              <div>
-                <p className="text-sm font-semibold text-white">Stream over Wi-Fi only</p>
-                <p className="text-xs text-[#8E8E93]">Save mobile data when listening on the go</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setStreamWifiOnly(!streamWifiOnly)}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
-                streamWifiOnly ? 'bg-[#22C55E]' : 'bg-[#27272A]'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  streamWifiOnly ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
+      {/* Edit Profile Modal Dialog */}
+      <LoginModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
 
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Music2 className="w-5 h-5 text-[#8E8E93]" />
-              <div>
-                <p className="text-sm font-semibold text-white">High Quality Audio (320kbps)</p>
-                <p className="text-xs text-[#8E8E93]">Lossless clarity and dynamic stereo sound</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setHighQualityAudio(!highQualityAudio)}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
-                highQualityAudio ? 'bg-[#22C55E]' : 'bg-[#27272A]'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  highQualityAudio ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Settings Section: Social & Privacy */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-[#8E8E93] px-1">
-          Social &amp; Privacy
-        </h3>
-        <div className="divide-y divide-[#27272A] rounded-2xl bg-[#18181B] border border-[#27272A] overflow-hidden">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-[#8E8E93]" />
-              <div>
-                <p className="text-sm font-semibold text-white">Social Listening Activity</p>
-                <p className="text-xs text-[#8E8E93]">Allow friends to see what you are playing</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setSocialListening(!socialListening)}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
-                socialListening ? 'bg-[#22C55E]' : 'bg-[#27272A]'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  socialListening ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-[#8E8E93]" />
-              <div>
-                <p className="text-sm font-semibold text-white">New Music Notifications</p>
-                <p className="text-xs text-[#8E8E93]">Alerts when followed artists release tracks</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setPushNotifications(!pushNotifications)}
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors ${
-                pushNotifications ? 'bg-[#22C55E]' : 'bg-[#27272A]'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  pushNotifications ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Account Actions */}
-      <div className="pt-2">
-        <button
-          onClick={() => logout && logout()}
-          className="w-full py-3.5 px-4 rounded-2xl bg-[#18181B] hover:bg-rose-950/30 text-rose-400 hover:text-rose-300 border border-[#27272A] hover:border-rose-800/40 text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+      {/* Terms & Privacy Sub Modals */}
+      {activeSubModal && (
+        <div
+          onClick={() => setActiveSubModal(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in"
         >
-          <LogOut className="w-4 h-4" />
-          <span>Log Out</span>
-        </button>
-      </div>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-[#141416] border border-[#26262A] rounded-2xl p-6 text-white max-h-[80vh] flex flex-col"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#26262A] mb-4">
+              <h3 className="text-base font-bold text-white">
+                {activeSubModal === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'}
+              </h3>
+              <button
+                onClick={() => setActiveSubModal(null)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto text-xs text-[#8E8E93] space-y-3 leading-relaxed">
+              <p>
+                Staytup Music is designed as a fast, privacy-focused audio platform. All audio streams are delivered via licensed or public CDNs and cached strictly in compliance with client storage protocols.
+              </p>
+              <p>
+                Your personal data, playlists, and preferences remain confidential and are synchronized securely using Firebase Realtime Database and localized storage.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
