@@ -625,7 +625,7 @@ class Storage {
                     'id' => $u,
                     'username' => $profile['username'] ?? 'Unknown',
                     'displayName' => $profile['displayName'] ?? $profile['username'] ?? 'Unknown',
-                    'avatar' => $profile['avatar'] ?? MEMOJI_AVATARS[0],
+                    'avatar' => $profile['avatar'] ?? './assets/memoji/pastel_0.51697304321735f33add6051853bcd14.jpg',
                 ];
                 
                 if (count($results) >= $limit) break;
