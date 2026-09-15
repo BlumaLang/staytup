@@ -141,6 +141,21 @@ export default function BlendPage() {
     }
   };
 
+  const handleShareInvite = async () => {
+    if (!inviteUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Blend on Staytup',
+          text: 'Blend music tastes with me on Staytup! Combine our favorites into a shared daily mix:',
+          url: inviteUrl,
+        });
+        return;
+      } catch (e) {}
+    }
+    handleCopyInvite();
+  };
+
   // Remove / Leave Blend
   const handleLeaveOrRemoveBlend = () => {
     if (!blend?.id) return;
@@ -253,101 +268,83 @@ export default function BlendPage() {
 
         {/* Content: Empty State or Active Blends Grid */}
         {allBlends.length === 0 ? (
-          <div>
-            {/* Full-Width Gradient Hero Card */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900/40 via-[#18181B] to-purple-950/40 border border-white/10 p-6 sm:p-10 shadow-2xl">
+          <div className="w-full">
+            {/* Clean Full-Width Hero Banner */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950/60 via-[#141416] to-[#0A0A0C] border border-white/10 p-6 sm:p-12 shadow-2xl">
               {/* Radial glow textures */}
-              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-80 h-80 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-1/3 -mb-10 w-72 h-72 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/4 -mb-12 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
 
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                {/* Left: Value Proposition */}
-                <div className="lg:col-span-7 space-y-4">
-                  <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                    Music sounds better <br className="hidden sm:block" />
-                    <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
-                      when shared together.
-                    </span>
-                  </h2>
-
-                  <p className="text-xs sm:text-sm text-[#B3B3B3] max-w-xl leading-relaxed">
-                    Create a Blend invite and send it to a friend. Once joined, Staytup merges your listening habits into a personalized 50/50 mix that automatically refreshes every single day.
-                  </p>
-
-                  <div className="pt-2 flex flex-wrap items-center gap-3">
-                    <button
-                      onClick={handleOpenInviteModal}
-                      className="px-6 py-3 rounded-full bg-[#1ED760] hover:bg-[#1db954] active:scale-95 text-black font-extrabold text-xs sm:text-sm transition-all shadow-xl hover:shadow-emerald-500/25 cursor-pointer flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4 stroke-[2.5]" />
-                      <span>Create Blend Invite</span>
-                    </button>
-                    <span className="text-xs text-[#8E8E93]">
-                      Instant 1-click link • Share anywhere
-                    </span>
-                  </div>
+              <div className="relative z-10 max-w-3xl space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                  <Disc3 className="w-3.5 h-3.5 animate-spin-slow" />
+                  <span>Spotify Blend Experience</span>
                 </div>
 
-                {/* Right: Visual Illustration Card */}
-                <div className="lg:col-span-5 flex justify-center lg:justify-end">
-                  <div className="w-full max-w-sm rounded-2xl bg-[#141416]/90 border border-white/10 backdrop-blur-md p-6 shadow-2xl relative overflow-hidden group">
-                    <div className="flex items-center justify-between mb-5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E93]">
-                        Blend Preview
-                      </span>
-                      <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        94% Taste Match
-                      </span>
-                    </div>
+                <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
+                  Blend your music taste with friends.
+                </h2>
 
-                    {/* Overlapping Avatar Rings */}
-                    <div className="flex items-center justify-center gap-3 my-4">
-                      <div className="flex flex-col items-center">
-                        <UserAvatar user={user} size="lg" className="ring-4 ring-emerald-500/40 shadow-xl" />
-                        <span className="text-[10px] font-bold text-white mt-1.5 max-w-[70px] truncate">
-                          {user?.displayName || user?.username || 'You'}
-                        </span>
-                      </div>
+                <p className="text-sm sm:text-base text-[#B3B3B3] leading-relaxed max-w-2xl">
+                  Create a Blend invite and share it with anyone. Once accepted, Staytup merges both of your listening habits into a personalized 50/50 mix that automatically updates every single day.
+                </p>
 
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-black text-xs -mt-5">
-                        +
-                      </div>
+                {/* Clean Feature Badges */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
+                    50/50 Shared Mix
+                  </span>
+                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
+                    Refreshes Daily
+                  </span>
+                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
+                    Taste Match %
+                  </span>
+                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
+                    1-Click Join Link
+                  </span>
+                </div>
 
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xl ring-4 ring-purple-500/40">
-                          <Users className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-[10px] font-bold text-white mt-1.5 max-w-[70px] truncate">
-                          Friend
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-center mt-3">
-                      <h4 className="text-sm font-bold text-white">
-                        {user?.username ? `${user.username} + Friend` : 'Shared Taste Blend'}
-                      </h4>
-                      <p className="text-[11px] text-[#8E8E93] mt-0.5">
-                        Daily updated shared playlist • 20 tracks
-                      </p>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="flex items-center justify-center gap-2 mt-3.5 flex-wrap">
-                      <span className="text-[10px] font-medium bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-[#B3B3B3]">
-                        Shared Favorites
-                      </span>
-                      <span className="text-[10px] font-medium bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-[#B3B3B3]">
-                        New Discoveries
-                      </span>
-                    </div>
-                  </div>
+                {/* Full-Width Create Blend Action */}
+                <div className="pt-3 space-y-3 w-full">
+                  <button
+                    onClick={handleOpenInviteModal}
+                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#1ED760] hover:bg-[#1fdf64] active:scale-[0.98] text-black font-black text-sm sm:text-base transition-all shadow-xl shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-3"
+                  >
+                    <Plus className="w-5 h-5 stroke-[2.5]" />
+                    <span>Create Blend Invite</span>
+                  </button>
+                  <p className="text-xs text-[#8E8E93]">
+                    Instant shareable link • Works on any device • Share anywhere
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="space-y-6">
+            {/* Full-Width Quick Invite Banner */}
+            <div className="w-full p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-[#161618] to-[#0D0D0F] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+              <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                <div className="w-11 h-11 rounded-full bg-emerald-500/20 text-[#1ED760] flex items-center justify-center flex-shrink-0">
+                  <Disc3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-white">Create Another Blend</h3>
+                  <p className="text-xs text-[#8E8E93]">Invite another friend to blend music tastes into a shared playlist</p>
+                </div>
+              </div>
+              <button
+                onClick={handleOpenInviteModal}
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#1ED760] text-black text-xs sm:text-sm font-extrabold hover:bg-[#1fdf64] active:scale-95 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Create Blend Invite</span>
+              </button>
+            </div>
+
+            {/* Grid of Blends */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {allBlends.map((b) => {
               const membersList = b.members || [];
               const memberNames = membersList.map((m) => m.name || m.username || m.displayName).filter(Boolean);
@@ -417,49 +414,75 @@ export default function BlendPage() {
                 </div>
               );
             })}
+            </div>
           </div>
         )}
 
         {/* Invite Link Modal */}
         {inviteModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-[#18181B] border border-white/10 rounded-3xl p-6 w-full max-w-sm shadow-2xl">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-bold text-white">
-                  Invite to Blend
-                </h3>
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-[#141416] border border-white/10 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl relative">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-[#1ED760] flex items-center justify-center">
+                    <Disc3 className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-white">
+                    Invite to Blend
+                  </h3>
+                </div>
                 <button
                   onClick={() => setInviteModalOpen(false)}
-                  className="text-[#8E8E93] hover:text-white p-1 cursor-pointer"
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-xs text-[#8E8E93] mb-4">
-                Share this link with a friend. When they open and approve it, your shared blend will generate instantly.
+
+              <p className="text-xs text-[#8E8E93] mb-5 leading-relaxed">
+                Share this invite link with a friend. Once they accept, Staytup merges your listening profiles into a shared 50/50 mix!
               </p>
 
-              <div className="flex items-center gap-2 bg-[#121214] border border-white/10 rounded-xl p-2 mb-4">
+              {/* URL Input Row with 1-tap Copy */}
+              <div className="flex items-center gap-2 bg-black border border-white/10 rounded-2xl p-2 mb-4">
                 <input
                   type="text"
                   readOnly
                   value={inviteUrl}
-                  className="bg-transparent text-xs text-white flex-1 outline-none px-1 select-all truncate"
+                  className="bg-transparent text-xs text-white/90 flex-1 outline-none px-2 select-all truncate font-mono"
                 />
                 <button
                   onClick={handleCopyInvite}
-                  className="px-3 py-1.5 bg-white text-black text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors cursor-pointer flex-shrink-0"
+                  className="px-4 py-2 bg-white text-black text-xs font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all cursor-pointer flex-shrink-0 flex items-center gap-1.5"
                 >
-                  {copiedToast ? 'Copied!' : 'Copy'}
+                  {copiedToast ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <span>Copy</span>
+                  )}
                 </button>
               </div>
 
-              <button
-                onClick={() => setInviteModalOpen(false)}
-                className="w-full py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-colors cursor-pointer"
-              >
-                Done
-              </button>
+              {/* Full-Width Action Buttons */}
+              <div className="space-y-2">
+                <button
+                  onClick={handleShareInvite}
+                  className="w-full py-3.5 rounded-2xl bg-[#1ED760] hover:bg-[#1fdf64] active:scale-[0.99] text-black font-extrabold text-sm transition-all shadow-lg shadow-emerald-500/15 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Share2 className="w-4 h-4 stroke-[2.5]" />
+                  <span>Share Invite Link</span>
+                </button>
+
+                <button
+                  onClick={() => setInviteModalOpen(false)}
+                  className="w-full py-2.5 rounded-2xl text-xs font-semibold text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
