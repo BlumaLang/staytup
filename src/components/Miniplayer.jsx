@@ -19,6 +19,7 @@ import {
   Maximize2,
   Shuffle,
   Repeat,
+  Repeat1,
   PanelRight,
   ChevronUp,
 } from 'lucide-react';
@@ -45,12 +46,14 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
     setIsSleepTimerModalOpen,
     sleepTimerMode,
     sleepTimerRemaining,
+    isShuffle,
+    toggleShuffle,
+    repeatMode,
+    toggleRepeat,
   } = usePlayer();
 
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubTime, setScrubTime] = useState(0);
-  const [isShuffleOn, setIsShuffleOn] = useState(false);
-  const [isRepeatOn, setIsRepeatOn] = useState(false);
 
   if (!currentTrack) return null;
 
@@ -249,13 +252,16 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
           {/* Top Controls Row */}
           <div className="flex items-center gap-5 mb-1.5">
             <button
-              onClick={() => setIsShuffleOn((prev) => !prev)}
-              className={`transition-colors cursor-pointer ${
-                isShuffleOn ? 'text-[#22C55E]' : 'text-[#8E8E93] hover:text-white'
+              onClick={toggleShuffle}
+              className={`transition-colors cursor-pointer relative ${
+                isShuffle ? 'text-[#1ED760]' : 'text-[#8E8E93] hover:text-white'
               }`}
-              title="Shuffle"
+              title={isShuffle ? 'Disable shuffle' : 'Enable shuffle'}
             >
               <Shuffle className="w-4 h-4" />
+              {isShuffle && (
+                <span className="w-1 h-1 rounded-full bg-[#1ED760] absolute -bottom-1 left-1/2 -translate-x-1/2" />
+              )}
             </button>
 
             <button
@@ -289,13 +295,20 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
             </button>
 
             <button
-              onClick={() => setIsRepeatOn((prev) => !prev)}
-              className={`transition-colors cursor-pointer ${
-                isRepeatOn ? 'text-[#22C55E]' : 'text-[#8E8E93] hover:text-white'
+              onClick={toggleRepeat}
+              className={`transition-colors cursor-pointer relative ${
+                repeatMode !== 'off' ? 'text-[#1ED760]' : 'text-[#8E8E93] hover:text-white'
               }`}
-              title="Repeat"
+              title={`Repeat: ${repeatMode}`}
             >
-              <Repeat className="w-4 h-4" />
+              {repeatMode === 'one' ? (
+                <Repeat1 className="w-4 h-4" />
+              ) : (
+                <Repeat className="w-4 h-4" />
+              )}
+              {repeatMode !== 'off' && (
+                <span className="w-1 h-1 rounded-full bg-[#1ED760] absolute -bottom-1 left-1/2 -translate-x-1/2" />
+              )}
             </button>
           </div>
 

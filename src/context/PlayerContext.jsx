@@ -80,6 +80,53 @@ export const PlayerProvider = ({ children }) => {
   const [isSleepTimerModalOpen, setIsSleepTimerModalOpen] = useState(false);
   const sleepTimerEndOfTrackRef = useRef(false);
 
+  // Shuffle and Repeat Playback Modes
+  const [isShuffle, setIsShuffle] = useState(() => {
+    try {
+      return localStorage.getItem('staytup_player_shuffle') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [repeatMode, setRepeatMode] = useState(() => {
+    try {
+      return localStorage.getItem('staytup_player_repeat') || 'off'; // 'off' | 'all' | 'one'
+    } catch {
+      return 'off';
+    }
+  });
+
+  const isShuffleRef = useRef(isShuffle);
+  const repeatModeRef = useRef(repeatMode);
+
+  useEffect(() => {
+    isShuffleRef.current = isShuffle;
+  }, [isShuffle]);
+
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
+  const toggleShuffle = useCallback(() => {
+    setIsShuffle((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('staytup_player_shuffle', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode((prev) => {
+      const next = prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off';
+      try {
+        localStorage.setItem('staytup_player_repeat', next);
+      } catch {}
+      return next;
+    });
+  }, []);
+
   // Active track
   const currentTrack = queue[currentIndex] || null;
 
@@ -273,6 +320,21 @@ export const PlayerProvider = ({ children }) => {
 
   const nextTrack = useCallback(() => {
     const q = queueRef.current;
+    if (q.length === 0) return;
+
+    // Shuffle mode: jump to a random index
+    if (isShuffleRef.current && q.length > 1) {
+      let randIdx = Math.floor(Math.random() * q.length);
+      if (randIdx === currentIndexRef.current) {
+        randIdx = (currentIndexRef.current + 1) % q.length;
+      }
+      jumpToIndex(randIdx);
+      if (q.length < 10) {
+        replenishQueue(q[randIdx], 10);
+      }
+      return;
+    }
+
     if (currentIndex < q.length - 1) {
       jumpToIndex(currentIndex + 1);
       if (currentIndex + 2 >= q.length) {
@@ -283,8 +345,8 @@ export const PlayerProvider = ({ children }) => {
       replenishQueue(q[currentIndex], 10).then((added) => {
         if (queueRef.current.length > currentIndex + 1) {
           jumpToIndex(currentIndex + 1);
-        } else if (queueRef.current.length > 0) {
-          // Loop back to start so track is never cleared or lost
+        } else if (repeatModeRef.current === 'all' && queueRef.current.length > 0) {
+          // Loop back to start
           jumpToIndex(0);
         }
       });
@@ -454,6 +516,17 @@ export const PlayerProvider = ({ children }) => {
         setIsPlaying(false);
         return;
       }
+
+      // Repeat One: replay the current track
+      if (repeatModeRef.current === 'one') {
+        const audio = audioRef.current;
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+        return;
+      }
+
       nextTrack();
     };
 
@@ -771,6 +844,10 @@ export const PlayerProvider = ({ children }) => {
         reorderQueue,
         clearQueue,
         replenishQueue,
+        isShuffle,
+        toggleShuffle,
+        repeatMode,
+        toggleRepeat,
       }}
     >
       {children}
