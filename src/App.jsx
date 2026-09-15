@@ -5,7 +5,6 @@ import { SplashScreen } from './components/SplashScreen';
 import { LoginPage } from './components/LoginPage';
 import { Onboarding } from './components/Onboarding';
 import AppShell from './layouts/AppShell';
-import UpdateManager from './components/UpdateManager';
 
 // Routed Pages
 import HomePage from './pages/HomePage';
@@ -84,7 +83,6 @@ export default function App() {
   return (
     <BrowserRouter basename={basename}>
       <NotificationNavigationHandler />
-      <UpdateManager />
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />

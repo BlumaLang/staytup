@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
 import { loadSmartFeed } from '../services/smartFeedService';
-import { RankedTrackList } from '../components/RankedTrackList';
 import { MediaCard } from '../components/MediaCard';
 import { MediaRail } from '../components/MediaRail';
 import { ArtistAvatar } from '../components/ArtistAvatar';
@@ -225,50 +224,43 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* SECTION 1: TOP DUAL-RANKED LISTS (Trending on This App vs Popular Right Now) */}
+        {/* SECTION 1: TRENDING ON STAYTUP (Normal Cards Rail)                       */}
         {/* ========================================================================= */}
-        {(isLoading || smartFeed.trendingOnApp || smartFeed.popularRightNow) && (
-          <div className="flex lg:grid lg:grid-cols-2 gap-3.5 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth -mx-3 px-3 sm:mx-0 sm:px-0 pb-1">
-            {/* Left: Trending on This App */}
-            {(isLoading || smartFeed.trendingOnApp) && (
-              <div className="w-[86vw] max-w-[340px] sm:max-w-none flex-shrink-0 lg:w-auto">
-                <RankedTrackList
-                  title="Trending on Staytup"
-                  subtitle="Most played & saved by community listeners"
-                  icon={Flame}
-                  iconColor="text-rose-400"
-                  iconBg="bg-rose-500/15"
-                  tracks={smartFeed.trendingOnApp || []}
-                  onPlayTrack={playTrack}
-                  currentTrack={currentTrack}
-                  isPlaying={isPlaying}
-                  likedTrackIds={likedTrackIds}
-                  toggleLike={toggleLike}
-                  isLoading={isLoading}
-                />
-              </div>
+        {(isLoading || (smartFeed.trendingOnApp && smartFeed.trendingOnApp.length > 0)) && (
+          <MediaRail
+            title="Trending on Staytup"
+            subtitle="Most played & saved by community listeners"
+            action={
+              <Link
+                to="/search"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                Explore
+              </Link>
+            }
+          >
+            {isLoading ? (
+              [1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="w-32 sm:w-48 flex-shrink-0">
+                  <div className="aspect-square rounded-lg bg-white/5 animate-pulse mb-3" />
+                  <div className="w-3/4 h-4 bg-white/10 rounded animate-pulse mb-1.5" />
+                  <div className="w-1/2 h-3 bg-white/5 rounded animate-pulse" />
+                </div>
+              ))
+            ) : (
+              smartFeed.trendingOnApp.map((track, idx) => (
+                <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
+                  <MediaCard
+                    image={track.image || track.thumbnail || track.artwork_url}
+                    title={track.title}
+                    subtitle={track.artist}
+                    track={track}
+                    onPlay={() => playTrack(track, smartFeed.trendingOnApp)}
+                  />
+                </div>
+              ))
             )}
-
-            {/* Right: Popular Right Now (Global Charts) */}
-            {(isLoading || smartFeed.popularRightNow) && (
-              <div className="w-[86vw] max-w-[340px] sm:max-w-none flex-shrink-0 lg:w-auto">
-                <RankedTrackList
-                  title="Popular Right Now"
-                  subtitle="Top songs currently topping the charts"
-                  icon={TrendingUp}
-                  iconColor="text-[#1ED760]"
-                  iconBg="bg-[#1ED760]/15"
-                  tracks={smartFeed.popularRightNow || []}
-                  onPlayTrack={playTrack}
-                  currentTrack={currentTrack}
-                  isPlaying={isPlaying}
-                  likedTrackIds={likedTrackIds}
-                  toggleLike={toggleLike}
-                  isLoading={isLoading}
-                />
-              </div>
-            )}
-          </div>
+          </MediaRail>
         )}
 
         {/* ========================================================================= */}

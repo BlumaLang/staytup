@@ -23,6 +23,11 @@ import {
   Share2,
   Trash2,
   X,
+  Sparkles,
+  Users,
+  RefreshCw,
+  Music,
+  Disc3,
 } from 'lucide-react';
 
 const formatDuration = (sec) => {
@@ -150,7 +155,7 @@ export default function BlendPage() {
     const inviter = blend?.members?.[0] || { name: 'A friend', username: 'listener' };
 
     return (
-      <div className="min-h-full bg-black text-white px-4 py-12 flex flex-col items-center justify-center select-none">
+      <div className="w-full min-h-full bg-[#121212] text-white px-4 py-12 flex flex-col items-center justify-center select-none">
         <div className="w-full max-w-sm bg-[#141417] border border-white/10 rounded-3xl p-6 text-center shadow-2xl flex flex-col items-center">
           {/* Member Avatars Side by Side */}
           <div className="flex items-center justify-center gap-3 my-4">
@@ -206,38 +211,178 @@ export default function BlendPage() {
   // ==========================================
   if (!isDetailMode || !blend) {
     return (
-      <div className="min-h-full bg-black text-white px-4 sm:px-6 py-6 max-w-4xl mx-auto select-none">
-        {/* Header — hidden on mobile (AppShell shows "Blend" in top bar already) */}
-        <div className="hidden lg:flex items-center justify-between gap-4 mb-6">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Blend
-          </h1>
+      <div className="w-full min-h-full bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Blend
+              </h1>
+              <span className="text-[11px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                Shared Mix
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#A7A7A7] mt-1">
+              A shared playlist made for two, combining your musical tastes with daily updates.
+            </p>
+          </div>
 
           <button
             onClick={handleOpenInviteModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-md flex-shrink-0"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-lg flex-shrink-0 self-start sm:self-auto"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Create Blend</span>
           </button>
         </div>
 
-        {/* Blends Grid */}
+        {/* Content: Empty State or Active Blends Grid */}
         {allBlends.length === 0 ? (
-          <div className="bg-[#141417] border border-white/5 rounded-2xl p-8 sm:p-12 text-center">
-            <h3 className="text-base font-bold text-white mb-1">No Active Blends Yet</h3>
-            <p className="text-xs text-[#8E8E93] max-w-sm mx-auto mb-5">
-              Create an invite link and send it to a friend. Once approved, your shared mix appears here.
-            </p>
-            <button
-              onClick={handleOpenInviteModal}
-              className="px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-gray-200 transition-colors cursor-pointer shadow-md"
-            >
-              Create Invite Link
-            </button>
+          <div className="space-y-8 sm:space-y-10">
+            {/* Full-Width Gradient Hero Card */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900/40 via-[#18181B] to-purple-950/40 border border-white/10 p-6 sm:p-10 shadow-2xl">
+              {/* Radial glow textures */}
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-80 h-80 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-1/3 -mb-10 w-72 h-72 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                {/* Left: Value Proposition */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Personalized Sound Blend</span>
+                  </div>
+
+                  <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+                    Music sounds better <br className="hidden sm:block" />
+                    <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
+                      when shared together.
+                    </span>
+                  </h2>
+
+                  <p className="text-xs sm:text-sm text-[#B3B3B3] max-w-xl leading-relaxed">
+                    Create a Blend invite and send it to a friend. Once joined, Staytup merges your listening habits into a personalized 50/50 mix that automatically refreshes every single day.
+                  </p>
+
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={handleOpenInviteModal}
+                      className="px-6 py-3 rounded-full bg-[#1ED760] hover:bg-[#1db954] active:scale-95 text-black font-extrabold text-xs sm:text-sm transition-all shadow-xl hover:shadow-emerald-500/25 cursor-pointer flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                      <span>Create Blend Invite</span>
+                    </button>
+                    <span className="text-xs text-[#8E8E93]">
+                      Instant 1-click link • Share anywhere
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: Visual Illustration Card */}
+                <div className="lg:col-span-5 flex justify-center lg:justify-end">
+                  <div className="w-full max-w-sm rounded-2xl bg-[#141416]/90 border border-white/10 backdrop-blur-md p-6 shadow-2xl relative overflow-hidden group">
+                    <div className="flex items-center justify-between mb-5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E93]">
+                        Blend Preview
+                      </span>
+                      <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        94% Taste Match
+                      </span>
+                    </div>
+
+                    {/* Overlapping Avatar Rings */}
+                    <div className="flex items-center justify-center gap-3 my-4">
+                      <div className="flex flex-col items-center">
+                        <UserAvatar user={user} size="lg" className="ring-4 ring-emerald-500/40 shadow-xl" />
+                        <span className="text-[10px] font-bold text-white mt-1.5 max-w-[70px] truncate">
+                          {user?.displayName || user?.username || 'You'}
+                        </span>
+                      </div>
+
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-black text-xs -mt-5">
+                        +
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-xl ring-4 ring-purple-500/40">
+                          🎧
+                        </div>
+                        <span className="text-[10px] font-bold text-white mt-1.5 max-w-[70px] truncate">
+                          Friend
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-center mt-3">
+                      <h4 className="text-sm font-bold text-white">
+                        {user?.username ? `${user.username} + Friend` : 'Shared Taste Blend'}
+                      </h4>
+                      <p className="text-[11px] text-[#8E8E93] mt-0.5">
+                        Daily updated shared playlist • 20 tracks
+                      </p>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex items-center justify-center gap-1.5 mt-3.5 flex-wrap">
+                      <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[#B3B3B3]">
+                        🔥 Shared Favorites
+                      </span>
+                      <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[#B3B3B3]">
+                        ✨ New Discoveries
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* "How Blend Works" Feature Cards Grid */}
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+                How Blend Works
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="bg-[#18181B]/80 hover:bg-[#1F1F23] border border-white/5 rounded-2xl p-5 sm:p-6 transition-colors shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3.5">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white mb-1">
+                    1. Invite a friend
+                  </h4>
+                  <p className="text-xs text-[#8E8E93] leading-relaxed">
+                    Create a unique invite link and share it on WhatsApp, Telegram, Instagram, or anywhere.
+                  </p>
+                </div>
+
+                <div className="bg-[#18181B]/80 hover:bg-[#1F1F23] border border-white/5 rounded-2xl p-5 sm:p-6 transition-colors shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-3.5">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white mb-1">
+                    2. Blend your tastes
+                  </h4>
+                  <p className="text-xs text-[#8E8E93] leading-relaxed">
+                    Our smart algorithm merges top genres, favorite artists, and recent discoveries with a match score.
+                  </p>
+                </div>
+
+                <div className="bg-[#18181B]/80 hover:bg-[#1F1F23] border border-white/5 rounded-2xl p-5 sm:p-6 transition-colors shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3.5">
+                    <RefreshCw className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white mb-1">
+                    3. Fresh every day
+                  </h4>
+                  <p className="text-xs text-[#8E8E93] leading-relaxed">
+                    Your Blend playlist refreshes automatically every morning based on what you both listen to.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {allBlends.map((b) => {
               const membersList = b.members || [];
               const memberNames = membersList.map((m) => m.name || m.username || m.displayName).filter(Boolean);
@@ -257,14 +402,14 @@ export default function BlendPage() {
                 <div
                   key={b.id}
                   onClick={() => navigate(`/blend/${b.id}`)}
-                  className={`relative rounded-2xl overflow-hidden cursor-pointer group transition-transform active:scale-[0.98] bg-gradient-to-br ${grad} border border-white/10 hover:border-white/20`}
-                  style={{ minHeight: '160px' }}
+                  className={`relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-br ${grad} border border-white/10 hover:border-white/20 shadow-xl`}
+                  style={{ minHeight: '170px' }}
                 >
                   {/* Background texture */}
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,_white,_transparent_60%)]" />
 
                   {/* Content */}
-                  <div className="relative z-10 p-5 flex flex-col justify-between h-full" style={{ minHeight: '160px' }}>
+                  <div className="relative z-10 p-5 flex flex-col justify-between h-full" style={{ minHeight: '170px' }}>
                     {/* Top: avatars + match score badge */}
                     <div className="flex items-start justify-between">
                       {/* Stacked avatars */}
@@ -381,7 +526,7 @@ export default function BlendPage() {
   };
 
   return (
-    <div className="min-h-full bg-black text-white px-4 sm:px-6 py-6 max-w-4xl mx-auto select-none">
+    <div className="w-full min-h-full bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
       {/* Top Back Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -403,53 +548,60 @@ export default function BlendPage() {
         </button>
       </div>
 
-      {/* Blend Header: User Names + Avatar List */}
-      <div className="bg-[#141417] border border-white/5 rounded-2xl p-5 sm:p-6 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          <div>
+      {/* Blend Header: Spotify-Style Hero Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-emerald-900/40 via-[#18181B] to-teal-950/30 border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-8 mb-6 shadow-2xl">
+        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-3">
             {/* Avatar List Side by Side with Member Names */}
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="flex items-center -space-x-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center -space-x-3">
                 {members.map((m, idx) => (
                   <UserAvatar
                     key={idx}
                     user={m}
-                    size="md"
-                    className="ring-2 ring-[#141417] shadow-md"
+                    size="lg"
+                    className="ring-4 ring-[#18181B] shadow-xl"
                   />
                 ))}
               </div>
 
-              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full ml-1">
-                {blend.matchScore || 85}% Match
+              <span className="text-xs font-black text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 rounded-full">
+                {blend.matchScore || 85}% Taste Match
               </span>
             </div>
 
             {/* User Names List */}
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-              {namesTitle}
-            </h1>
-            <p className="text-xs text-[#8E8E93] mt-1">
-              {tracks.length} blended tracks based on your listening activity
-            </p>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E8E93]">
+                Shared Blend Mix
+              </span>
+              <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mt-0.5">
+                {namesTitle}
+              </h1>
+              <p className="text-xs sm:text-sm text-[#A7A7A7] mt-1">
+                {tracks.length} blended tracks based on your listening habits • Refreshes daily
+              </p>
+            </div>
           </div>
 
           {/* Actions: Big Play Button & Share */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button
               onClick={() => handlePlayBlend()}
-              className="w-12 h-12 rounded-full bg-[#22C55E] hover:bg-[#1fb856] active:scale-95 text-black flex items-center justify-center shadow-lg transition-transform cursor-pointer"
+              className="w-14 h-14 rounded-full bg-[#1ED760] hover:bg-[#1db954] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-xl shadow-emerald-500/20 transition-all cursor-pointer"
               title="Play Blend"
             >
-              <Play className="w-5 h-5 fill-black ml-0.5" />
+              <Play className="w-6 h-6 fill-black ml-0.5" />
             </button>
 
             <button
               onClick={handleCopyLink}
-              className="px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer"
               title="Invite another friend"
             >
-              <Share2 className="w-3.5 h-3.5" />
+              <Share2 className="w-4 h-4" />
               <span>Invite</span>
             </button>
           </div>
