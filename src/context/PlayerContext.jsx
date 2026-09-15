@@ -168,6 +168,22 @@ export const PlayerProvider = ({ children }) => {
     }
   }, []);
 
+  // Prefetch stream URL for seamless zero-latency track switching
+  const prefetchNextTrackStream = useCallback((track) => {
+    if (!track) return;
+    const rawId = track.videoId || track.video_id || track.id;
+    if (!rawId) return;
+    const videoId = String(rawId).replace(/^saavn_/, '');
+    if (!videoId || streamCache.current.has(videoId)) return;
+
+    api.getStreamUrl(videoId).then((res) => {
+      const url = res?.stream_url || res?.url || res?.streamUrl;
+      if (url) {
+        streamCache.current.set(videoId, url);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Play a track with stream resolution and strict race condition prevention
   const loadAndPlayTrack = useCallback(async (track, autoPlay = true) => {
     if (!track) return;
@@ -185,10 +201,6 @@ export const PlayerProvider = ({ children }) => {
     fetchLyrics(track, currentLoadId);
 
     const audio = audioRef.current;
-    // Stop and clear previous audio immediately to prevent playing wrong song
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
     setCurrentTime(0);
 
     try {
@@ -214,8 +226,11 @@ export const PlayerProvider = ({ children }) => {
         throw new Error('No stream URL available');
       }
 
-      audio.src = streamUrl;
-      audio.load();
+      // Seamlessly switch audio source without breaking media session pipeline on mobile/lock-screen
+      if (audio.src !== streamUrl) {
+        audio.src = streamUrl;
+      }
+      audio.currentTime = 0;
 
       if (autoPlay) {
         try {
@@ -239,6 +254,14 @@ export const PlayerProvider = ({ children }) => {
           }
         }
       }
+
+      // Proactively prefetch next track in queue for instantaneous background transition
+      const q = queueRef.current;
+      const curIdx = currentIndexRef.current;
+      const nextCandidate = q[curIdx + 1] || (repeatModeRef.current === 'all' ? q[0] : null);
+      if (nextCandidate) {
+        prefetchNextTrackStream(nextCandidate);
+      }
     } catch (err) {
       if (currentLoadId === activeTrackLoadIdRef.current) {
         console.error('Failed to load stream for track:', track.title, err);
@@ -250,7 +273,7 @@ export const PlayerProvider = ({ children }) => {
         setIsLoadingStream(false);
       }
     }
-  }, [fetchLyrics]);
+  }, [fetchLyrics, prefetchNextTrackStream]);
 
   // Intelligent queue replenishment
   const isReplenishingRef = useRef(false);
@@ -318,15 +341,17 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [loadAndPlayTrack, replenishQueue]);
 
-  const nextTrack = useCallback(() => {
+  const nextTrack = useCallback(async () => {
     const q = queueRef.current;
     if (q.length === 0) return;
 
-    // Shuffle mode: jump to a random index
+    const curIdx = currentIndexRef.current;
+
+    // 1. Shuffle mode: jump to a random index
     if (isShuffleRef.current && q.length > 1) {
       let randIdx = Math.floor(Math.random() * q.length);
-      if (randIdx === currentIndexRef.current) {
-        randIdx = (currentIndexRef.current + 1) % q.length;
+      if (randIdx === curIdx) {
+        randIdx = (curIdx + 1) % q.length;
       }
       jumpToIndex(randIdx);
       if (q.length < 10) {
@@ -335,23 +360,27 @@ export const PlayerProvider = ({ children }) => {
       return;
     }
 
-    if (currentIndex < q.length - 1) {
-      jumpToIndex(currentIndex + 1);
-      if (currentIndex + 2 >= q.length) {
-        replenishQueue(q[currentIndex + 1], 10);
+    // 2. Sequential next track in queue
+    if (curIdx < q.length - 1) {
+      jumpToIndex(curIdx + 1);
+      if (curIdx + 2 >= q.length) {
+        replenishQueue(q[curIdx + 1], 10);
       }
-    } else if (q.length > 0) {
-      // Reached end of queue: replenish and jump to next
-      replenishQueue(q[currentIndex], 10).then((added) => {
-        if (queueRef.current.length > currentIndex + 1) {
-          jumpToIndex(currentIndex + 1);
-        } else if (repeatModeRef.current === 'all' && queueRef.current.length > 0) {
-          // Loop back to start
-          jumpToIndex(0);
-        }
-      });
+      return;
     }
-  }, [currentIndex, jumpToIndex, replenishQueue]);
+
+    // 3. End of queue: replenish intelligent recommendations or loop so audio never halts
+    if (q.length > 0) {
+      const current = q[curIdx] || currentTrack;
+      await replenishQueue(current, 10);
+      const updatedQueue = queueRef.current;
+      if (updatedQueue.length > curIdx + 1) {
+        jumpToIndex(curIdx + 1);
+      } else if (updatedQueue.length > 0) {
+        jumpToIndex(0);
+      }
+    }
+  }, [jumpToIndex, replenishQueue, currentTrack]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -375,10 +404,22 @@ export const PlayerProvider = ({ children }) => {
   }, [isPlaying, currentTrack, loadAndPlayTrack]);
 
   const prevTrack = useCallback(() => {
-    if (currentIndex > 0) {
-      jumpToIndex(currentIndex - 1);
+    const audio = audioRef.current;
+    // If more than 3 seconds played, rewind to 0:00 (standard UX across Spotify & iOS/Android lock screens)
+    if (audio && audio.currentTime > 3) {
+      audio.currentTime = 0;
+      setCurrentTime(0);
+      return;
     }
-  }, [currentIndex, jumpToIndex]);
+
+    const curIdx = currentIndexRef.current;
+    if (curIdx > 0) {
+      jumpToIndex(curIdx - 1);
+    } else if (audio) {
+      audio.currentTime = 0;
+      setCurrentTime(0);
+    }
+  }, [jumpToIndex]);
 
   const seek = useCallback((timeInSeconds) => {
     const audio = audioRef.current;
@@ -425,6 +466,7 @@ export const PlayerProvider = ({ children }) => {
 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      updateMediaSessionPosition();
 
       // Record play to history once 1 second played
       if (currentTrack && audio.currentTime > 1) {
@@ -450,26 +492,40 @@ export const PlayerProvider = ({ children }) => {
 
             // 2. Realtime Firebase Community & User History record
             recordTrackHistoryToFirebase(effectiveUserId, currentTrack);
+          }
+        }
+      }
 
-            // 3. Record entity-aware recent activity for search & library
+      // Record listening history once when song reaches 30s or 50%
+      if (!hasRecordedHistory && currentTrack && audio.duration > 0) {
+        const percent = audio.currentTime / audio.duration;
+        if (audio.currentTime >= 30 || percent >= 0.5) {
+          hasRecordedHistory = true;
+
+          const trackId = currentTrack.videoId || currentTrack.video_id || currentTrack.id;
+          if (trackId) {
+            // 1. Record in DB history if logged in
+            if (user?.id) {
+              api.recordHistory(trackId, user.id, Math.floor(audio.currentTime)).catch(() => {});
+            }
+
+            // 2. Increment global play count for popularity metrics
+            api.incrementPlayCount(trackId).catch(() => {});
+
+            // 3. Dispatch global play event and record recent activity
             try {
-              const artistName =
-                currentTrack.artist ||
-                (Array.isArray(currentTrack.artists) && currentTrack.artists.length > 0
-                  ? currentTrack.artists.map((a) => (typeof a === 'string' ? a : a.name)).filter(Boolean).join(', ')
-                  : '') ||
-                '';
-
+              const artistName = currentTrack.artist || 'Unknown Artist';
+              window.dispatchEvent(new CustomEvent('track_played', {
+                detail: { track: currentTrack, timestamp: Date.now() }
+              }));
               recordRecentActivity({
                 type: 'song',
                 id: trackId,
-                videoId: trackId,
-                title: currentTrack.title,
+                title: currentTrack.title || 'Unknown Title',
                 subtitle: artistName,
                 artist: artistName,
                 artists: currentTrack.artists || [],
                 image: currentTrack.thumbnail || currentTrack.image || '',
-                thumbnail: currentTrack.thumbnail || currentTrack.image || '',
               });
             } catch (e) {}
 
@@ -503,6 +559,7 @@ export const PlayerProvider = ({ children }) => {
     const handleDurationChange = () => {
       if (audio.duration && !isNaN(audio.duration)) {
         setDuration(audio.duration);
+        updateMediaSessionPosition();
       }
     };
 
@@ -511,23 +568,23 @@ export const PlayerProvider = ({ children }) => {
         sleepTimerEndOfTrackRef.current = false;
         setSleepTimerMode(null);
         setSleepTimerRemaining(0);
-        const audio = audioRef.current;
-        if (audio) audio.pause();
+        const a = audioRef.current;
+        if (a) a.pause();
         setIsPlaying(false);
         return;
       }
 
-      // Repeat One: replay the current track
+      // Repeat One: replay the current track from 0:00
       if (repeatModeRef.current === 'one') {
-        const audio = audioRef.current;
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
+        const a = audioRef.current;
+        if (a) {
+          a.currentTime = 0;
+          a.play().catch(() => {});
         }
         return;
       }
 
-      nextTrack();
+      nextTrackRef.current();
     };
 
     const handlePlay = () => setIsPlaying(true);
@@ -557,9 +614,73 @@ export const PlayerProvider = ({ children }) => {
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('waiting', handleWaiting);
     };
-  }, [currentTrack, user?.id, nextTrack]);
+  }, [currentTrack, user?.id, updateMediaSessionPosition]);
 
-  // Sync with System MediaSession (Notification Panel, Control Center, Lock Screen)
+  // Register System MediaSession Action Handlers once (iOS Lock Screen, Android Notification, Bluetooth Car)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    try {
+      navigator.mediaSession.setActionHandler('play', () => {
+        const audio = audioRef.current;
+        if (audio) {
+          audio.play().catch(() => {});
+          setIsPlaying(true);
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('pause', () => {
+        const audio = audioRef.current;
+        if (audio) {
+          audio.pause();
+          setIsPlaying(false);
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        prevTrackRef.current();
+      });
+
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        nextTrackRef.current();
+      });
+
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && details.seekTime !== null) {
+          seekRef.current(details.seekTime);
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const skip = details.seekOffset || 10;
+        const audio = audioRef.current;
+        if (audio) {
+          seekRef.current(Math.max(0, audio.currentTime - skip));
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const skip = details.seekOffset || 10;
+        const audio = audioRef.current;
+        if (audio) {
+          seekRef.current(Math.min(audio.duration || 0, audio.currentTime + skip));
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('stop', () => {
+        const audio = audioRef.current;
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+          setIsPlaying(false);
+        }
+      });
+    } catch (e) {
+      console.warn('MediaSession initialization error:', e);
+    }
+  }, []);
+
+  // Sync Metadata with System MediaSession (Artwork, Title, Artist, Album)
   useEffect(() => {
     if (!('mediaSession' in navigator) || !currentTrack) return;
 
@@ -571,42 +692,20 @@ export const PlayerProvider = ({ children }) => {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack.title || 'Staytup Track',
         artist: currentTrack.artist || 'Staytup Artist',
-        album: currentTrack.album || 'Staytup Music',
+        album: currentTrack.album || currentTrack.artist || 'Staytup Music',
         artwork: [
           { src: hdArtwork, sizes: '96x96', type: 'image/jpeg' },
           { src: hdArtwork, sizes: '128x128', type: 'image/jpeg' },
           { src: hdArtwork, sizes: '192x192', type: 'image/jpeg' },
           { src: hdArtwork, sizes: '256x256', type: 'image/jpeg' },
           { src: hdArtwork, sizes: '384x384', type: 'image/jpeg' },
-          { src: hdArtwork, sizes: '500x500', type: 'image/jpeg' },
+          { src: hdArtwork, sizes: '512x512', type: 'image/jpeg' },
         ],
       });
-
-      navigator.mediaSession.setActionHandler('play', () => {
-        const audio = audioRef.current;
-        audio.play().catch(() => {});
-        setIsPlaying(true);
-      });
-      navigator.mediaSession.setActionHandler('pause', () => {
-        const audio = audioRef.current;
-        audio.pause();
-        setIsPlaying(false);
-      });
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        prevTrack();
-      });
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        nextTrack();
-      });
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime !== undefined && details.seekTime !== null) {
-          seek(details.seekTime);
-        }
-      });
     } catch (e) {
-      console.warn('MediaSession initialization error:', e);
+      console.warn('MediaSession metadata error:', e);
     }
-  }, [currentTrack, nextTrack, prevTrack, seek]);
+  }, [currentTrack]);
 
   // Update MediaSession playback state
   useEffect(() => {

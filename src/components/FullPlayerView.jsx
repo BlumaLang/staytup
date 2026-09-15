@@ -42,6 +42,8 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
     toggleShuffle,
     repeatMode,
     toggleRepeat,
+    isMuted,
+    toggleMute,
     isLoadingStream,
     setIsLyricsDrawerOpen,
     setIsQueueModalOpen,
