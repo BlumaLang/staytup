@@ -222,193 +222,136 @@ export default function BlendPage() {
   }
 
   // ==========================================
-  // VIEW 2: BLEND HUB (CLEAN LIST OF BLENDS)
+  // VIEW 2: BLEND HUB / CREATE SCREEN (SPOTIFY 1:1)
   // ==========================================
   if (!isDetailMode || !blend) {
-    return (
-      <div className="w-full min-h-full bg-black lg:bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
-        {/* Header — hidden on mobile (AppShell already displays "Blend" in the top bar) */}
-        <div className="hidden lg:flex items-center justify-between gap-4 mb-6 sm:mb-8">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Blend
-              </h1>
-              <span className="text-[11px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                Shared Mix
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-[#A7A7A7] mt-1">
-              A shared playlist made for two, combining your musical tastes with daily updates.
-            </p>
-          </div>
+    const userInitial = (user?.displayName || user?.username || 'A').charAt(0).toUpperCase();
 
+    return (
+      <div className="w-full min-h-full bg-black lg:bg-[#121212] text-white select-none flex flex-col justify-between">
+        {/* Mobile Top Header: Back Arrow & "Create a Blend" */}
+        <div className="flex lg:hidden items-center justify-between px-4 pt-3 pb-2">
           <button
-            onClick={handleOpenInviteModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-lg flex-shrink-0"
+            onClick={() => navigate(-1)}
+            className="w-9 h-9 -ml-2 rounded-full flex items-center justify-center text-white active:scale-95 transition-all"
+            aria-label="Back"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Create Blend</span>
+            <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
           </button>
+          <span className="text-base font-bold text-white tracking-tight">Create a Blend</span>
+          <div className="w-7" /> {/* spacer for true center alignment */}
         </div>
 
-        {/* Mobile top action bar when active blends exist */}
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-6 max-w-xl mx-auto w-full text-center">
+          {/* Overlapping Venn Circles */}
+          <div className="flex items-center justify-center mb-8 sm:mb-10 select-none">
+            {/* Left Circle: User's circle */}
+            <div className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full bg-[#535353] flex items-center justify-center overflow-hidden shadow-2xl relative z-0 flex-shrink-0">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.displayName || user.username || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-4xl sm:text-5xl lg:text-6xl font-black text-white/90">
+                  {userInitial}
+                </span>
+              )}
+            </div>
+
+            {/* Right Circle: Overlapping Plus Circle */}
+            <div className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 -ml-8 sm:-ml-10 lg:-ml-12 rounded-full bg-[#535353] border-4 border-black lg:border-[#121212] flex items-center justify-center shadow-2xl relative z-10 flex-shrink-0">
+              <Plus className="w-12 h-12 sm:w-16 sm:h-16 text-white stroke-[2.5]" />
+            </div>
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-3">
+            <span className="lg:hidden">Invite friends to Blend</span>
+            <span className="hidden lg:inline">Invite friends</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-xs sm:text-sm text-[#A7A7A7] font-medium leading-relaxed max-w-md mx-auto mb-6 sm:mb-8">
+            <span className="lg:hidden">
+              Invite up to 10 friends to a Blend, a shared playlist that gives you social recommendations based on all of your music tastes.
+            </span>
+            <span className="hidden lg:inline">
+              Pick a friend to create a Blend with—a playlist that shows how your music taste matches up.
+            </span>
+          </p>
+
+          {/* Pill Invite Button */}
+          <button
+            onClick={handleShareInvite}
+            className="w-auto min-w-[140px] px-8 py-3.5 rounded-full bg-white hover:bg-gray-200 active:scale-95 text-black font-extrabold text-sm sm:text-base tracking-normal transition-all shadow-xl cursor-pointer mb-6"
+          >
+            Invite
+          </button>
+
+          {/* Disclaimer Note */}
+          <p className="text-[11px] sm:text-xs text-[#727272] leading-relaxed max-w-md mx-auto text-center">
+            <span className="lg:hidden">
+              Note: People in this Blend will be able to add their friends. We may also create other playlists that include social recommendations. People in social recommendations playlists will be able to see your profile picture and username.{' '}
+              <span className="text-white hover:underline cursor-pointer">Learn more</span> about these playlists and information they include.
+            </span>
+            <span className="hidden lg:inline">
+              Note: You may invite up to 10 people. Connected people will see your profile picture and username. Inviting friends will create playlists and use other recommendation features that match your taste.
+            </span>
+          </p>
+        </div>
+
+        {/* Existing Blends section (if user has already created blends) */}
         {allBlends.length > 0 && (
-          <div className="flex lg:hidden items-center justify-between gap-3 mb-4">
-            <span className="text-xs text-[#8E8E93] font-medium">Your Shared Blends</span>
-            <button
-              onClick={handleOpenInviteModal}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-md"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Create</span>
-            </button>
-          </div>
-        )}
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-8 pb-8 pt-4 border-t border-white/5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-[#B3B3B3] uppercase tracking-wider">
+                Your Active Blends ({allBlends.length})
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {allBlends.map((b) => {
+                const membersList = b.members || [];
+                const memberNames = membersList
+                  .map((m) => m.name || m.username || m.displayName)
+                  .filter(Boolean);
+                const namesLabel =
+                  memberNames.length > 0 ? memberNames.join(' + ') : b.title || 'Shared Blend';
 
-        {/* Content: Empty State or Active Blends Grid */}
-        {allBlends.length === 0 ? (
-          <div className="w-full">
-            {/* Clean Full-Width Hero Banner */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950/60 via-[#141416] to-[#0A0A0C] border border-white/10 p-6 sm:p-12 shadow-2xl">
-              {/* Radial glow textures */}
-              <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-1/4 -mb-12 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
-
-              <div className="relative z-10 max-w-3xl space-y-6">
-                <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-                  Blend your music taste with friends.
-                </h2>
-
-                <p className="text-sm sm:text-base text-[#B3B3B3] leading-relaxed max-w-2xl">
-                  Create a Blend invite and share it with anyone. Once accepted, Staytup merges both of your listening habits into a personalized 50/50 mix that automatically updates every single day.
-                </p>
-
-                {/* Clean Feature Badges */}
-                <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
-                    50/50 Shared Mix
-                  </span>
-                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
-                    Refreshes Daily
-                  </span>
-                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
-                    Taste Match %
-                  </span>
-                  <span className="text-xs font-medium bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-white/90">
-                    1-Click Join Link
-                  </span>
-                </div>
-
-                {/* Full-Width Create Blend Action */}
-                <div className="pt-3 space-y-3 w-full">
-                  <button
-                    onClick={handleOpenInviteModal}
-                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#1ED760] hover:bg-[#1fdf64] active:scale-[0.98] text-black font-black text-sm sm:text-base transition-all shadow-xl shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-3"
+                return (
+                  <div
+                    key={b.id}
+                    onClick={() => navigate(`/blend/${b.id}`)}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all cursor-pointer flex items-center justify-between gap-3 group"
                   >
-                    <Plus className="w-5 h-5 stroke-[2.5]" />
-                    <span>Create Blend Invite</span>
-                  </button>
-                  <p className="text-xs text-[#8E8E93]">
-                    Instant shareable link • Works on any device • Share anywhere
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Full-Width Quick Invite Banner */}
-            <div className="w-full p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-[#161618] to-[#0D0D0F] border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
-              <div className="flex items-center gap-3.5 w-full sm:w-auto">
-                <div className="w-11 h-11 rounded-full bg-emerald-500/20 text-[#1ED760] flex items-center justify-center flex-shrink-0">
-                  <Disc3 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-white">Create Another Blend</h3>
-                  <p className="text-xs text-[#8E8E93]">Invite another friend to blend music tastes into a shared playlist</p>
-                </div>
-              </div>
-              <button
-                onClick={handleOpenInviteModal}
-                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#1ED760] text-black text-xs sm:text-sm font-extrabold hover:bg-[#1fdf64] active:scale-95 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>Create Blend Invite</span>
-              </button>
-            </div>
-
-            {/* Grid of Blends */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {allBlends.map((b) => {
-              const membersList = b.members || [];
-              const memberNames = membersList.map((m) => m.name || m.username || m.displayName).filter(Boolean);
-              const namesLabel = memberNames.length > 0 ? memberNames.join(' + ') : b.title || 'Shared Blend';
-
-              // Build gradient colors per blend
-              const gradColors = [
-                'from-emerald-600/80 to-teal-900/90',
-                'from-purple-600/80 to-indigo-900/90',
-                'from-rose-600/80 to-pink-900/90',
-                'from-orange-600/80 to-amber-900/90',
-              ];
-              const gradIdx = (b.id || '').charCodeAt(0) % gradColors.length;
-              const grad = gradColors[gradIdx];
-
-              return (
-                <div
-                  key={b.id}
-                  onClick={() => navigate(`/blend/${b.id}`)}
-                  className={`relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-br ${grad} border border-white/10 hover:border-white/20 shadow-xl`}
-                  style={{ minHeight: '170px' }}
-                >
-                  {/* Background texture */}
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,_white,_transparent_60%)]" />
-
-                  {/* Content */}
-                  <div className="relative z-10 p-5 flex flex-col justify-between h-full" style={{ minHeight: '170px' }}>
-                    {/* Top: avatars + match score badge */}
-                    <div className="flex items-start justify-between">
-                      {/* Stacked avatars */}
-                      <div className="flex items-center -space-x-2.5">
-                        {membersList.slice(0, 3).map((m, idx) => (
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center -space-x-2 flex-shrink-0">
+                        {membersList.slice(0, 2).map((m, idx) => (
                           <UserAvatar
                             key={idx}
                             user={m}
                             size="sm"
-                            className="ring-2 ring-black/40 shadow-lg"
+                            className="ring-2 ring-black shadow"
                           />
                         ))}
                       </div>
-                      {/* Match score badge */}
-                      {b.matchScore && (
-                        <span className="text-[10px] font-black text-white bg-white/20 backdrop-blur-sm border border-white/20 px-2 py-0.5 rounded-full">
-                          {b.matchScore}% match
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Bottom: names + stats + open button */}
-                    <div className="mt-4">
-                      <h3 className="text-base font-extrabold text-white leading-tight truncate max-w-full">
-                        {namesLabel}
-                      </h3>
-                      <p className="text-xs text-white/60 mt-0.5">
-                        {(b.tracks || []).length > 0 ? `${(b.tracks || []).length} songs` : 'Blend'} • Shared Mix
-                      </p>
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
-                          Taste Blend
-                        </span>
-                        <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors flex items-center gap-1">
-                          Open →
-                        </span>
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-sm font-bold text-white truncate">
+                          {namesLabel}
+                        </div>
+                        <div className="text-[11px] text-[#8E8E93] truncate">
+                          {(b.tracks || []).length} songs • {b.matchScore || 85}% match
+                        </div>
                       </div>
                     </div>
+                    <span className="text-xs font-bold text-[#8E8E93] group-hover:text-white transition-colors flex-shrink-0">
+                      Open →
+                    </span>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           </div>
         )}
@@ -461,14 +404,14 @@ export default function BlendPage() {
                 </button>
               </div>
 
-              {/* Full-Width Action Buttons */}
+              {/* Action Buttons */}
               <div className="space-y-2">
                 <button
-                  onClick={handleShareInvite}
+                  onClick={handleCopyInvite}
                   className="w-full py-3.5 rounded-2xl bg-[#1ED760] hover:bg-[#1fdf64] active:scale-[0.99] text-black font-extrabold text-sm transition-all shadow-lg shadow-emerald-500/15 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Share2 className="w-4 h-4 stroke-[2.5]" />
-                  <span>Share Invite Link</span>
+                  <span>Copy Link</span>
                 </button>
 
                 <button
