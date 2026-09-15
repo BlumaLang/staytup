@@ -276,11 +276,6 @@ export default function BlendPage() {
               <div className="absolute bottom-0 left-1/4 -mb-12 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
 
               <div className="relative z-10 max-w-3xl space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                  <Disc3 className="w-3.5 h-3.5 animate-spin-slow" />
-                  <span>Spotify Blend Experience</span>
-                </div>
-
                 <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
                   Blend your music taste with friends.
                 </h2>
