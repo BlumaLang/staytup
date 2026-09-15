@@ -5,12 +5,14 @@ const BUILD_ID = '__BUILD_ID__';
 const BUILD_TIME = '__BUILD_TIME__';
 const CACHE_NAME = 'staytup-' + BUILD_ID;
 
+const scopeUrl = (self.registration && self.registration.scope) ? self.registration.scope : '/';
+const getScopedUrl = (path) => new URL(path, scopeUrl).href;
+
 const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './logo.png',
-  './icon.png',
-  './manifest.webmanifest'
+  getScopedUrl('./'),
+  getScopedUrl('logo.png'),
+  getScopedUrl('icon.png'),
+  getScopedUrl('manifest.webmanifest')
 ];
 
 // ==================== INSTALL LIFECYCLE ====================
@@ -72,13 +74,22 @@ self.addEventListener('fetch', (event) => {
   // - Audio streams & media CDNs
   // - Range requests
   // - Version check file (/version.json)
+  // - Manifest files (/manifest.webmanifest, /manifest.json)
   // - Service worker script itself (/sw.js)
+  // - Vite dev server requests (/@vite/client, /@react-refresh, /src/*, etc.)
   if (
     event.request.method !== 'GET' ||
     url.pathname.includes('/api/') ||
     url.pathname.endsWith('/version.json') ||
     url.pathname.endsWith('/sw.js') ||
+    url.pathname.endsWith('/manifest.webmanifest') ||
+    url.pathname.endsWith('/manifest.json') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.includes('/node_modules/') ||
     url.searchParams.has('audio') ||
+    url.searchParams.has('t') ||
+    url.searchParams.has('v') ||
     event.request.headers.get('range') ||
     url.hostname.includes('saavncdn') ||
     url.hostname.includes('googlevideo') ||
@@ -89,19 +100,20 @@ self.addEventListener('fetch', (event) => {
 
   // 2. Network-First strategy for HTML navigation requests (ensures fresh index.html with offline fallback)
   if (event.request.mode === 'navigate') {
+    const navFallbackUrl = getScopedUrl('./');
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put('./index.html', copy);
+              cache.put(navFallbackUrl, copy);
             });
           }
           return networkResponse;
         })
         .catch(() => {
-          return caches.match('./index.html') || caches.match('./');
+          return caches.match(navFallbackUrl);
         })
     );
     return;
@@ -111,7 +123,14 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse;
+        const cachedType = cachedResponse.headers.get('content-type') || '';
+        const isCodeAsset = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+        // Self-heal: If an old corrupted entry cached HTML for a JS/CSS file, purge and fetch fresh
+        if (isCodeAsset && cachedType.includes('text/html')) {
+          caches.open(CACHE_NAME).then((cache) => cache.delete(event.request));
+        } else {
+          return cachedResponse;
+        }
       }
       return fetch(event.request)
         .then((networkResponse) => {
@@ -122,6 +141,19 @@ self.addEventListener('fetch', (event) => {
           ) {
             return networkResponse;
           }
+
+          const contentType = networkResponse.headers.get('content-type') || '';
+          const isCodeOrManifest =
+            url.pathname.endsWith('.js') ||
+            url.pathname.endsWith('.css') ||
+            url.pathname.endsWith('.webmanifest') ||
+            url.pathname.endsWith('.json');
+
+          // Never cache HTML fallback responses for scripts, css, or manifests
+          if (isCodeOrManifest && contentType.includes('text/html')) {
+            return networkResponse;
+          }
+
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

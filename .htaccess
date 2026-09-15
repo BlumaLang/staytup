@@ -20,12 +20,14 @@ DirectoryIndex index.html index.php
     # 4. If index.php exists in this directory (PHP front-controller deployment)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|webmanifest|json|woff|woff2|ttf|eot|mp3|mp4|m4a)$ [NC]
     RewriteCond index.php -f
     RewriteRule ^ index.php [L,QSA]
 
     # 5. Fallback all other SPA deep links to index.html
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|webmanifest|json|woff|woff2|ttf|eot|mp3|mp4|m4a)$ [NC]
     RewriteRule ^ index.html [L,QSA]
 </IfModule>
 

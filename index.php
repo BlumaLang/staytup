@@ -103,9 +103,17 @@ if ($route === '/manifest.json' || $route === '/manifest.webmanifest') {
     header('Expires: 0');
     $manifestFile = file_exists(__DIR__ . '/dist/manifest.webmanifest') 
         ? __DIR__ . '/dist/manifest.webmanifest' 
-        : __DIR__ . '/public/manifest.json';
+        : (file_exists(__DIR__ . '/public/manifest.webmanifest')
+            ? __DIR__ . '/public/manifest.webmanifest'
+            : __DIR__ . '/public/manifest.json');
     if (file_exists($manifestFile)) {
-        readfile($manifestFile);
+        $manifestContent = file_get_contents($manifestFile);
+        if ($basePath !== '') {
+            $manifestContent = str_replace('"start_url": "/"', '"start_url": "' . $basePath . '/"', $manifestContent);
+            $manifestContent = str_replace('"scope": "/"', '"scope": "' . $basePath . '/"', $manifestContent);
+            $manifestContent = str_replace('"src": "/', '"src": "' . $basePath . '/', $manifestContent);
+        }
+        echo $manifestContent;
         exit;
     }
 }
@@ -136,6 +144,14 @@ if (file_exists($indexHtml)) {
     header('Expires: 0');
     $content = file_get_contents($indexHtml);
     $baseHref = ($basePath ?: '') . '/';
+
+    if ($basePath !== '') {
+        $content = str_replace(
+            ['href="/assets/', 'src="/assets/', 'href="/logo.png', 'href="/icon.png', 'href="/manifest.webmanifest', 'href="/manifest.json"'],
+            ['href="' . $baseHref . 'assets/', 'src="' . $baseHref . 'assets/', 'href="' . $baseHref . 'logo.png', 'href="' . $baseHref . 'icon.png', 'href="' . $baseHref . 'manifest.webmanifest', 'href="' . $baseHref . 'manifest.json"'],
+            $content
+        );
+    }
 
     // Default metadata
     $metaTitle = "Staytup Music — Sound Without Limits";

@@ -75,6 +75,32 @@ class UpdateService {
       return;
     }
 
+    // In local Vite dev mode (localhost/127.0.0.1 on dev ports), unregister any stale SW to avoid caching conflicts
+    const isDevServer =
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+      window.location.port !== '' &&
+      window.location.port !== '80' &&
+      window.location.port !== '443';
+
+    if (isDevServer) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const reg of registrations) {
+          reg.unregister().then(() => {
+            console.log('[UpdateService] Dev Service Worker unregistered.');
+          });
+        }
+      });
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key);
+          }
+        });
+      }
+      this.startVersionPolling();
+      return;
+    }
+
     // Determine correct service worker path
     const isStaytupSubpath = window.location.pathname.startsWith('/staytup');
     const swPath = isStaytupSubpath ? '/staytup/sw.js' : '/sw.js';

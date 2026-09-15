@@ -72,7 +72,7 @@ function staytupAutoUpdatePlugin() {
 
 export default defineConfig({
   plugins: [react(), staytupAutoUpdatePlugin()],
-  base: './',
+  base: '/',
   legacy: {
     skipWebSocketTokenCheck: true,
   },
