@@ -356,9 +356,16 @@ export default function SearchPage() {
     handleQueryChange(item.title || item.name || query);
   };
 
-  const topResult = results?.tracks?.[0] || null;
-  const otherTracks = results?.tracks?.slice(1) || [];
-  const artists = results?.artists || [];
+  // Smart Top Result: Determine whether an artist or a song best matches the search query
+  const qClean = query.trim().toLowerCase();
+  const matchedArtist = artists.find((a) => {
+    const aName = (a.name || a.title || '').toLowerCase();
+    return aName === qClean || (qClean.length >= 3 && aName.startsWith(qClean));
+  });
+
+  const isArtistTop = Boolean(matchedArtist);
+  const topResult = matchedArtist ? matchedArtist : (results?.tracks?.[0] || null);
+  const otherTracks = isArtistTop ? (results?.tracks || []) : (results?.tracks?.slice(1) || []);
   const albums = results?.albums || [];
   const playlists = results?.playlists || [];
   const people = results?.people || [];
@@ -488,50 +495,53 @@ export default function SearchPage() {
               <>
                 {/* Top Result + Songs Side by Side on Desktop */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Top Result Card */}
+                  {/* Top Result Card (Entity-Aware: Artist or Song) */}
                   {topResult && (
                     <div className="lg:col-span-5 xl:col-span-4 flex flex-col">
                       <h2 className="text-xl font-bold text-white mb-3">Top result</h2>
-                      <div
-                        onClick={() => {
-                          recordRecentActivity({
-                            type: 'song',
-                            id: topResult.videoId || topResult.id,
-                            title: topResult.title,
-                            subtitle: topResult.artist,
-                            image: topResult.image || topResult.thumbnail,
-                          });
-                          playTrack(topResult, [topResult, ...otherTracks]);
-                        }}
-                        className="flex-1 bg-[#181818]/80 hover:bg-[#242424] p-5 rounded-2xl transition-all group relative cursor-pointer flex flex-col justify-between shadow-xl"
-                      >
-                        <div className="relative">
-                          <img
-                            src={get500x500Image(topResult.image || topResult.thumbnail)}
-                            alt={topResult.title}
-                            className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover bg-black shadow-lg"
-                          />
-                        </div>
-
-                        <div className="mt-4 pr-16">
-                          <h3 className="text-2xl font-extrabold text-white line-clamp-1 tracking-tight">
-                            {topResult.title}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 rounded-full bg-black/60 text-[10px] font-bold uppercase tracking-wider text-white">
-                              Song
-                            </span>
-                            <ArtistLinks
-                              track={topResult}
-                              linkClassName="text-xs text-[#8E8E93] hover:text-white transition-colors"
+                      {isArtistTop ? (
+                        <div
+                          onClick={() => {
+                            const aName = topResult.name || topResult.title;
+                            recordRecentActivity({
+                              type: 'artist',
+                              id: aName,
+                              title: aName,
+                              subtitle: 'Artist',
+                              image: topResult.image,
+                            });
+                            navigate(`/artist/${encodeURIComponent(aName)}`);
+                          }}
+                          className="flex-1 bg-[#181818]/80 hover:bg-[#242424] p-5 rounded-2xl transition-all group relative cursor-pointer flex flex-col justify-between shadow-xl"
+                        >
+                          <div className="relative">
+                            <ArtistAvatar
+                              name={topResult.name || topResult.title}
+                              image={topResult.image}
+                              size="xl"
+                              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full shadow-lg"
                             />
                           </div>
-                        </div>
 
-                        {/* Floating circular green Play button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          <div className="mt-4 pr-16">
+                            <h3 className="text-2xl font-extrabold text-white line-clamp-1 tracking-tight">
+                              {topResult.name || topResult.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+                                Artist
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Action Button */}
+                          <div className="w-12 h-12 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 absolute bottom-5 right-5 flex-shrink-0">
+                            <Play className="w-5 h-5 fill-black ml-0.5" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
                             recordRecentActivity({
                               type: 'song',
                               id: topResult.videoId || topResult.id,
@@ -539,18 +549,57 @@ export default function SearchPage() {
                               subtitle: topResult.artist,
                               image: topResult.image || topResult.thumbnail,
                             });
-                            playTrack(topResult, [topResult, ...otherTracks]);
+                            playTrack(topResult);
                           }}
-                          className="w-12 h-12 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 absolute bottom-5 right-5 cursor-pointer flex-shrink-0"
-                          title="Play"
+                          className="flex-1 bg-[#181818]/80 hover:bg-[#242424] p-5 rounded-2xl transition-all group relative cursor-pointer flex flex-col justify-between shadow-xl"
                         >
-                          {isCurrentPlaying(topResult) ? (
-                            <Pause className="w-5 h-5 fill-black" />
-                          ) : (
-                            <Play className="w-5 h-5 fill-black ml-0.5" />
-                          )}
-                        </button>
-                      </div>
+                          <div className="relative">
+                            <img
+                              src={get500x500Image(topResult.image || topResult.thumbnail)}
+                              alt={topResult.title}
+                              className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover bg-black shadow-lg"
+                            />
+                          </div>
+
+                          <div className="mt-4 pr-16">
+                            <h3 className="text-2xl font-extrabold text-white line-clamp-1 tracking-tight">
+                              {topResult.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-2 py-0.5 rounded-full bg-black/60 text-[10px] font-bold uppercase tracking-wider text-white">
+                                Song
+                              </span>
+                              <ArtistLinks
+                                track={topResult}
+                                linkClassName="text-xs text-[#8E8E93] hover:text-white transition-colors"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Floating circular green Play button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              recordRecentActivity({
+                                type: 'song',
+                                id: topResult.videoId || topResult.id,
+                                title: topResult.title,
+                                subtitle: topResult.artist,
+                                image: topResult.image || topResult.thumbnail,
+                              });
+                              playTrack(topResult);
+                            }}
+                            className="w-12 h-12 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 absolute bottom-5 right-5 cursor-pointer flex-shrink-0"
+                            title="Play"
+                          >
+                            {isCurrentPlaying(topResult) ? (
+                              <Pause className="w-5 h-5 fill-black" />
+                            ) : (
+                              <Play className="w-5 h-5 fill-black ml-0.5" />
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -584,7 +633,7 @@ export default function SearchPage() {
                                 subtitle: track.artist,
                                 image: track.thumbnail || track.image,
                               });
-                              playTrack(track, [track, ...otherTracks]);
+                              playTrack(track);
                             }}
                             className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18181B] transition-colors cursor-pointer group"
                           >
@@ -868,7 +917,7 @@ export default function SearchPage() {
                           subtitle: track.artist,
                           image: track.thumbnail || track.image,
                         });
-                        playTrack(track, results?.tracks);
+                        playTrack(track);
                       }}
                       className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18181B] transition-colors cursor-pointer group"
                     >

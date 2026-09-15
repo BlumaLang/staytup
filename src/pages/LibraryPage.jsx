@@ -372,104 +372,104 @@ export default function LibraryPage() {
             {/* TAB: FAVORITES */}
             {activeTab === 'favorites' && (
               <div className="space-y-4 sm:space-y-6">
-                {/* Liked Songs Hero Banner (Compact & Sleek on desktop and mobile) */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4f22b3]/50 via-[#2d1264]/35 to-[#18181B] p-3.5 sm:p-5 flex flex-row items-center gap-3.5 sm:gap-5 border border-white/10 shadow-lg group select-none">
-                  {/* Heart Icon Tile */}
-                  <div className="w-14 h-14 sm:w-28 sm:h-28 rounded-xl bg-gradient-to-br from-[#450af5] via-[#6e3aff] to-[#9b72cf] flex items-center justify-center shadow-lg shadow-indigo-950/60 flex-shrink-0 border border-white/15 transition-transform duration-300 group-hover:scale-[1.02]">
-                    <Heart className="w-7 h-7 sm:w-14 sm:h-14 text-white fill-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
+                {/* Liked Songs Flat Header (Matching media_1789477833587.png) */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 sm:gap-6 pt-2 pb-4 select-none">
+                  {/* Square Heart Artwork */}
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-gradient-to-br from-[#450af5] via-[#6e3aff] to-[#9b72cf] flex items-center justify-center shadow-2xl shadow-indigo-950/50 flex-shrink-0 border border-white/10">
+                    <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-white fill-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
                   </div>
 
-                  <div className="flex-1 min-w-0 text-left">
-                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-300">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
                       Playlist
                     </span>
-                    <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-0.5 mb-1 truncate">
+                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mt-1 mb-2">
                       Liked Songs
                     </h1>
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-400 sm:text-neutral-300 flex-wrap font-medium">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-neutral-400 font-medium mb-4">
                       <span className="font-semibold text-white">
                         {user?.displayName || user?.username || 'Staytup Listener'}
                       </span>
                       <span>•</span>
                       <span>{favorites.length} {favorites.length === 1 ? 'song' : 'songs'}</span>
                     </div>
+
+                    {/* Pill Action Buttons */}
+                    {favorites.length > 0 && (
+                      <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                        {/* Play / Pause Pill */}
+                        <button
+                          onClick={() => {
+                            const isFavPlaying = isPlaying && favorites.some(
+                              (f) => String(f.videoId || f.id) === String(currentTrack?.videoId || currentTrack?.id)
+                            );
+                            if (isFavPlaying) {
+                              togglePlay();
+                            } else {
+                              playTrack(favorites[0], favorites);
+                            }
+                          }}
+                          className="px-5 py-2.5 rounded-full bg-white hover:bg-neutral-200 text-black font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-all cursor-pointer active:scale-95"
+                          title={isPlaying && favorites.some((f) => String(f.videoId || f.id) === String(currentTrack?.videoId || currentTrack?.id)) ? 'Pause' : 'Play Liked Songs'}
+                        >
+                          {isPlaying && favorites.some((f) => String(f.videoId || f.id) === String(currentTrack?.videoId || currentTrack?.id)) ? (
+                            <>
+                              <Pause className="w-4 h-4 fill-black text-black" />
+                              <span>Pause</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4 fill-black text-black ml-0.5" />
+                              <span>Play</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Shuffle Pill */}
+                        <button
+                          onClick={() => {
+                            setIsShuffle((prev) => !prev);
+                            const shuffled = [...favorites].sort(() => Math.random() - 0.5);
+                            playTrack(shuffled[0], shuffled);
+                          }}
+                          className={`px-4 py-2.5 rounded-full font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border active:scale-95 ${
+                            isShuffle
+                              ? 'bg-[#1ED760]/20 text-[#1ED760] border-[#1ED760]/40'
+                              : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
+                          }`}
+                          title="Shuffle Liked Songs"
+                        >
+                          <Shuffle className="w-4 h-4" />
+                          <span>Shuffle</span>
+                        </button>
+
+                        {/* Share Pill */}
+                        <button
+                          onClick={async () => {
+                            try {
+                              if (navigator.share) {
+                                await navigator.share({
+                                  title: 'Liked Songs on Staytup',
+                                  text: `Listen to my Liked Songs collection on Staytup!`,
+                                  url: window.location.href,
+                                });
+                              } else {
+                                await navigator.clipboard.writeText(window.location.href);
+                                setCopiedToast(true);
+                                setTimeout(() => setCopiedToast(false), 2000);
+                              }
+                            } catch (e) {}
+                          }}
+                          className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border border-white/10 active:scale-95"
+                          title="Share Liked Songs"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          <span>{copiedToast ? 'Copied!' : 'Share'}</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Spotify-Style Action Bar with Big Play, Shuffle, Share */}
-                {favorites.length > 0 && (
-                  <div className="flex items-center justify-between py-1 sm:py-2 border-b border-white/[0.06]">
-                    <div className="flex items-center gap-3.5 sm:gap-5">
-                      {/* Big Circular Green Play/Pause Button */}
-                      <button
-                        onClick={() => {
-                          const isFavPlaying = isPlaying && favorites.some(
-                            (f) => String(f.videoId || f.id) === String(currentTrack?.videoId || currentTrack?.id)
-                          );
-                          if (isFavPlaying) {
-                            togglePlay();
-                          } else {
-                            playTrack(favorites[0], favorites);
-                          }
-                        }}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-lg sm:shadow-xl shadow-emerald-600/30 transition-all cursor-pointer flex-shrink-0"
-                        title={isPlaying && favorites.some((f) => String(f.videoId || f.id) === String(currentTrack?.videoId || currentTrack?.id)) ? 'Pause' : 'Play Liked Songs'}
-                      >
-                        {isPlaying && favorites.some((f) => String(f.videoId || f.id) === String(currentTrack?.videoId || currentTrack?.id)) ? (
-                          <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-black" />
-                        ) : (
-                          <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-black ml-0.5" />
-                        )}
-                      </button>
-
-                      {/* Shuffle Play Button */}
-                      <button
-                        onClick={() => {
-                          setIsShuffle((prev) => !prev);
-                          const shuffled = [...favorites].sort(() => Math.random() - 0.5);
-                          playTrack(shuffled[0], shuffled);
-                        }}
-                        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                          isShuffle
-                            ? 'text-[#1ED760] bg-[#1ED760]/10 hover:bg-[#1ED760]/20 scale-105'
-                            : 'text-[#8E8E93] hover:text-white hover:bg-white/10'
-                        }`}
-                        title="Shuffle Liked Songs"
-                      >
-                        <Shuffle className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-                      </button>
-
-                      {/* Share Button */}
-                      <button
-                        onClick={async () => {
-                          try {
-                            if (navigator.share) {
-                              await navigator.share({
-                                title: 'Liked Songs on Staytup',
-                                text: `Listen to my Liked Songs collection on Staytup!`,
-                                url: window.location.href,
-                              });
-                            } else {
-                              await navigator.clipboard.writeText(window.location.href);
-                              setCopiedToast(true);
-                              setTimeout(() => setCopiedToast(false), 2000);
-                            }
-                          } catch (e) {}
-                        }}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                        title="Share Liked Songs"
-                      >
-                        <Share2 className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-                      </button>
-
-                      {copiedToast && (
-                        <span className="text-xs font-semibold text-[#1ED760] animate-fade-in">
-                          Link copied!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {favorites.length === 0 ? (
                   <div className="py-16 sm:py-20 text-center text-[#8E8E93]">

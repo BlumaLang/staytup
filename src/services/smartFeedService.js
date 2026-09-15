@@ -376,7 +376,7 @@ export const loadSmartFeed = async (user = null) => {
   // Step E: Popular Playlists (5–8 items)
   const popularPlaylists = getPopularPlaylists(searchPlaylists, 8);
 
-  // Step F: Jump Back In (User's recently played or listening history, fallback to trending)
+  // Step F: Jump Back In (Strictly genuine user recently played, no fake filler)
   let jumpBackIn = [];
   try {
     const recents = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
@@ -387,25 +387,100 @@ export const loadSmartFeed = async (user = null) => {
     }
   } catch (e) {}
 
-  if (jumpBackIn.length === 0 && Array.isArray(rawTrending) && rawTrending.length > 4) {
-    jumpBackIn = rawTrending.slice(4, 12);
-  }
-
-  // Step G: Curated Popular Artists
-  const popularArtists = [
-    { name: 'Arijit Singh', id: 'Arijit Singh', image: 'https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg' },
-    { name: 'Karan Aujla', id: 'Karan Aujla', image: '' },
-    { name: 'Diljit Dosanjh', id: 'Diljit Dosanjh', image: '' },
-    { name: 'Shreya Ghoshal', id: 'Shreya Ghoshal', image: '' },
-    { name: 'Pritam', id: 'Pritam', image: '' },
-    { name: 'AP Dhillon', id: 'AP Dhillon', image: '' },
-    { name: 'Sidhu Moose Wala', id: 'Sidhu Moose Wala', image: '' },
-    { name: 'Badshah', id: 'Badshah', image: '' },
-    { name: 'Anuv Jain', id: 'Anuv Jain', image: '' },
-    { name: 'Atif Aslam', id: 'Atif Aslam', image: '' },
+  // Step G: Curated Trending Artists with Real Batch Images
+  const popularArtistNames = [
+    'Arijit Singh',
+    'Karan Aujla',
+    'Diljit Dosanjh',
+    'Shreya Ghoshal',
+    'Pritam',
+    'AP Dhillon',
+    'Sidhu Moose Wala',
+    'Badshah',
+    'Anuv Jain',
+    'Atif Aslam',
   ];
 
-  // Step H: Curated Mood & Vibe Playlists
+  let popularArtists = popularArtistNames.map((name) => ({
+    name,
+    id: name,
+    image: '',
+  }));
+
+  try {
+    const imageRes = await api.getBatchArtistImages(popularArtistNames).catch(() => null);
+    if (imageRes?.images) {
+      popularArtists = popularArtists.map((a) => ({
+        ...a,
+        image: imageRes.images[a.name] || '',
+      }));
+    }
+  } catch (e) {}
+
+  // Step H: "Because You Listen To [Top Artist]" (Intelligent Personalization)
+  let becauseYouListenTo = null;
+  try {
+    // Extract top listened artist from recents or favorites
+    const artistPlayCounts = new Map();
+    const candidateTracks = [...jumpBackIn, ...Array.from(userFavorites)];
+    candidateTracks.forEach((t) => {
+      const aStr = typeof t === 'object' ? t.artist || t.author || '' : '';
+      if (aStr) {
+        aStr.split(/[,&/]|(?:\s+feat\.?\s+)|\s+ft\.?\s+/i).forEach((part) => {
+          const clean = part.trim();
+          if (clean && clean.length > 2 && clean.toLowerCase() !== 'various artists') {
+            artistPlayCounts.set(clean, (artistPlayCounts.get(clean) || 0) + 1);
+          }
+        });
+      }
+    });
+
+    const sortedArtists = Array.from(artistPlayCounts.entries()).sort((a, b) => b[1] - a[1]);
+    const topArtistName = sortedArtists[0]?.[0];
+
+    if (topArtistName) {
+      const topArtistRes = await api.search(`artist:"${topArtistName}"`, 'songs', 0, 10).catch(() => null);
+      const tracks = (topArtistRes?.tracks || topArtistRes?.results || []).filter((t) => {
+        const tid = t.videoId || t.video_id || t.id;
+        return tid && !seenIds.has(tid);
+      });
+      if (tracks.length >= 3) {
+        tracks.forEach((t) => seenIds.add(t.videoId || t.id));
+        becauseYouListenTo = {
+          artistName: topArtistName,
+          tracks: tracks.slice(0, 8),
+        };
+      }
+    }
+  } catch (e) {}
+
+  // Step I: "From Artists You Follow" (Strictly real followed artists)
+  let fromFollowedArtists = null;
+  try {
+    const stored = JSON.parse(localStorage.getItem('staytup_followed_artists') || '[]');
+    if (Array.isArray(stored) && stored.length > 0) {
+      // Pick a followed artist
+      const randomFollowed = stored[Math.floor(Math.random() * stored.length)];
+      const faName = typeof randomFollowed === 'string' ? randomFollowed : randomFollowed?.name;
+      if (faName) {
+        const faRes = await api.search(`artist:"${faName}"`, 'songs', 0, 10).catch(() => null);
+        const faTracks = (faRes?.tracks || faRes?.results || []).filter((t) => {
+          const tid = t.videoId || t.video_id || t.id;
+          return tid && !seenIds.has(tid);
+        });
+        if (faTracks.length >= 2) {
+          faTracks.forEach((t) => seenIds.add(t.videoId || t.id));
+          fromFollowedArtists = {
+            artistName: faName,
+            artistImage: typeof randomFollowed === 'object' ? randomFollowed.image : '',
+            tracks: faTracks.slice(0, 8),
+          };
+        }
+      }
+    }
+  } catch (e) {}
+
+  // Step J: Curated Mood & Vibe Playlists
   const moodMixes = [
     { id: 'mood_lofi', title: 'Chill & Lo-Fi', subtitle: 'Slowed beats & cozy acoustics', image: 'https://i.pinimg.com/736x/81/72/26/817226cbcea560a00430ec74c97c9358.jpg', query: 'chill lofi hindi' },
     { id: 'mood_punjabi', title: 'Punjabi Hits', subtitle: 'Hustle, drip & high-energy beats', image: 'https://i.pinimg.com/1200x/b0/99/60/b09960b3cc975e1f0a85ec3e423ff35b.jpg', query: 'punjabi hits 2026' },
@@ -415,7 +490,7 @@ export const loadSmartFeed = async (user = null) => {
     { id: 'mood_indie', title: 'Indie Pop Discovery', subtitle: 'Fresh acoustic voices & stories', image: 'https://i.pinimg.com/736x/e7/b3/1f/e7b31fb612f78536804721cedbe6ca07.jpg', query: 'indian indie pop' },
   ];
 
-  // Step I: Today's Biggest Hits (Curated tracks from trending)
+  // Step K: Today's Biggest Hits (Curated tracks from trending)
   const todaysHits = Array.isArray(rawTrending) && rawTrending.length > 0 ? rawTrending.slice(0, 10) : [];
 
   return {
@@ -425,6 +500,8 @@ export const loadSmartFeed = async (user = null) => {
     popularAlbums: popularAlbums.length > 0 ? popularAlbums : null,
     popularPlaylists: popularPlaylists.length > 0 ? popularPlaylists : null,
     jumpBackIn: jumpBackIn.length > 0 ? jumpBackIn : null,
+    becauseYouListenTo,
+    fromFollowedArtists,
     popularArtists,
     moodMixes,
     todaysHits: todaysHits.length > 0 ? todaysHits : null,

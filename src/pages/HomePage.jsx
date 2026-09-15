@@ -23,6 +23,8 @@ export default function HomePage() {
     popularAlbums: null,
     popularPlaylists: null,
     jumpBackIn: null,
+    becauseYouListenTo: null,
+    fromFollowedArtists: null,
     popularArtists: null,
     moodMixes: null,
     todaysHits: null,
@@ -300,6 +302,66 @@ export default function HomePage() {
                 </div>
               ))
             )}
+          </MediaRail>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SECTION: BECAUSE YOU LISTEN TO [ARTIST]                                   */}
+        {/* ========================================================================= */}
+        {smartFeed.becauseYouListenTo && smartFeed.becauseYouListenTo.tracks?.length > 0 && (
+          <MediaRail
+            title={`Because you listen to ${smartFeed.becauseYouListenTo.artistName}`}
+            subtitle="Recommended tracks based on your listening taste"
+            action={
+              <Link
+                to={`/artist/${encodeURIComponent(smartFeed.becauseYouListenTo.artistName)}`}
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                More
+              </Link>
+            }
+          >
+            {smartFeed.becauseYouListenTo.tracks.map((track, idx) => (
+              <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
+                <MediaCard
+                  image={track.image || track.thumbnail || track.artwork_url}
+                  title={track.title}
+                  subtitle={track.artist}
+                  track={track}
+                  onPlay={() => playTrack(track, smartFeed.becauseYouListenTo.tracks)}
+                />
+              </div>
+            ))}
+          </MediaRail>
+        )}
+
+        {/* ========================================================================= */}
+        {/* SECTION: FROM ARTISTS YOU FOLLOW                                          */}
+        {/* ========================================================================= */}
+        {smartFeed.fromFollowedArtists && smartFeed.fromFollowedArtists.tracks?.length > 0 && (
+          <MediaRail
+            title={`From ${smartFeed.fromFollowedArtists.artistName}`}
+            subtitle="Fresh releases from artists in your library"
+            action={
+              <Link
+                to={`/artist/${encodeURIComponent(smartFeed.fromFollowedArtists.artistName)}`}
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                Artist Profile
+              </Link>
+            }
+          >
+            {smartFeed.fromFollowedArtists.tracks.map((track, idx) => (
+              <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
+                <MediaCard
+                  image={track.image || track.thumbnail || track.artwork_url}
+                  title={track.title}
+                  subtitle={track.artist}
+                  track={track}
+                  onPlay={() => playTrack(track, smartFeed.fromFollowedArtists.tracks)}
+                />
+              </div>
+            ))}
           </MediaRail>
         )}
 
