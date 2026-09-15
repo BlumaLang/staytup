@@ -55,6 +55,7 @@ export default function BlendPage() {
   const [copiedToast, setCopiedToast] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState('');
+  const [creatingInvite, setCreatingInvite] = useState(false);
   const [joining, setJoining] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
@@ -131,29 +132,50 @@ export default function BlendPage() {
     const inv = await createBlendInvite(bId, user);
     setInviteUrl(inv.inviteUrl);
     setInviteModalOpen(true);
+    return inv.inviteUrl;
   };
 
-  const handleCopyInvite = () => {
-    if (inviteUrl) {
-      navigator.clipboard.writeText(inviteUrl);
+  const handleCopyInvite = (urlToCopy = inviteUrl) => {
+    const target = urlToCopy || inviteUrl;
+    if (target) {
+      navigator.clipboard.writeText(target);
       setCopiedToast(true);
       setTimeout(() => setCopiedToast(false), 2200);
     }
   };
 
   const handleShareInvite = async () => {
-    if (!inviteUrl) return;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Blend on Staytup',
-          text: 'Blend music tastes with me on Staytup! Combine our favorites into a shared daily mix:',
-          url: inviteUrl,
-        });
-        return;
-      } catch (e) {}
+    setCreatingInvite(true);
+    try {
+      let url = inviteUrl;
+      if (!url) {
+        const bId = blend?.id || `blend_${user?.id || 'user'}_${Date.now()}`;
+        const inv = await createBlendInvite(bId, user);
+        url = inv.inviteUrl;
+        setInviteUrl(url);
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Blend on Staytup',
+            text: 'Blend music tastes with me on Staytup! Combine our favorites into a shared daily mix:',
+            url,
+          });
+          return;
+        } catch (e) {
+          // Fallback if user cancels or share dialog is dismissed
+        }
+      }
+
+      // Open modal and copy link
+      setInviteModalOpen(true);
+      handleCopyInvite(url);
+    } catch (err) {
+      console.warn('Create invite error:', err);
+    } finally {
+      setCreatingInvite(false);
     }
-    handleCopyInvite();
   };
 
   // Remove / Leave Blend
@@ -273,9 +295,10 @@ export default function BlendPage() {
           {/* Pill Invite Button */}
           <button
             onClick={handleShareInvite}
-            className="w-auto min-w-[140px] px-8 py-3.5 rounded-full bg-white hover:bg-gray-200 active:scale-95 text-black font-extrabold text-sm sm:text-base tracking-normal transition-all shadow-xl cursor-pointer mb-6"
+            disabled={creatingInvite}
+            className="w-auto min-w-[140px] px-8 py-3.5 rounded-full bg-white hover:bg-gray-200 active:scale-95 disabled:opacity-60 text-black font-extrabold text-sm sm:text-base tracking-normal transition-all shadow-xl cursor-pointer mb-6"
           >
-            Invite
+            {creatingInvite ? 'Generating...' : 'Invite'}
           </button>
 
           {/* Disclaimer Note */}
