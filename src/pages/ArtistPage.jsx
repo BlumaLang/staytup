@@ -14,8 +14,6 @@ import {
   Share2,
   BadgeCheck,
   Disc3,
-  Search,
-  X,
 } from 'lucide-react';
 import { getArtistUrl, shareContent } from '../utils/canonicalUrl';
 import { ArtistAvatar } from '../components/ArtistAvatar';
@@ -56,7 +54,6 @@ export default function ArtistPage() {
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [showAllTracks, setShowAllTracks] = useState(false);
-  const [artistSearchQuery, setArtistSearchQuery] = useState('');
   const [discographyTab, setDiscographyTab] = useState('all'); // 'all' | 'albums' | 'singles'
 
   const artistIdentifier = decodeURIComponent(id || '');
@@ -81,7 +78,6 @@ export default function ArtistPage() {
     setIsLoading(true);
     setIsBioExpanded(false);
     setShowAllTracks(false);
-    setArtistSearchQuery('');
 
     const cleanArtistName = artistIdentifier.split(',')[0].split('&')[0].trim();
 
@@ -286,11 +282,7 @@ export default function ArtistPage() {
     return true;
   });
 
-  const filteredSongs = artistSearchQuery.trim()
-    ? songs.filter((s) => (s.title || '').toLowerCase().includes(artistSearchQuery.toLowerCase().trim()))
-    : songs;
-
-  const displayedSongs = showAllTracks || artistSearchQuery.trim() ? filteredSongs.slice(0, 30) : filteredSongs.slice(0, 5);
+  const displayedSongs = showAllTracks ? songs.slice(0, 30) : songs.slice(0, 5);
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
@@ -385,33 +377,9 @@ export default function ArtistPage() {
           {/* MAIN ARTIST CONTENT (Popular Songs, Discography, About)                    */}
           {/* ========================================================================= */}
           <div className="px-6 sm:px-10 pb-16 space-y-12">
-            {/* 1. Popular Tracks Section with Scoped In-Artist Search */}
+            {/* 1. Popular Tracks Section */}
             <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <h2 className="text-2xl font-bold text-white">Popular</h2>
-
-                {/* Scoped In-Artist Search Bar */}
-                {songs.length > 0 && (
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8E8E93]" />
-                    <input
-                      type="text"
-                      value={artistSearchQuery}
-                      onChange={(e) => setArtistSearchQuery(e.target.value)}
-                      placeholder={`Search in ${displayName}...`}
-                      className="w-full pl-8.5 pr-8 py-1.5 bg-[#18181A] border border-[#28282C] focus:border-white/40 rounded-full text-xs text-white placeholder-[#8E8E93] focus:outline-none transition-colors"
-                    />
-                    {artistSearchQuery && (
-                      <button
-                        onClick={() => setArtistSearchQuery('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-white p-0.5"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">Popular</h2>
 
               {songs.length === 0 ? (
                 <p className="text-xs text-[#8E8E93]">No popular tracks available.</p>
