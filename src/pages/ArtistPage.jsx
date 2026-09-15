@@ -326,68 +326,73 @@ export default function ArtistPage() {
           <p className="text-sm font-semibold text-white">Loading artist profile...</p>
         </div>
       ) : (
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full bg-[#121212] min-h-screen">
           {/* ========================================================================= */}
           {/* SPOTIFY IMMERSIVE FULL-BLEED PHOTOGRAPHIC HERO BANNER                      */}
           {/* Matching media_1789498830660.jpg (Mobile) and media_1789498886244.png     */}
           {/* ========================================================================= */}
-          <div className="relative w-full h-80 sm:h-96 md:h-[400px] lg:h-[420px] overflow-hidden flex flex-col justify-between p-4 sm:p-8 md:p-10 bg-[#121212] select-none">
+          <div className="relative w-full h-[320px] sm:h-[360px] md:h-[380px] lg:h-[400px] overflow-hidden flex flex-col justify-between p-4 sm:p-8 md:p-8 bg-[#181818] select-none">
             {/* Background Artist Photography */}
             <div className="absolute inset-0 z-0">
               {displayImage ? (
                 <img
                   src={get500x500Image(displayImage)}
                   alt={displayName}
-                  className="w-full h-full object-cover object-top filter brightness-[0.85] scale-100"
+                  className="w-full h-full object-cover object-[center_20%] filter brightness-[0.88]"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-b from-[#383838] to-[#121212]" />
               )}
-              {/* Spotify Gradient Overlay Fade */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/30 to-black/20" />
+              {/* Spotify Authentic Vignette & Bottom Gradient Overlay Fade */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-[#121212]" />
+              <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#121212] via-[#121212]/70 to-transparent" />
             </div>
 
             {/* Top Navigation Row (Mobile Circular Back Button) */}
             <div className="relative z-10 flex items-center justify-between">
               <button
                 onClick={() => navigate(-1)}
-                className="w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                className="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
                 title="Go back"
               >
-                <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
 
             {/* Bottom Content within Hero */}
-            <div className="relative z-10 space-y-1.5 max-w-4xl pb-1">
-              {/* Massive Artist Name */}
-              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight leading-none drop-shadow-md">
+            <div className="relative z-10 space-y-1 pb-1">
+              {/* Massive Bold Artist Name */}
+              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-none drop-shadow-md">
                 {displayName}
               </h1>
 
               {/* Verified by Spotify Pill Badge */}
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white pt-1">
-                <div className="w-4 h-4 rounded-full bg-[#1ED760] flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-white pt-1">
+                <div className="w-4 h-4 rounded-full bg-[#1ED760] flex items-center justify-center flex-shrink-0 shadow-sm">
                   <Check className="w-2.5 h-2.5 text-black stroke-[3.5]" />
                 </div>
-                <span className="font-semibold text-white/95">Verified by Spotify</span>
+                <span className="text-white/95">Verified by Spotify</span>
               </div>
+
+              {/* Desktop Monthly listeners directly under verified badge (Matching media_1789498886244.png) */}
+              <p className="hidden md:block text-sm text-[#B3B3B3] font-normal pt-0.5">
+                {baseDisplayCount} monthly listeners
+              </p>
             </div>
           </div>
 
           {/* ========================================================================= */}
           {/* CONTROLS & META SECTION (Mobile & Desktop)                                */}
           {/* ========================================================================= */}
-          <div className="bg-[#121212] px-4 sm:px-8 md:px-10 pt-3 pb-2">
-            {/* Monthly Listeners line */}
-            <p className="text-xs sm:text-sm font-medium text-[#B3B3B3] mb-4">
-              <span className="md:hidden">{mobileDisplayCount} monthly listeners</span>
-              <span className="hidden md:inline">{baseDisplayCount} monthly listeners</span>
+          <div className="bg-[#121212] px-4 sm:px-8 md:px-8 pt-3 pb-2 select-none">
+            {/* Mobile: Monthly Listeners (Matching media_1789498830660.jpg) */}
+            <p className="md:hidden text-xs text-[#B3B3B3] font-normal mb-3">
+              {mobileDisplayCount} monthly listeners
             </p>
 
             {/* Action Bar matching both screenshots:
-                Mobile: [Latest Song Thumb] [Following pill] [•••]    [Shuffle] [Big Green Play]
-                Desktop: [Big Green Play] [Latest Thumb] [Shuffle] [Following pill] [•••]
+                Mobile:  [Release Thumb] [Following pill] [•••]     [Shuffle] [Big Green Play]
+                Desktop: [Big Green Play] [Release Thumb] [Shuffle] [Following pill] [•••]
             */}
             <div className="flex items-center justify-between pb-3">
               {/* Left group */}
@@ -396,7 +401,7 @@ export default function ArtistPage() {
                 <button
                   onClick={() => handlePlayArtist(0)}
                   disabled={songs.length === 0}
-                  className="hidden md:flex w-14 h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black items-center justify-center shadow-2xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+                  className="hidden md:flex w-14 h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black items-center justify-center shadow-xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
                   title={isCurrentArtistPlaying ? 'Pause' : 'Play'}
                 >
                   {isCurrentArtistPlaying ? (
@@ -406,11 +411,11 @@ export default function ArtistPage() {
                   )}
                 </button>
 
-                {/* Latest Release Thumbnail Card with border */}
+                {/* Release Thumbnail Card */}
                 {songs[0] && (
                   <div
                     onClick={() => handlePlayArtist(0)}
-                    className="w-10 h-10 rounded-md overflow-hidden bg-[#282828] border border-white/10 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-md overflow-hidden bg-[#282828] border border-white/10 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md"
                     title={songs[0].title}
                   >
                     <img
@@ -424,7 +429,7 @@ export default function ArtistPage() {
                 {/* Desktop: Shuffle icon */}
                 <button
                   onClick={() => handlePlayArtist(Math.floor(Math.random() * (songs.length || 1)))}
-                  className="hidden md:flex p-2 text-[#B3B3B3] hover:text-[#1ED760] transition-colors cursor-pointer"
+                  className="hidden md:flex p-1.5 text-[#B3B3B3] hover:text-[#1ED760] transition-colors cursor-pointer"
                   title="Shuffle artist"
                 >
                   <Shuffle className="w-5 h-5 stroke-[2]" />
@@ -433,7 +438,7 @@ export default function ArtistPage() {
                 {/* Following Pill Button */}
                 <button
                   onClick={toggleFollow}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
                     isFollowing
                       ? 'border-white/30 text-white hover:border-white bg-transparent'
                       : 'border-white/20 text-white hover:border-white bg-transparent'
@@ -452,20 +457,20 @@ export default function ArtistPage() {
                 </button>
               </div>
 
-              {/* Mobile Right: Shuffle + Big Green Play Button */}
+              {/* Mobile Right: Shuffle + Big Green Play Button (Matching media_1789498830660.jpg) */}
               <div className="flex md:hidden items-center gap-4">
                 <button
                   onClick={() => handlePlayArtist(Math.floor(Math.random() * (songs.length || 1)))}
                   className="p-1 text-[#1ED760] hover:scale-110 active:scale-95 transition-all cursor-pointer"
                   title="Shuffle artist"
                 >
-                  <Shuffle className="w-6 h-6 stroke-[2]" />
+                  <Shuffle className="w-6 h-6 stroke-[2.2]" />
                 </button>
 
                 <button
                   onClick={() => handlePlayArtist(0)}
                   disabled={songs.length === 0}
-                  className="w-13 h-13 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] active:scale-95 text-black flex items-center justify-center shadow-xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+                  className="w-13 h-13 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] active:scale-95 text-black flex items-center justify-center shadow-lg transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
                   title={isCurrentArtistPlaying ? 'Pause' : 'Play'}
                 >
                   {isCurrentArtistPlaying ? (
@@ -477,11 +482,11 @@ export default function ArtistPage() {
               </div>
             </div>
 
-            {/* Listen to the new track banner (Matching Mobile Screenshot media_1789498830660.jpg) */}
+            {/* Listen to the new track banner (Mobile Only - Matching media_1789498830660.jpg) */}
             {songs[0] && (
               <div
                 onClick={() => handlePlayArtist(0)}
-                className="mt-2 mb-4 p-2.5 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] active:scale-[0.99] transition-all flex items-center justify-between cursor-pointer border border-white/5"
+                className="md:hidden mt-2 mb-4 p-2.5 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] active:scale-[0.99] transition-all flex items-center justify-between cursor-pointer border border-white/5"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <img
@@ -489,7 +494,7 @@ export default function ArtistPage() {
                     alt=""
                     className="w-8 h-8 rounded object-cover flex-shrink-0"
                   />
-                  <span className="text-xs sm:text-sm font-bold text-white truncate">
+                  <span className="text-xs font-bold text-white truncate">
                     Listen to the new track
                   </span>
                 </div>
@@ -497,13 +502,13 @@ export default function ArtistPage() {
               </div>
             )}
 
-            {/* Navigation Tabs: Music, Clips, Events (Matching media_1789498830660.jpg) */}
-            <div className="flex items-center gap-6 border-b border-white/5 pt-1 pb-2">
+            {/* Mobile Navigation Tabs: Music, Clips, Events (Matching media_1789498830660.jpg) */}
+            <div className="md:hidden flex items-center gap-6 border-b border-white/5 pt-1 pb-2">
               {['Music', 'Clips', 'Events'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`relative text-sm sm:text-base font-bold transition-colors pb-1.5 cursor-pointer ${
+                  className={`relative text-sm font-bold transition-colors pb-1.5 cursor-pointer ${
                     activeTab === tab ? 'text-white' : 'text-[#A7A7A7] hover:text-white'
                   }`}
                 >
@@ -520,7 +525,7 @@ export default function ArtistPage() {
           {/* MAIN CONTENT AREA: Popular Tracks + Desktop Right Panel                   */}
           {/* Matching media_1789498830660.jpg & media_1789498886244.png                */}
           {/* ========================================================================= */}
-          <div className="px-4 sm:px-8 md:px-10 pt-4 pb-20 flex flex-col lg:flex-row gap-8">
+          <div className="px-4 sm:px-8 md:px-8 pt-4 pb-20 flex flex-col lg:flex-row gap-8">
             {/* Left / Center: Popular Songs & Discography */}
             <div className="flex-1 min-w-0 space-y-10">
               {/* Popular Tracks Section */}
@@ -530,7 +535,7 @@ export default function ArtistPage() {
                 {songs.length === 0 ? (
                   <p className="text-xs text-[#8E8E93]">No popular tracks available.</p>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {displayedSongs.map((track, i) => {
                       const vid = String(track.videoId || track.video_id || track.id || '');
                       const isLiked = likedTrackIds.has(vid);
@@ -548,7 +553,7 @@ export default function ArtistPage() {
                           }`}
                         >
                           {/* Left: Index + Thumb + Title/Artist */}
-                          <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-4 flex-1">
+                          <div className="flex items-center gap-3.5 min-w-0 pr-4 flex-1">
                             {/* Track Rank / Index */}
                             <div className="w-4 sm:w-5 flex items-center justify-center flex-shrink-0">
                               {isTrackPlaying ? (
@@ -587,48 +592,32 @@ export default function ArtistPage() {
                               >
                                 {track.title}
                               </p>
-                              {/* Mobile shows plays directly under title matching media_1789498830660.jpg */}
+                              {/* Mobile: play count under song title (Matching media_1789498830660.jpg) */}
                               <p className="text-xs text-[#B3B3B3] md:hidden truncate mt-0.5">
                                 {plays}
                               </p>
                             </div>
                           </div>
 
-                          {/* Desktop: Streams / Play Count Column */}
+                          {/* Desktop: Play Count Column (Matching media_1789498886244.png) */}
                           <div className="hidden md:block w-36 text-right text-xs text-[#B3B3B3] tabular-nums pr-6">
                             {plays}
                           </div>
 
-                          {/* Desktop: Duration / Mobile: 3-Dots action */}
+                          {/* Desktop: Duration / Mobile: 3-Dots button */}
                           <div className="flex items-center gap-3 text-xs text-[#B3B3B3] flex-shrink-0">
-                            {/* Like heart (desktop) */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleLike(track);
-                              }}
-                              className="hidden sm:flex w-8 h-8 rounded-full items-center justify-center hover:text-white transition-colors cursor-pointer"
-                              title={isLiked ? 'Unlike' : 'Like'}
-                            >
-                              <Heart
-                                className={`w-4 h-4 ${
-                                  isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-current'
-                                }`}
-                              />
-                            </button>
-
-                            {/* Duration (desktop) */}
-                            <span className="hidden sm:inline text-xs font-medium tabular-nums w-10 text-right">
+                            {/* Duration (desktop - Matching media_1789498886244.png) */}
+                            <span className="hidden md:inline text-xs font-medium tabular-nums w-10 text-right">
                               {formatDuration(track.duration || track.duration_formatted)}
                             </span>
 
-                            {/* Mobile 3-Dots button matching media_1789498830660.jpg */}
+                            {/* Mobile: 3-Dots Action (Matching media_1789498830660.jpg) */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleLike(track);
                               }}
-                              className="sm:hidden p-1 text-[#B3B3B3] hover:text-white cursor-pointer"
+                              className="md:hidden p-1 text-[#B3B3B3] hover:text-white cursor-pointer"
                             >
                               <MoreHorizontal className="w-5 h-5" />
                             </button>
@@ -712,7 +701,7 @@ export default function ArtistPage() {
               )}
             </div>
 
-            {/* Desktop Right Side Panel: Now Playing Track + About the Artist (Matching media_1789498886244.png) */}
+            {/* Desktop Right Side Panel: Now Playing Track + About the Artist (Exact Match to media_1789498886244.png) */}
             <div className="hidden lg:flex flex-col w-80 xl:w-96 flex-shrink-0 space-y-6">
               {/* Featured Track / Now Playing Card */}
               {songs[0] && (

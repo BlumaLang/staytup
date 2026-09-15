@@ -239,12 +239,6 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Desktop Lossless Badge */}
-          <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 mr-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Lossless 320kbps</span>
-          </div>
-
           {/* Mobile & Desktop Options 3-Dots */}
           <button
             onClick={() => setShowDetailsModal(true)}
