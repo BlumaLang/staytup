@@ -104,17 +104,7 @@ export const LyricsDrawer = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => toggleLike(currentTrack)}
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
-          title={isLiked ? 'Unlike' : 'Like'}
-        >
-          <Heart
-            className={`w-5 h-5 ${
-              isLiked ? 'fill-[#22C55E] text-[#22C55E]' : 'stroke-white'
-            }`}
-          />
-        </button>
+        <div className="w-10 h-10" /> {/* Spacer for centered track title */}
       </div>
 
       {/* Center Lyrics Flow (Full Viewport Scrollable Area) */}

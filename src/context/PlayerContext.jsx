@@ -13,6 +13,7 @@ export const PlayerProvider = ({ children }) => {
   const audioRef = useRef(new Audio());
   const streamCache = useRef(new Map());
   const playRecordedRef = useRef(new Set());
+  const historyRecordedRef = useRef(new Set());
 
   // Player state with localStorage persistence for session survival across navigation/refresh
   const [queue, setQueue] = useState(() => {
@@ -525,60 +526,58 @@ export const PlayerProvider = ({ children }) => {
       }
 
       // Record listening history once when song reaches 30s or 50%
-      if (!hasRecordedHistory && currentTrack && audio.duration > 0) {
+      if (currentTrack && audio.duration > 0) {
+        const trackId = currentTrack.videoId || currentTrack.video_id || currentTrack.id;
         const percent = audio.currentTime / audio.duration;
-        if (audio.currentTime >= 30 || percent >= 0.5) {
-          hasRecordedHistory = true;
+        if (trackId && !historyRecordedRef.current.has(trackId) && (audio.currentTime >= 30 || percent >= 0.5)) {
+          historyRecordedRef.current.add(trackId);
 
-          const trackId = currentTrack.videoId || currentTrack.video_id || currentTrack.id;
-          if (trackId) {
-            // 1. Record in DB history if logged in
-            if (user?.id) {
-              api.recordHistory(trackId, user.id, Math.floor(audio.currentTime)).catch(() => {});
-            }
+          // 1. Record in DB history if logged in
+          if (user?.id) {
+            api.recordHistory(trackId, user.id, Math.floor(audio.currentTime)).catch(() => {});
+          }
 
-            // 2. Increment global play count for popularity metrics
-            api.incrementPlayCount(trackId).catch(() => {});
+          // 2. Increment global play count for popularity metrics
+          api.incrementPlayCount(trackId).catch(() => {});
 
-            // 3. Dispatch global play event and record recent activity
+          // 3. Dispatch global play event and record recent activity
+          try {
+            const artistName = currentTrack.artist || 'Unknown Artist';
+            window.dispatchEvent(new CustomEvent('track_played', {
+              detail: { track: currentTrack, timestamp: Date.now() }
+            }));
+            recordRecentActivity({
+              type: 'song',
+              id: trackId,
+              title: currentTrack.title || 'Unknown Title',
+              subtitle: artistName,
+              artist: artistName,
+              artists: currentTrack.artists || [],
+              image: currentTrack.thumbnail || currentTrack.image || '',
+            });
+          } catch (e) {}
+
+          // 4. LocalStorage persistence for instant offline & zero-latency history
+          try {
+            const savedHistory = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
+            const filtered = savedHistory.filter(t => {
+              const tid = t?.videoId || t?.video_id || t?.id;
+              return tid !== trackId;
+            });
+            localStorage.setItem('staytup_recently_played', JSON.stringify([currentTrack, ...filtered].slice(0, 50)));
+          } catch (e) {}
+
+          // 5. Record artist into recent listening artists list for Queue personalization
+          if (currentTrack.artist) {
             try {
-              const artistName = currentTrack.artist || 'Unknown Artist';
-              window.dispatchEvent(new CustomEvent('track_played', {
-                detail: { track: currentTrack, timestamp: Date.now() }
-              }));
-              recordRecentActivity({
-                type: 'song',
-                id: trackId,
-                title: currentTrack.title || 'Unknown Title',
-                subtitle: artistName,
-                artist: artistName,
-                artists: currentTrack.artists || [],
-                image: currentTrack.thumbnail || currentTrack.image || '',
-              });
+              const recent = JSON.parse(localStorage.getItem('staytup_recent_artists') || '[]');
+              const artists = currentTrack.artist
+                .split(/[,/&|;]|(?:\s+feat\.?\s+)|\s+ft\.?\s+/i)
+                .map(a => a.trim())
+                .filter(a => a.length > 0 && a.toLowerCase() !== 'various artists');
+              const combined = Array.from(new Set([...artists, ...recent])).slice(0, 15);
+              localStorage.setItem('staytup_recent_artists', JSON.stringify(combined));
             } catch (e) {}
-
-            // 4. LocalStorage persistence for instant offline & zero-latency history
-            try {
-              const savedHistory = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
-              const filtered = savedHistory.filter(t => {
-                const tid = t?.videoId || t?.video_id || t?.id;
-                return tid !== trackId;
-              });
-              localStorage.setItem('staytup_recently_played', JSON.stringify([currentTrack, ...filtered].slice(0, 50)));
-            } catch (e) {}
-
-            // 5. Record artist into recent listening artists list for Queue personalization
-            if (currentTrack.artist) {
-              try {
-                const recent = JSON.parse(localStorage.getItem('staytup_recent_artists') || '[]');
-                const artists = currentTrack.artist
-                  .split(/[,/&|;]|(?:\s+feat\.?\s+)|\s+ft\.?\s+/i)
-                  .map(a => a.trim())
-                  .filter(a => a.length > 0 && a.toLowerCase() !== 'various artists');
-                const combined = Array.from(new Set([...artists, ...recent])).slice(0, 15);
-                localStorage.setItem('staytup_recent_artists', JSON.stringify(combined));
-              } catch (e) {}
-            }
           }
         }
       }
