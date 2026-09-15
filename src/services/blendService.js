@@ -1,4 +1,5 @@
 import { api } from '../api/endpoints';
+import { getAppBaseUrl } from '../utils/canonicalUrl';
 
 const BLENDS_STORAGE_KEY = 'staytup_blends_v1';
 
@@ -311,12 +312,13 @@ export async function createOrGetBlend(currentUser, otherMembers = [], userHisto
  * Generate a shareable invite link for a Blend
  */
 export async function createBlendInvite(blendId, inviter) {
+  const baseUrl = getAppBaseUrl();
   try {
     const res = await api.generateBlendInvite(blendId, inviter);
     if (res?.token) {
       return {
         token: res.token,
-        inviteUrl: `${window.location.origin}/staytup/blend/invite/${res.token}`,
+        inviteUrl: `${baseUrl}/blend/invite/${res.token}`,
       };
     }
   } catch (e) {}
@@ -325,7 +327,7 @@ export async function createBlendInvite(blendId, inviter) {
   const fallbackToken = 'bld_' + Math.random().toString(36).substring(2, 10);
   return {
     token: fallbackToken,
-    inviteUrl: `${window.location.origin}/staytup/blend/invite/${fallbackToken}`,
+    inviteUrl: `${baseUrl}/blend/invite/${fallbackToken}`,
   };
 }
 

@@ -126,8 +126,9 @@ if (in_array($route, ['/sw.js', '/service-worker.js', '/registerSW.js'])) {
     }
 }
 
-// ==================== 3. SPA CLIENT-SIDE FALLBACK WITH OPEN GRAPH METADATA ====================
-$indexHtml = __DIR__ . '/dist/index.html';
+$indexHtml = file_exists(__DIR__ . '/dist/index.html') 
+    ? __DIR__ . '/dist/index.html' 
+    : __DIR__ . '/index.html';
 if (file_exists($indexHtml)) {
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
