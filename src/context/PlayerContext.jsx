@@ -448,6 +448,30 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [isMuted]);
 
+  // Stable refs for background / lock-screen action handlers
+  const nextTrackRef = useRef(nextTrack);
+  const prevTrackRef = useRef(prevTrack);
+  const seekRef = useRef(seek);
+
+  useEffect(() => { nextTrackRef.current = nextTrack; }, [nextTrack]);
+  useEffect(() => { prevTrackRef.current = prevTrack; }, [prevTrack]);
+  useEffect(() => { seekRef.current = seek; }, [seek]);
+
+  // Lock-screen scrubber & timeline sync (iOS 15+, Android Chrome, macOS Control Center)
+  const updateMediaSessionPosition = useCallback(() => {
+    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+    const audio = audioRef.current;
+    if (audio && audio.duration && !isNaN(audio.duration) && isFinite(audio.duration) && audio.duration > 0) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: Math.max(0, audio.duration),
+          playbackRate: audio.playbackRate || 1,
+          position: Math.min(Math.max(0, audio.currentTime), audio.duration),
+        });
+      } catch (e) {}
+    }
+  }, []);
+
   // Fetch user favorites on load
   useEffect(() => {
     const userId = user?.id || user?.uid || localStorage.getItem('staytup_user_id') || 'guest_user';
