@@ -73,6 +73,9 @@ function staytupAutoUpdatePlugin() {
 export default defineConfig({
   plugins: [react(), staytupAutoUpdatePlugin()],
   base: './',
+  legacy: {
+    skipWebSocketTokenCheck: true,
+  },
   server: {
     port: 5173,
     host: true,
