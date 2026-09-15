@@ -273,7 +273,7 @@ export default function ProfilePage() {
                 <span className="text-xs text-[#8E8E93]">({likedTrackIds.size})</span>
               </div>
               <button
-                onClick={() => navigate('/library?tab=favorites')}
+                onClick={() => navigate('/collection/tracks')}
                 className="flex items-center gap-1 text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
               >
                 View all

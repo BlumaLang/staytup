@@ -33,11 +33,18 @@ import { PlaylistSheet } from '../components/PlaylistSheet';
 export default function LibraryPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'favorites';
+  const initialTab = searchParams.get('tab') && searchParams.get('tab') !== 'favorites' ? searchParams.get('tab') : 'playlists';
 
   const { user } = useAuth();
   const { playTrack, currentTrack, isPlaying, togglePlay, likedTrackIds, toggleLike } = usePlayer();
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Redirect /library?tab=favorites to dedicated /collection/tracks
+  useEffect(() => {
+    if (searchParams.get('tab') === 'favorites') {
+      navigate('/collection/tracks', { replace: true });
+    }
+  }, [searchParams, navigate]);
   const [favorites, setFavorites] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [community, setCommunity] = useState([]);
@@ -335,7 +342,6 @@ export default function LibraryPage() {
           {/* Circle Pill Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5 sm:pb-1">
             {[
-              { id: 'favorites', label: 'Favorites' },
               { id: 'playlists', label: 'Playlists' },
               { id: 'artists', label: 'Artists' },
               { id: 'community', label: 'Community' },
@@ -645,6 +651,24 @@ export default function LibraryPage() {
                       <Plus className="w-6 h-6" />
                     </div>
                     <p className="font-bold text-xs text-white">Create Playlist</p>
+                  </div>
+
+                  {/* Pinned: Liked Songs Card (Spotify Signature) */}
+                  <div
+                    onClick={() => navigate('/collection/tracks')}
+                    className="p-4 rounded-2xl bg-gradient-to-br from-[#450af5]/20 via-[#18181A] to-[#121214] hover:bg-[#1A1A1E] border border-indigo-500/20 hover:border-indigo-400/40 transition-all cursor-pointer group shadow-lg flex flex-col justify-between aspect-square"
+                  >
+                    <div className="w-full aspect-square rounded-xl bg-gradient-to-br from-[#450af5] via-[#8e8ee5] to-[#c4efd9] flex items-center justify-center mb-3 overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+                      <Heart className="w-10 h-10 fill-white text-white drop-shadow-md" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-white truncate group-hover:text-white">
+                        Liked Songs
+                      </p>
+                      <p className="text-xs text-[#8E8E93] truncate mt-0.5">
+                        {likedTrackIds.size} {likedTrackIds.size === 1 ? 'song' : 'songs'}
+                      </p>
+                    </div>
                   </div>
 
                   {playlists.map((pl) => (

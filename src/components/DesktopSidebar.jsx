@@ -83,7 +83,10 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
   ];
 
   const currentPath = location.pathname;
-  const isFavoritesActive = currentPath === '/library' && location.search.includes('tab=favorites');
+  const isFavoritesActive =
+    currentPath === '/collection/tracks' ||
+    currentPath === '/liked' ||
+    (currentPath === '/library' && location.search.includes('tab=favorites'));
 
   return (
     <aside
@@ -237,7 +240,7 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
           {/* Pinned: Liked Songs (Shown in 'all' and 'playlists') */}
           {(libraryFilter === 'all' || libraryFilter === 'playlists') && (
             <div
-              onClick={() => navigate('/library?tab=favorites')}
+              onClick={() => navigate('/collection/tracks')}
               title={isCollapsed ? `Liked Songs (${likedTrackIds.size})` : undefined}
               className={`flex items-center rounded-xl transition-all cursor-pointer group ${
                 isCollapsed ? 'justify-center p-2' : 'gap-3 px-2.5 py-2'

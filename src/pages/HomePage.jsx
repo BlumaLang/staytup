@@ -168,7 +168,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
           {/* 1. Liked Songs Dashboard Tile */}
           <div
-            onClick={() => navigate('/library?tab=favorites')}
+            onClick={() => navigate('/collection/tracks')}
             className="group flex items-center gap-2 sm:gap-3 bg-[#1A1A1A]/90 hover:bg-[#282828] active:scale-[0.98] transition-all duration-200 rounded-lg sm:rounded-md overflow-hidden cursor-pointer shadow-sm relative pr-2 sm:pr-3"
           >
             <div className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 bg-gradient-to-br from-[#450af5] to-[#c4efd9] flex items-center justify-center shadow-md">

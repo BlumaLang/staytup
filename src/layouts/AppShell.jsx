@@ -51,7 +51,7 @@ export const AppShell = () => {
   const getActiveView = () => {
     const path = location.pathname;
     if (path.startsWith('/search')) return 'search';
-    if (path.startsWith('/library')) return 'library';
+    if (path.startsWith('/library') || path.startsWith('/collection') || path.startsWith('/liked')) return 'library';
     if (path.startsWith('/blend')) return 'blend';
     if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile';
     return 'home';
@@ -89,7 +89,10 @@ export const AppShell = () => {
   const videoId = String(currentTrack?.videoId || currentTrack?.video_id || currentTrack?.id || '');
   const isLiked = likedTrackIds.has(videoId);
 
-  const hideMobileHeader = location.pathname.startsWith('/search');
+  const hideMobileHeader =
+    location.pathname.startsWith('/search') ||
+    location.pathname.startsWith('/collection') ||
+    location.pathname.startsWith('/liked');
 
   const isSubpage =
     location.pathname.startsWith('/playlist') ||

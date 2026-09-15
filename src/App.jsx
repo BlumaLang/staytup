@@ -18,6 +18,7 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import UserProfilePage from './pages/UserProfilePage';
 import BlendPage from './pages/BlendPage';
+import LikedSongsPage from './pages/LikedSongsPage';
 
 // Inner component to handle service worker notification navigation
 function NotificationNavigationHandler() {
@@ -100,6 +101,8 @@ export default function App() {
           <Route path="/friends" element={<Navigate to="/blend" replace />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/collection/tracks" element={<LikedSongsPage />} />
+          <Route path="/liked" element={<LikedSongsPage />} />
           {/* Catch-all redirect to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
