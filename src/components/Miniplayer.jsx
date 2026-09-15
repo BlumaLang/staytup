@@ -174,9 +174,9 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
               {isLoadingStream ? (
                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="w-4 h-4 fill-black" />
+                <Pause className="w-4 h-4 fill-black stroke-0" />
               ) : (
-                <Play className="w-4 h-4 fill-black ml-0.5" />
+                <Play className="w-4 h-4 fill-black stroke-0 ml-0.5" />
               )}
             </button>
           </div>
@@ -274,15 +274,15 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
 
             <button
               onClick={togglePlay}
-              className="w-9 h-9 rounded-full bg-white hover:scale-105 text-black flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-md"
+              className="w-8 h-8 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center transition-all cursor-pointer shadow-md mx-1"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isLoadingStream ? (
-                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="w-4.5 h-4.5 fill-black" />
+                <Pause className="w-4 h-4 fill-black stroke-0" />
               ) : (
-                <Play className="w-4.5 h-4.5 fill-black ml-0.5" />
+                <Play className="w-4 h-4 fill-black stroke-0 ml-0.5" />
               )}
             </button>
 

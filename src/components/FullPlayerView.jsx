@@ -663,15 +663,15 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
 
                 <button
                   onClick={togglePlay}
-                  className="w-13 h-13 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center transition-all cursor-pointer shadow-2xl"
+                  className="w-10 h-10 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center transition-all cursor-pointer shadow-xl mx-1"
                   title={isPlaying ? 'Pause' : 'Play'}
                 >
                   {isLoadingStream ? (
-                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                   ) : isPlaying ? (
-                    <Pause className="w-6 h-6 fill-black" />
+                    <Pause className="w-5 h-5 fill-black stroke-0" />
                   ) : (
-                    <Play className="w-6 h-6 fill-black ml-0.5" />
+                    <Play className="w-5 h-5 fill-black stroke-0 ml-0.5" />
                   )}
                 </button>
 
