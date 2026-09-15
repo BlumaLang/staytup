@@ -42,6 +42,8 @@ export const clearAllUserData = () => {
     localStorage.removeItem('staytup_friends');
     localStorage.removeItem('staytup_friend_requests');
     localStorage.removeItem('staytup_blend_requests');
+    localStorage.removeItem('staytup_cached_smart_feed');
+    sessionStorage.removeItem('staytup_cached_smart_feed');
   } catch (e) {}
 };
 

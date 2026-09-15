@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
-import { loadSmartFeed } from '../services/smartFeedService';
+import { loadSmartFeed, getCachedSmartFeed } from '../services/smartFeedService';
 import { MediaCard } from '../components/MediaCard';
 import { MediaRail } from '../components/MediaRail';
 import { ArtistAvatar } from '../components/ArtistAvatar';
@@ -16,7 +16,10 @@ export default function HomePage() {
   const { playTrack, currentTrack, isPlaying, likedTrackIds, toggleLike } = usePlayer();
 
   const [activeFilter, setActiveFilter] = useState('all');
-  const [smartFeed, setSmartFeed] = useState({
+
+  // Immediately retrieve cached feed to render Home at 0ms with zero loading flash
+  const initialCachedFeed = getCachedSmartFeed();
+  const [smartFeed, setSmartFeed] = useState(() => initialCachedFeed || {
     trendingOnApp: null,
     newReleases: null,
     popularRightNow: null,
@@ -29,16 +32,29 @@ export default function HomePage() {
     moodMixes: null,
     todaysHits: null,
   });
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load Smart Feed
+  const hasCachedContent = !!(
+    initialCachedFeed?.trendingOnApp ||
+    initialCachedFeed?.todaysHits ||
+    initialCachedFeed?.newReleases ||
+    initialCachedFeed?.popularRightNow
+  );
+  const [isLoading, setIsLoading] = useState(!hasCachedContent);
+
+  const userId = user?.id || user?.uid || '';
+
+  // Load Smart Feed (stale-while-revalidate pattern: 0ms instant display, silent background refresh)
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
+
+    // Only display skeleton loaders if there is NO feed content rendered at all
+    if (!hasCachedContent && !smartFeed.trendingOnApp && !smartFeed.todaysHits) {
+      setIsLoading(true);
+    }
 
     loadSmartFeed(user)
       .then((feed) => {
-        if (isMounted) {
+        if (isMounted && feed) {
           setSmartFeed(feed);
           setIsLoading(false);
         }
@@ -51,7 +67,7 @@ export default function HomePage() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [userId]);
 
   // Quick Jump cards derived from smartFeed (Spotify 6-Pack Grid)
   const quickCards = [];

@@ -96,7 +96,11 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
         <div
           onClick={() => {
             setActiveView('home');
-            navigate('/');
+            if (currentPath !== '/') {
+              navigate('/');
+            } else {
+              document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
           className="flex items-center gap-3 cursor-pointer group min-w-0"
           title="Staytup Music"
@@ -141,6 +145,10 @@ export const DesktopSidebar = ({ activeView, setActiveView, onOpenProfile, onOpe
               key={item.id}
               onClick={() => {
                 setActiveView(item.id);
+                if (item.id === 'home' && currentPath === '/') {
+                  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                  return;
+                }
                 navigate(item.path);
                 if (item.id === 'search') {
                   setTimeout(() => {

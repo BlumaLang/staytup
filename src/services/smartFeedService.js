@@ -311,11 +311,78 @@ export const getPopularPlaylists = (rawPlaylists = [], limit = 8) => {
   return results;
 };
 
+
+// ============================================================================
+// IN-MEMORY & STORAGE FEED CACHE
+// ============================================================================
+let memorySmartFeedCache = null;
+let memorySmartFeedTimestamp = 0;
+let inflightFeedPromise = null;
+const FEED_CACHE_KEY = 'staytup_cached_smart_feed';
+const FEED_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache TTL
+
 /**
- * Load and curate the smart home feed dynamically
+ * Retrieve cached feed immediately from memory or persistent storage.
+ * Enables 0ms instantaneous Home page rendering without loading flash.
  */
-export const loadSmartFeed = async (user = null) => {
-  const userId = user?.id || localStorage.getItem('staytup_user_id') || '';
+export const getCachedSmartFeed = () => {
+  if (memorySmartFeedCache) return memorySmartFeedCache;
+
+  try {
+    const raw = sessionStorage.getItem(FEED_CACHE_KEY) || localStorage.getItem(FEED_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.feed) {
+        memorySmartFeedCache = parsed.feed;
+        memorySmartFeedTimestamp = parsed.timestamp || 0;
+        return memorySmartFeedCache;
+      }
+    }
+  } catch (e) {}
+
+  return null;
+};
+
+/**
+ * Check if the cached smart feed is still fresh within TTL
+ */
+export const isSmartFeedFresh = () => {
+  if (!memorySmartFeedCache) {
+    getCachedSmartFeed();
+  }
+  return !!memorySmartFeedCache && Date.now() - memorySmartFeedTimestamp < FEED_CACHE_TTL_MS;
+};
+
+/**
+ * Invalidate cached feed (e.g. on user logout or manual pull-to-refresh)
+ */
+export const clearSmartFeedCache = () => {
+  memorySmartFeedCache = null;
+  memorySmartFeedTimestamp = 0;
+  inflightFeedPromise = null;
+  try {
+    sessionStorage.removeItem(FEED_CACHE_KEY);
+    localStorage.removeItem(FEED_CACHE_KEY);
+  } catch (e) {}
+};
+
+/**
+ * Load and curate the smart home feed dynamically with caching & in-flight deduplication
+ */
+export const loadSmartFeed = async (user = null, forceRefresh = false) => {
+  // 1. If fresh cache exists and not forced, return cached feed instantly
+  if (!forceRefresh && isSmartFeedFresh() && memorySmartFeedCache) {
+    return memorySmartFeedCache;
+  }
+
+  // 2. If a fetch is already in flight, reuse the promise to prevent duplicate API requests
+  if (inflightFeedPromise) {
+    return inflightFeedPromise;
+  }
+
+  inflightFeedPromise = (async () => {
+    try {
+      const userId = user?.id || localStorage.getItem('staytup_user_id') || '';
 
   // 1. Fetch data concurrently
   const [homeRes, communityRes, playlistsRes, albumsRes] = await Promise.allSettled([
@@ -493,17 +560,34 @@ export const loadSmartFeed = async (user = null) => {
   // Step K: Today's Biggest Hits (Curated tracks from trending)
   const todaysHits = Array.isArray(rawTrending) && rawTrending.length > 0 ? rawTrending.slice(0, 10) : [];
 
-  return {
-    trendingOnApp: trendingOnApp.length > 0 ? trendingOnApp : null,
-    newReleases: newReleases.length > 0 ? newReleases : null,
-    popularRightNow: popularRightNow.length > 0 ? popularRightNow : null,
-    popularAlbums: popularAlbums.length > 0 ? popularAlbums : null,
-    popularPlaylists: popularPlaylists.length > 0 ? popularPlaylists : null,
-    jumpBackIn: jumpBackIn.length > 0 ? jumpBackIn : null,
-    becauseYouListenTo,
-    fromFollowedArtists,
-    popularArtists,
-    moodMixes,
-    todaysHits: todaysHits.length > 0 ? todaysHits : null,
-  };
+      const result = {
+        trendingOnApp: trendingOnApp.length > 0 ? trendingOnApp : null,
+        newReleases: newReleases.length > 0 ? newReleases : null,
+        popularRightNow: popularRightNow.length > 0 ? popularRightNow : null,
+        popularAlbums: popularAlbums.length > 0 ? popularAlbums : null,
+        popularPlaylists: popularPlaylists.length > 0 ? popularPlaylists : null,
+        jumpBackIn: jumpBackIn.length > 0 ? jumpBackIn : null,
+        becauseYouListenTo,
+        fromFollowedArtists,
+        popularArtists,
+        moodMixes,
+        todaysHits: todaysHits.length > 0 ? todaysHits : null,
+      };
+
+      // Update in-memory and persistent storage caches
+      memorySmartFeedCache = result;
+      memorySmartFeedTimestamp = Date.now();
+      try {
+        const payload = JSON.stringify({ feed: result, timestamp: memorySmartFeedTimestamp });
+        sessionStorage.setItem(FEED_CACHE_KEY, payload);
+        localStorage.setItem(FEED_CACHE_KEY, payload);
+      } catch (e) {}
+
+      return result;
+    } finally {
+      inflightFeedPromise = null;
+    }
+  })();
+
+  return inflightFeedPromise;
 };

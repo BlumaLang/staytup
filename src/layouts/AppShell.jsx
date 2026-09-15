@@ -60,7 +60,11 @@ export const AppShell = () => {
   const handleNavClick = (view) => {
     switch (view) {
       case 'home':
-        navigate('/');
+        if (location.pathname !== '/') {
+          navigate('/');
+        } else {
+          document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         break;
       case 'search':
         navigate('/search');
@@ -75,7 +79,9 @@ export const AppShell = () => {
         navigate('/profile');
         break;
       default:
-        navigate('/');
+        if (location.pathname !== '/') {
+          navigate('/');
+        }
     }
   };
 
@@ -113,7 +119,13 @@ export const AppShell = () => {
               </button>
               <span
                 className="font-black text-xl tracking-tight text-white cursor-pointer"
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  if (location.pathname !== '/') {
+                    navigate('/');
+                  } else {
+                    document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
               >
                 Staytup
               </span>
@@ -121,7 +133,13 @@ export const AppShell = () => {
           ) : (
             <div
               className="flex items-center cursor-pointer select-none"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                if (location.pathname !== '/') {
+                  navigate('/');
+                } else {
+                  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
             >
               <span className="font-black text-xl tracking-tight text-white">
                 {location.pathname.startsWith('/library')
@@ -191,7 +209,13 @@ export const AppShell = () => {
         {/* Center: Home Button + Universal Search Bar */}
         <div className="flex items-center gap-2.5 flex-1 max-w-xl mx-auto">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => {
+              if (location.pathname !== '/') {
+                navigate('/');
+              } else {
+                document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
               location.pathname === '/'
                 ? 'bg-white text-black shadow-md'
