@@ -356,6 +356,11 @@ export default function SearchPage() {
     handleQueryChange(item.title || item.name || query);
   };
 
+  const artists = results?.artists || [];
+  const albums = results?.albums || [];
+  const playlists = results?.playlists || [];
+  const people = results?.people || [];
+
   // Smart Top Result: Determine whether an artist or a song best matches the search query
   const qClean = query.trim().toLowerCase();
   const matchedArtist = artists.find((a) => {
@@ -366,9 +371,6 @@ export default function SearchPage() {
   const isArtistTop = Boolean(matchedArtist);
   const topResult = matchedArtist ? matchedArtist : (results?.tracks?.[0] || null);
   const otherTracks = isArtistTop ? (results?.tracks || []) : (results?.tracks?.slice(1) || []);
-  const albums = results?.albums || [];
-  const playlists = results?.playlists || [];
-  const people = results?.people || [];
 
   const isCurrentPlaying = (item) => {
     const activeId = currentTrack?.videoId || currentTrack?.id;
