@@ -242,6 +242,36 @@ export default function HomePage() {
         </div>
 
         {/* ========================================================================= */}
+        {/* SECTION: JUMP BACK IN (Moved to Top Before Trending on Staytup)           */}
+        {/* ========================================================================= */}
+        {!isLoading && smartFeed.jumpBackIn && smartFeed.jumpBackIn.length > 0 && (
+          <MediaRail
+            title="Jump back in"
+            subtitle="Your recent listening activity"
+            action={
+              <Link
+                to="/library?tab=history"
+                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
+              >
+                View history
+              </Link>
+            }
+          >
+            {smartFeed.jumpBackIn.map((track, idx) => (
+              <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
+                <MediaCard
+                  image={track.thumbnail || track.image || track.artwork_url}
+                  title={track.title}
+                  subtitle={track.artist}
+                  track={track}
+                  onPlay={() => playTrack(track, smartFeed.jumpBackIn)}
+                />
+              </div>
+            ))}
+          </MediaRail>
+        )}
+
+        {/* ========================================================================= */}
         {/* SECTION 1: TRENDING ON STAYTUP (Normal Cards Rail)                       */}
         {/* ========================================================================= */}
         {(isLoading || (smartFeed.trendingOnApp && smartFeed.trendingOnApp.length > 0)) && (
@@ -599,36 +629,6 @@ export default function HomePage() {
                 </div>
               ))
             )}
-          </MediaRail>
-        )}
-
-        {/* ========================================================================= */}
-        {/* SECTION 8: JUMP BACK IN (Personal user history, strictly deduplicated)     */}
-        {/* ========================================================================= */}
-        {!isLoading && smartFeed.jumpBackIn && smartFeed.jumpBackIn.length > 0 && (
-          <MediaRail
-            title="Jump back in"
-            subtitle="Your recent listening activity"
-            action={
-              <Link
-                to="/library?tab=history"
-                className="text-xs font-bold text-[#A7A7A7] hover:text-white transition-colors"
-              >
-                View history
-              </Link>
-            }
-          >
-            {smartFeed.jumpBackIn.map((track, idx) => (
-              <div key={track.videoId || track.id || idx} className="w-32 sm:w-48 flex-shrink-0">
-                <MediaCard
-                  image={track.thumbnail || track.image || track.artwork_url}
-                  title={track.title}
-                  subtitle={track.artist}
-                  track={track}
-                  onPlay={() => playTrack(track, smartFeed.jumpBackIn)}
-                />
-              </div>
-            ))}
           </MediaRail>
         )}
       </div>

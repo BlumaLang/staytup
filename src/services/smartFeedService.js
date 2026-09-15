@@ -92,7 +92,7 @@ export const calculateAppTrending = (
   likedIds = new Set(),
   globalTrending = [],
   seenIds = new Set(),
-  limit = 5
+  limit = 25
 ) => {
   const scores = new Map();
   const trackMap = new Map();
@@ -190,7 +190,7 @@ export const calculateAppTrending = (
  * 15–30 days: Medium priority
  * 31–90 days: Lower priority
  */
-export const filterAndRankNewReleases = (rawItems = [], seenIds = new Set(), limit = 8) => {
+export const filterAndRankNewReleases = (rawItems = [], seenIds = new Set(), limit = 25) => {
   if (!Array.isArray(rawItems) || rawItems.length === 0) return [];
 
   const candidates = [];
@@ -243,7 +243,7 @@ export const filterAndRankNewReleases = (rawItems = [], seenIds = new Set(), lim
 /**
  * Extracts popular chart songs, strictly excluding songs already surfaced in seenIds.
  */
-export const getPopularRightNow = (globalTrending = [], seenIds = new Set(), limit = 5) => {
+export const getPopularRightNow = (globalTrending = [], seenIds = new Set(), limit = 25) => {
   if (!Array.isArray(globalTrending)) return [];
 
   const results = [];
@@ -268,7 +268,7 @@ export const getPopularRightNow = (globalTrending = [], seenIds = new Set(), lim
 /**
  * Extracts popular albums, avoiding duplicates.
  */
-export const getPopularAlbums = (rawAlbums = [], seenIds = new Set(), limit = 8) => {
+export const getPopularAlbums = (rawAlbums = [], seenIds = new Set(), limit = 25) => {
   if (!Array.isArray(rawAlbums)) return [];
 
   const results = [];
@@ -292,7 +292,7 @@ export const getPopularAlbums = (rawAlbums = [], seenIds = new Set(), limit = 8)
 /**
  * Extracts popular playlists.
  */
-export const getPopularPlaylists = (rawPlaylists = [], limit = 8) => {
+export const getPopularPlaylists = (rawPlaylists = [], limit = 25) => {
   if (!Array.isArray(rawPlaylists)) return [];
 
   const results = [];
@@ -388,8 +388,8 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
   const [homeRes, communityRes, playlistsRes, albumsRes] = await Promise.allSettled([
     api.getHomeFeed(userId),
     getCommunityListeningHistoryFromFirebase(),
-    api.search('trending hits 2026', 'playlists', 0, 10),
-    api.search('top albums 2026', 'albums', 0, 10),
+    api.search('trending hits 2026', 'playlists', 0, 30),
+    api.search('top albums 2026', 'albums', 0, 30),
   ]);
 
   const homeData = homeRes.status === 'fulfilled' ? homeRes.value : null;
@@ -421,36 +421,36 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
   const seenIds = new Set();
 
   // 3. Smart pipeline execution:
-  // Step A: Trending on This App (Top 5)
+  // Step A: Trending on This App (25–30 songs)
   const trendingOnApp = calculateAppTrending(
     communityHistory,
     userHistory,
     userFavorites,
     rawTrending,
     seenIds,
-    5
+    25
   );
 
-  // Step B: New Releases (5–8 fresh items)
-  const newReleases = filterAndRankNewReleases(rawNewReleases, seenIds, 8);
+  // Step B: New Releases (25–30 fresh items)
+  const newReleases = filterAndRankNewReleases(rawNewReleases, seenIds, 25);
 
-  // Step C: Popular Right Now (Top 5 chart hits, deduplicated against Trending on App & New Releases)
-  const popularRightNow = getPopularRightNow(rawTrending, seenIds, 5);
+  // Step C: Popular Right Now (25 chart hits, deduplicated against Trending on App & New Releases)
+  const popularRightNow = getPopularRightNow(rawTrending, seenIds, 25);
 
-  // Step D: Popular Albums (5–8 items)
-  const popularAlbums = getPopularAlbums(combinedAlbums, seenIds, 8);
+  // Step D: Popular Albums (25 items)
+  const popularAlbums = getPopularAlbums(combinedAlbums, seenIds, 25);
 
-  // Step E: Popular Playlists (5–8 items)
-  const popularPlaylists = getPopularPlaylists(searchPlaylists, 8);
+  // Step E: Popular Playlists (25 items)
+  const popularPlaylists = getPopularPlaylists(searchPlaylists, 25);
 
-  // Step F: Jump Back In (Strictly genuine user recently played, no fake filler)
+  // Step F: Jump Back In (Strictly genuine user recently played, up to 25)
   let jumpBackIn = [];
   try {
     const recents = JSON.parse(localStorage.getItem('staytup_recently_played') || '[]');
     if (Array.isArray(recents) && recents.length > 0) {
-      jumpBackIn = recents.slice(0, 10);
+      jumpBackIn = recents.slice(0, 25);
     } else if (Array.isArray(userHistory) && userHistory.length > 0) {
-      jumpBackIn = userHistory.slice(0, 10);
+      jumpBackIn = userHistory.slice(0, 25);
     }
   } catch (e) {}
 
@@ -466,6 +466,11 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
     'Badshah',
     'Anuv Jain',
     'Atif Aslam',
+    'Neha Kakkar',
+    'Darshan Raval',
+    'Armaan Malik',
+    'B Praak',
+    'Jubin Nautiyal',
   ];
 
   let popularArtists = popularArtistNames.map((name) => ({
@@ -506,7 +511,7 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
     const topArtistName = sortedArtists[0]?.[0];
 
     if (topArtistName) {
-      const topArtistRes = await api.search(`artist:"${topArtistName}"`, 'songs', 0, 10).catch(() => null);
+      const topArtistRes = await api.search(`artist:"${topArtistName}"`, 'songs', 0, 30).catch(() => null);
       const tracks = (topArtistRes?.tracks || topArtistRes?.results || []).filter((t) => {
         const tid = t.videoId || t.video_id || t.id;
         return tid && !seenIds.has(tid);
@@ -515,7 +520,7 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
         tracks.forEach((t) => seenIds.add(t.videoId || t.id));
         becauseYouListenTo = {
           artistName: topArtistName,
-          tracks: tracks.slice(0, 8),
+          tracks: tracks.slice(0, 25),
         };
       }
     }
@@ -530,7 +535,7 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
       const randomFollowed = stored[Math.floor(Math.random() * stored.length)];
       const faName = typeof randomFollowed === 'string' ? randomFollowed : randomFollowed?.name;
       if (faName) {
-        const faRes = await api.search(`artist:"${faName}"`, 'songs', 0, 10).catch(() => null);
+        const faRes = await api.search(`artist:"${faName}"`, 'songs', 0, 30).catch(() => null);
         const faTracks = (faRes?.tracks || faRes?.results || []).filter((t) => {
           const tid = t.videoId || t.video_id || t.id;
           return tid && !seenIds.has(tid);
@@ -540,7 +545,7 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
           fromFollowedArtists = {
             artistName: faName,
             artistImage: typeof randomFollowed === 'object' ? randomFollowed.image : '',
-            tracks: faTracks.slice(0, 8),
+            tracks: faTracks.slice(0, 25),
           };
         }
       }
@@ -558,7 +563,7 @@ export const loadSmartFeed = async (user = null, forceRefresh = false) => {
   ];
 
   // Step K: Today's Biggest Hits (Curated tracks from trending)
-  const todaysHits = Array.isArray(rawTrending) && rawTrending.length > 0 ? rawTrending.slice(0, 10) : [];
+  const todaysHits = Array.isArray(rawTrending) && rawTrending.length > 0 ? rawTrending.slice(0, 25) : [];
 
       const result = {
         trendingOnApp: trendingOnApp.length > 0 ? trendingOnApp : null,

@@ -278,7 +278,7 @@ export const PlayerProvider = ({ children }) => {
   // Intelligent queue replenishment
   const isReplenishingRef = useRef(false);
 
-  const replenishQueue = useCallback(async (customSeedTrack = null, count = 10) => {
+  const replenishQueue = useCallback(async (customSeedTrack = null, count = 20) => {
     if (isReplenishingRef.current) return 0;
     isReplenishingRef.current = true;
     try {
@@ -291,8 +291,13 @@ export const PlayerProvider = ({ children }) => {
         limit: count,
       });
       if (newRecs && newRecs.length > 0) {
-        setQueue(prev => deduplicateTracks([...prev, ...newRecs]));
-        return newRecs.length;
+        const merged = deduplicateTracks(queueRef.current, newRecs);
+        if (merged.length > 0) {
+          const nextQueue = [...queueRef.current, ...merged];
+          queueRef.current = nextQueue;
+          setQueue(nextQueue);
+          return merged.length;
+        }
       }
     } catch (err) {
       console.warn('Queue replenishment error:', err);
@@ -315,8 +320,8 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(targetIdx);
       loadAndPlayTrack(newQueue[targetIdx], true);
       // Auto-replenish if queue is very short
-      if (newQueue.length <= 2) {
-        replenishQueue(newQueue[targetIdx], 10);
+      if (newQueue.length <= 3) {
+        replenishQueue(newQueue[targetIdx], 20);
       }
     } else {
       queueRef.current = [track];
@@ -324,7 +329,7 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(0);
       loadAndPlayTrack(track, true);
       // Automatically generate recommendations in the background so queue never halts
-      replenishQueue(track, 10);
+      replenishQueue(track, 20);
     }
   }, [loadAndPlayTrack, replenishQueue]);
 
@@ -335,8 +340,8 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(index);
       loadAndPlayTrack(q[index], true);
       // If approaching end of queue, replenish preemptively
-      if (index >= q.length - 2) {
-        replenishQueue(q[index], 10);
+      if (index >= q.length - 3) {
+        replenishQueue(q[index], 20);
       }
     }
   }, [loadAndPlayTrack, replenishQueue]);
@@ -354,8 +359,8 @@ export const PlayerProvider = ({ children }) => {
         randIdx = (curIdx + 1) % q.length;
       }
       jumpToIndex(randIdx);
-      if (q.length < 10) {
-        replenishQueue(q[randIdx], 10);
+      if (q.length < 15) {
+        replenishQueue(q[randIdx], 20);
       }
       return;
     }
@@ -363,22 +368,21 @@ export const PlayerProvider = ({ children }) => {
     // 2. Sequential next track in queue
     if (curIdx < q.length - 1) {
       jumpToIndex(curIdx + 1);
-      if (curIdx + 2 >= q.length) {
-        replenishQueue(q[curIdx + 1], 10);
+      if (curIdx + 3 >= q.length) {
+        replenishQueue(q[curIdx + 1], 20);
       }
       return;
     }
 
-    // 3. End of queue: replenish intelligent recommendations or loop so audio never halts
-    if (q.length > 0) {
-      const current = q[curIdx] || currentTrack;
-      await replenishQueue(current, 10);
-      const updatedQueue = queueRef.current;
-      if (updatedQueue.length > curIdx + 1) {
-        jumpToIndex(curIdx + 1);
-      } else if (updatedQueue.length > 0) {
-        jumpToIndex(0);
-      }
+    // 3. End of queue reached: fetch intelligent recommendations to keep player alive and continuous
+    const current = q[curIdx] || currentTrack;
+    const addedCount = await replenishQueue(current, 20);
+    const updatedQueue = queueRef.current;
+    if (updatedQueue.length > curIdx + 1) {
+      jumpToIndex(curIdx + 1);
+    } else if (updatedQueue.length > 0) {
+      // Loop from start if no new songs could be found
+      jumpToIndex(0);
     }
   }, [jumpToIndex, replenishQueue, currentTrack]);
 

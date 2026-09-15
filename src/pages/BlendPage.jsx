@@ -229,19 +229,6 @@ export default function BlendPage() {
 
     return (
       <div className="w-full min-h-full bg-black lg:bg-[#121212] text-white select-none flex flex-col justify-between">
-        {/* Mobile Top Header: Back Arrow & "Create a Blend" */}
-        <div className="flex lg:hidden items-center justify-between px-4 pt-3 pb-2">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-9 h-9 -ml-2 rounded-full flex items-center justify-center text-white active:scale-95 transition-all"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
-          </button>
-          <span className="text-base font-bold text-white tracking-tight">Create a Blend</span>
-          <div className="w-7" /> {/* spacer for true center alignment */}
-        </div>
-
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-6 max-w-xl mx-auto w-full text-center">
           {/* Overlapping Venn Circles */}

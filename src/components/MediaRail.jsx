@@ -6,7 +6,8 @@ export const MediaRail = ({ title, subtitle, action, children }) => {
 
   const scroll = (direction) => {
     if (!scrollContainerRef.current) return;
-    const offset = direction === 'left' ? -340 : 340;
+    const clientWidth = scrollContainerRef.current.clientWidth || 360;
+    const offset = direction === 'left' ? -Math.round(clientWidth * 0.75) : Math.round(clientWidth * 0.75);
     scrollContainerRef.current.scrollBy({ left: offset, behavior: 'smooth' });
   };
 
@@ -43,7 +44,7 @@ export const MediaRail = ({ title, subtitle, action, children }) => {
       {/* Rail Scrolling Row */}
       <div
         ref={scrollContainerRef}
-        className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3 px-3 sm:mx-0 sm:px-0"
+        className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3 px-3 sm:mx-0 sm:px-0 overscroll-x-contain"
       >
         {children}
       </div>
