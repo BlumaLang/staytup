@@ -3,7 +3,6 @@ import { usePlayer } from '../context/PlayerContext';
 import { get500x500Image } from '../utils/media';
 import { MarqueeText } from './MarqueeText';
 import { ArtistLinks } from './ArtistLinks';
-import confetti from 'canvas-confetti';
 import {
   ChevronDown,
   Play,
@@ -90,7 +89,6 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubTime, setScrubTime] = useState(0);
-  const [isLikedAnimating, setIsLikedAnimating] = useState(false);
 
   const desktopLyricsContainerRef = useRef(null);
   const desktopActiveLineRef = useRef(null);
@@ -124,36 +122,10 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
   const activeTime = isScrubbing ? scrubTime : currentTime;
   const progressPercent = duration > 0 ? (activeTime / duration) * 100 : 0;
 
-  // Animatic like button handler with spring bounce and vibrant multi-color confetti burst
+  // Like button handler
   const handleLikeClick = (e) => {
     e.stopPropagation();
-    const willLike = !isLiked;
-
-    setIsLikedAnimating(true);
-    setTimeout(() => setIsLikedAnimating(false), 500);
-
     toggleLike(currentTrack);
-
-    if (willLike) {
-      try {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (rect.left + rect.width / 2) / window.innerWidth;
-        const y = (rect.top + rect.height / 2) / window.innerHeight;
-
-        confetti({
-          particleCount: 50,
-          spread: 85,
-          startVelocity: 28,
-          origin: { x, y },
-          colors: ['#1ED760', '#22C55E', '#10B981', '#4ADE80', '#FBBF24', '#EC4899', '#A855F7', '#FFFFFF'],
-          ticks: 200,
-          gravity: 1.1,
-          scalar: 0.9,
-          shapes: ['circle', 'square'],
-          disableForReducedMotion: true,
-        });
-      } catch (err) {}
-    }
   };
 
   const handleShare = async () => {
@@ -327,11 +299,11 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
               title={isLiked ? 'Liked' : 'Like'}
             >
               <Heart
-                className={`w-7 h-7 transition-all duration-300 ${
+                className={`w-7 h-7 transition-colors ${
                   isLiked
                     ? 'fill-[#1ED760] text-[#1ED760] stroke-[#1ED760]'
                     : 'stroke-white hover:text-white'
-                } ${isLikedAnimating ? 'scale-135 animate-bounce' : 'scale-100'}`}
+                }`}
               />
             </button>
           </div>
@@ -665,7 +637,7 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
                   <Heart
                     className={`w-5 h-5 ${
                       isLiked ? 'fill-[#1ED760] stroke-[#1ED760]' : 'stroke-white'
-                    } ${isLikedAnimating ? 'scale-125' : 'scale-100'}`}
+                    }`}
                   />
                 </button>
               </div>
