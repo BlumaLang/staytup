@@ -119,6 +119,12 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const formatRemainingTime = (total, current) => {
+    if (isNaN(total) || total <= 0) return '-0:00';
+    const remaining = Math.max(0, total - (current || 0));
+    return `-${formatTime(remaining)}`;
+  };
+
   const activeTime = isScrubbing ? scrubTime : currentTime;
   const progressPercent = duration > 0 ? (activeTime / duration) * 100 : 0;
 
@@ -172,30 +178,28 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
 
       {/* ========================================================================= */}
       {/* TOP HEADER BAR (Mobile & Desktop)                                         */}
+      {/* Matching media_1789497665502.jpg                                          */}
       {/* ========================================================================= */}
-      <div className="relative z-20 flex items-center justify-between px-4 sm:px-8 pt-3 sm:pt-4 pb-2 flex-shrink-0">
-        {/* Left: Minimize Player button */}
+      <div className="relative z-20 flex items-center justify-between px-5 sm:px-8 pt-3 sm:pt-4 pb-2 flex-shrink-0">
+        {/* Left: Minimize Player button (Chevron Down) */}
         <button
           onClick={onClose}
-          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/5 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer"
+          className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer -ml-2"
           title="Minimize Player"
           aria-label="Minimize Player"
         >
-          <ChevronDown className="w-6 h-6 stroke-[2.2]" />
+          <ChevronDown className="w-7 h-7 stroke-[2.2]" />
         </button>
 
-        {/* Center: Playing from Playlist / Album */}
+        {/* Center: Track title centered on mobile (media_1789497665502.jpg shows "Ehsaas" centered) */}
         <div className="flex-1 text-center px-4 min-w-0">
-          <p className="text-[10px] uppercase tracking-widest font-extrabold text-white/60">
-            Playing from
-          </p>
-          <p className="text-xs sm:text-sm font-bold text-white truncate max-w-sm mx-auto mt-0.5">
-            {currentTrack.album || currentTrack.playlist || currentTrack.artist || 'Staytup Feed'}
+          <p className="text-sm sm:text-base font-bold text-white truncate max-w-sm mx-auto">
+            {currentTrack.title}
           </p>
         </div>
 
-        {/* Right Header: Desktop View Toggles & Mobile 3-Dots */}
-        <div className="flex items-center gap-2">
+        {/* Right Header: Desktop View Toggles & 3-Dots */}
+        <div className="flex items-center gap-1 -mr-2">
           {/* Desktop View Switcher (Lyrics | Queue | Artwork) */}
           <div className="hidden lg:flex items-center gap-1.5 bg-black/30 p-1 rounded-full border border-white/10 mr-2">
             <button
@@ -244,20 +248,21 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
           {/* Mobile & Desktop Options 3-Dots */}
           <button
             onClick={() => setShowDetailsModal(true)}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/5 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer"
             title="More Options"
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <MoreHorizontal className="w-6 h-6" />
           </button>
         </div>
       </div>
 
       {/* ========================================================================= */}
       {/* MOBILE FULL-SCREEN PLAYER LAYOUT (< 1024px)                               */}
+      {/* Matching media_1789497665502.jpg                                          */}
       {/* ========================================================================= */}
-      <div className="lg:hidden flex-1 flex flex-col justify-between px-6 sm:px-8 pt-2 pb-24 relative z-10 overflow-y-auto no-scrollbar">
+      <div className="lg:hidden flex-1 flex flex-col justify-between px-6 pt-1 pb-6 relative z-10 overflow-hidden select-none">
         {/* Large Artwork */}
-        <div className="relative w-full max-w-sm mx-auto aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-black/40 shadow-2xl border border-white/10 my-auto flex-shrink-0">
+        <div className="relative w-full max-w-[340px] sm:max-w-sm mx-auto aspect-square rounded-lg overflow-hidden bg-black/40 shadow-[0_16px_36px_rgba(0,0,0,0.6)] my-auto flex-shrink-0">
           <img
             src={highResImage}
             alt={currentTrack.title}
@@ -275,42 +280,40 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Track Title, Artist & Animatic Heart */}
-        <div className="w-full max-w-sm mx-auto mt-4 mb-2">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0 pr-2">
-              <div className="overflow-hidden mb-1">
+        {/* Track Title, Artist & Spotify Circular Green Checkmark / Heart */}
+        <div className="w-full max-w-[340px] sm:max-w-sm mx-auto flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="flex-1 min-w-0 pr-1">
+              <div className="overflow-hidden">
                 <MarqueeText
                   text={currentTrack.title}
-                  className="text-xl sm:text-2xl font-black text-white tracking-tight"
+                  className="text-2xl font-black text-white tracking-tight"
                 />
               </div>
-              <div className="text-sm sm:text-base text-white/70 font-medium truncate">
+              <div className="text-sm text-[#A7A7A7] font-medium truncate mt-0.5">
                 <ArtistLinks track={currentTrack} showAvatars={false} />
               </div>
             </div>
 
-            {/* Animatic Like Button */}
+            {/* Like Button: Green circular filled checkmark when liked (Matching Screenshot), outline heart when not liked */}
             <button
               onClick={handleLikeClick}
-              className={`p-3 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
-                isLiked ? 'text-[#1ED760]' : 'text-white/70 hover:text-white'
-              }`}
+              className="w-8 h-8 flex items-center justify-center transition-transform active:scale-90 cursor-pointer flex-shrink-0"
               title={isLiked ? 'Liked' : 'Like'}
             >
-              <Heart
-                className={`w-7 h-7 transition-colors ${
-                  isLiked
-                    ? 'fill-[#1ED760] text-[#1ED760] stroke-[#1ED760]'
-                    : 'stroke-white hover:text-white'
-                }`}
-              />
+              {isLiked ? (
+                <div className="w-6 h-6 rounded-full bg-[#1ED760] flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-black stroke-[3.5]" />
+                </div>
+              ) : (
+                <Heart className="w-6 h-6 stroke-white/80 hover:stroke-white fill-none stroke-[2]" />
+              )}
             </button>
           </div>
 
-          {/* Timeline Scrubber */}
-          <div className="w-full mt-3 mb-1">
-            <div className="relative flex items-center py-2 group">
+          {/* Timeline Scrubber with negative remaining time (e.g. -3:36) */}
+          <div className="w-full mt-4">
+            <div className="relative flex items-center py-1 group">
               <input
                 type="range"
                 min={0}
@@ -328,28 +331,28 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
                   seek(parseFloat(e.target.value));
                   setIsScrubbing(false);
                 }}
-                className="w-full h-1.5 group-hover:h-2 bg-white/20 rounded-full appearance-none cursor-pointer accent-white transition-all"
+                className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-white transition-all"
                 style={{
                   background: `linear-gradient(to right, #ffffff ${progressPercent}%, rgba(255,255,255,0.2) ${progressPercent}%)`,
                 }}
               />
             </div>
-            <div className="flex justify-between text-xs font-semibold tabular-nums text-white/60">
+            <div className="flex justify-between text-[11px] font-medium tabular-nums text-[#B3B3B3] pt-1">
               <span>{formatTime(activeTime)}</span>
-              <span>{formatTime(duration)}</span>
+              <span>{formatRemainingTime(duration, activeTime)}</span>
             </div>
           </div>
 
-          {/* Controls: Shuffle, Prev, Play/Pause, Next, Repeat */}
-          <div className="flex items-center justify-between px-1 mt-2">
+          {/* Main Controls Row: Shuffle -> Prev -> Big White Circular Play/Pause -> Next -> Timer */}
+          <div className="flex items-center justify-between px-1 mt-4 mb-4">
             <button
               onClick={toggleShuffle}
-              className={`relative p-2.5 rounded-full transition-all active:scale-90 cursor-pointer ${
-                isShuffle ? 'text-[#1ED760]' : 'text-white/60 hover:text-white'
+              className={`relative p-2 transition-all active:scale-90 cursor-pointer ${
+                isShuffle ? 'text-[#1ED760]' : 'text-white/70 hover:text-white'
               }`}
               title={isShuffle ? 'Disable shuffle' : 'Enable shuffle'}
             >
-              <Shuffle className="w-5 h-5" />
+              <Shuffle className="w-5 h-5 stroke-[2]" />
               {isShuffle && (
                 <span className="w-1 h-1 rounded-full bg-[#1ED760] absolute bottom-1 left-1/2 -translate-x-1/2" />
               )}
@@ -357,98 +360,94 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
 
             <button
               onClick={prevTrack}
-              className="text-white/85 hover:text-white transition-all active:scale-90 cursor-pointer p-1"
+              className="text-white hover:text-white transition-all active:scale-90 cursor-pointer p-2"
               title="Previous"
             >
-              <SkipBack className="w-7 h-7 fill-current" />
+              <SkipBack className="w-7 h-7 fill-current stroke-0" />
             </button>
 
             <button
               onClick={togglePlay}
-              className="w-16 h-16 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center transition-all cursor-pointer shadow-2xl"
+              className="w-16 h-16 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center transition-all cursor-pointer shadow-xl"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isLoadingStream ? (
                 <div className="w-6 h-6 border-3 border-black border-t-transparent rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="w-7 h-7 fill-black" />
+                <Pause className="w-7 h-7 fill-black stroke-0" />
               ) : (
-                <Play className="w-7 h-7 fill-black ml-1" />
+                <Play className="w-7 h-7 fill-black stroke-0 ml-1" />
               )}
             </button>
 
             <button
               onClick={nextTrack}
-              className="text-white/85 hover:text-white transition-all active:scale-90 cursor-pointer p-1"
+              className="text-white hover:text-white transition-all active:scale-90 cursor-pointer p-2"
               title="Next"
             >
-              <SkipForward className="w-7 h-7 fill-current" />
+              <SkipForward className="w-7 h-7 fill-current stroke-0" />
             </button>
 
+            {/* Sleep Timer Icon (replacing repeat on main row matching Spotify icon) */}
             <button
-              onClick={toggleRepeat}
-              className={`relative p-2.5 rounded-full transition-all active:scale-90 cursor-pointer ${
-                repeatMode !== 'off' ? 'text-[#1ED760]' : 'text-white/60 hover:text-white'
+              onClick={() => setIsSleepTimerModalOpen(true)}
+              className={`relative p-2 transition-all active:scale-90 cursor-pointer ${
+                sleepTimerMode ? 'text-[#1ED760]' : 'text-white/70 hover:text-white'
               }`}
-              title={`Repeat: ${repeatMode}`}
+              title="Sleep Timer"
             >
-              {repeatMode === 'one' ? (
-                <Repeat1 className="w-5 h-5" />
-              ) : (
-                <Repeat className="w-5 h-5" />
-              )}
-              {repeatMode !== 'off' && (
+              <Moon className="w-5 h-5 stroke-[2]" />
+              {sleepTimerMode && (
                 <span className="w-1 h-1 rounded-full bg-[#1ED760] absolute bottom-1 left-1/2 -translate-x-1/2" />
               )}
             </button>
           </div>
+
+          {/* Auxiliary Row: Cast/Device on left, Share & Queue on right (Matching media_1789497665502.jpg) */}
+          <div className="flex items-center justify-between px-1 mb-4 text-[#B3B3B3]">
+            {/* Cast / Device icon */}
+            <button
+              onClick={() => setShowDetailsModal(true)}
+              className="hover:text-white transition-colors cursor-pointer p-1"
+              title="Devices / Details"
+            >
+              <Volume2 className="w-5 h-5 stroke-[2]" />
+            </button>
+
+            <div className="flex items-center gap-5">
+              <button
+                onClick={handleShare}
+                className="hover:text-white transition-colors cursor-pointer p-1"
+                title="Share track"
+              >
+                <Share2 className="w-5 h-5 stroke-[2]" />
+              </button>
+
+              <button
+                onClick={() => setIsQueueModalOpen(true)}
+                className="hover:text-white transition-colors cursor-pointer p-1"
+                title="Queue"
+              >
+                <ListMusic className="w-5 h-5 stroke-[2]" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* FIXED MOBILE BOTTOM FOOTER (Lyrics, Timer, Share, Queue)                  */}
-        {/* ========================================================================= */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-6 py-2.5 bg-gradient-to-t from-black via-black/95 to-transparent pb-[calc(14px+env(safe-area-inset-bottom,14px))] border-t border-white/[0.08] flex items-center justify-between">
-          {/* 1. Lyrics Button */}
-          <button
-            onClick={() => setIsLyricsDrawerOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full hover:bg-white/10 active:scale-95 text-white/80 hover:text-white transition-all text-xs font-bold cursor-pointer"
-          >
-            <Mic2 className="w-4 h-4 text-[#1ED760]" />
-            <span>Lyrics</span>
-          </button>
-
-          {/* 2. Sleep Timer Button (Moved from top to bottom) */}
-          <button
-            onClick={() => setIsSleepTimerModalOpen(true)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full active:scale-95 transition-all text-xs font-bold cursor-pointer ${
-              sleepTimerMode
-                ? 'bg-indigo-600/40 text-indigo-300 border border-indigo-400/40'
-                : 'hover:bg-white/10 text-white/80 hover:text-white'
-            }`}
-            title="Sleep Timer"
-          >
-            <Moon className={`w-4 h-4 ${sleepTimerMode ? 'fill-current text-indigo-400' : ''}`} />
-            <span>{sleepTimerMode ? formatTimerBadge() : 'Timer'}</span>
-          </button>
-
-          {/* 3. Share Button */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full hover:bg-white/10 active:scale-95 text-white/80 hover:text-white transition-all text-xs font-bold cursor-pointer"
-            title="Share track"
-          >
-            <Share2 className="w-4 h-4" />
-            <span>{isCopied ? 'Copied!' : 'Share'}</span>
-          </button>
-
-          {/* 4. Queue Button */}
-          <button
-            onClick={() => setIsQueueModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full hover:bg-white/10 active:scale-95 text-white/80 hover:text-white transition-all text-xs font-bold cursor-pointer"
-          >
-            <ListMusic className="w-4 h-4" />
-            <span>Queue</span>
-          </button>
+        {/* Bottom Lyrics Preview Card (Matching media_1789497665502.jpg) */}
+        <div
+          onClick={() => setIsLyricsDrawerOpen(true)}
+          className="w-full max-w-[340px] sm:max-w-sm mx-auto bg-[#4a4a4a]/50 hover:bg-[#5a5a5a]/60 backdrop-blur-md rounded-2xl p-4 pt-3 cursor-pointer transition-all border border-white/5 active:scale-[0.99] flex-shrink-0"
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <h4 className="text-sm font-bold text-white tracking-tight">Lyrics preview</h4>
+            <Mic2 className="w-4 h-4 text-white/60" />
+          </div>
+          <p className="text-sm font-semibold text-white/90 truncate">
+            {lyrics?.synced_lyrics?.[activeLyricIndex]?.text ||
+              lyrics?.plain_lyrics?.split('\n').filter(Boolean)[0] ||
+              'Tap to view lyrics & sing along'}
+          </p>
         </div>
       </div>
 

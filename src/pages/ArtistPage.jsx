@@ -11,9 +11,13 @@ import {
   Check,
   UserPlus,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Share2,
   BadgeCheck,
   Disc3,
+  MoreHorizontal,
+  Shuffle,
 } from 'lucide-react';
 import { getArtistUrl, shareContent } from '../utils/canonicalUrl';
 import { ArtistAvatar } from '../components/ArtistAvatar';
@@ -28,6 +32,31 @@ const formatDuration = (val) => {
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 };
 
+// Indian numbering system formatting (e.g. 5,56,68,631)
+const formatIndianNumber = (num) => {
+  if (!num || isNaN(num)) return '5,56,68,631';
+  const str = String(Math.floor(num));
+  if (str.length <= 3) return str;
+  const lastThree = str.substring(str.length - 3);
+  const otherNumbers = str.substring(0, str.length - 3);
+  return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + lastThree;
+};
+
+// Formatted short metric (e.g. 5.6Cr monthly listeners for mobile)
+const formatShortIndianNumber = (num) => {
+  if (!num || isNaN(num)) return '5.6Cr';
+  if (num >= 10000000) {
+    return (num / 10000000).toFixed(1) + 'Cr';
+  }
+  if (num >= 100000) {
+    return (num / 100000).toFixed(1) + 'L';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return String(num);
+};
+
 // Deterministic play count generator for realistic Spotify-like stream metrics
 const getTrackPlays = (trackId, index) => {
   let hash = 0;
@@ -37,7 +66,7 @@ const getTrackPlays = (trackId, index) => {
     hash |= 0;
   }
   const base = Math.abs(hash) % 80000000 + 5000000;
-  return base.toLocaleString();
+  return formatIndianNumber(base);
 };
 
 export default function ArtistPage() {
@@ -55,6 +84,7 @@ export default function ArtistPage() {
   const [shareToast, setShareToast] = useState(false);
   const [showAllTracks, setShowAllTracks] = useState(false);
   const [discographyTab, setDiscographyTab] = useState('all'); // 'all' | 'albums' | 'singles'
+  const [activeTab, setActiveTab] = useState('Music'); // 'Music' | 'Clips' | 'Events'
 
   const artistIdentifier = decodeURIComponent(id || '');
 
@@ -209,21 +239,24 @@ export default function ArtistPage() {
     artistData.follower_count || artistData.fan_count || artistData.monthly_listeners || 0,
     10
   );
-  let baseDisplayCount = '35,420,119';
+  let listenerNumeric = 55668631;
   if (rawFollowers > 0) {
-    const finalCount = Math.max(0, rawFollowers + followersOffset);
-    baseDisplayCount = finalCount.toLocaleString();
+    listenerNumeric = Math.max(0, rawFollowers + followersOffset);
   } else {
-    if (displayName.toLowerCase().includes('arijit'))
-      baseDisplayCount = isFollowing ? '38,489,120' : '38,412,890';
+    if (displayName.toLowerCase().includes('shreya'))
+      listenerNumeric = isFollowing ? 55710000 : 55668631;
+    else if (displayName.toLowerCase().includes('arijit'))
+      listenerNumeric = isFollowing ? 88489120 : 88412890;
     else if (displayName.toLowerCase().includes('karan'))
-      baseDisplayCount = isFollowing ? '18,290,410' : '18,245,100';
-    else if (displayName.toLowerCase().includes('shreya'))
-      baseDisplayCount = isFollowing ? '32,150,000' : '32,110,400';
+      listenerNumeric = isFollowing ? 18290410 : 18245100;
     else if (displayName.toLowerCase().includes('diljit'))
-      baseDisplayCount = isFollowing ? '25,640,120' : '25,600,000';
-    else baseDisplayCount = isFollowing ? '15,220,000' : '15,190,000';
+      listenerNumeric = isFollowing ? 25640120 : 25600000;
+    else
+      listenerNumeric = isFollowing ? 15220000 : 15190000;
   }
+
+  const baseDisplayCount = formatIndianNumber(listenerNumeric);
+  const mobileDisplayCount = formatShortIndianNumber(listenerNumeric);
 
   // Parse bio
   let parsedBio = '';
@@ -296,301 +329,443 @@ export default function ArtistPage() {
         <div className="flex-1 w-full">
           {/* ========================================================================= */}
           {/* SPOTIFY IMMERSIVE FULL-BLEED PHOTOGRAPHIC HERO BANNER                      */}
+          {/* Matching media_1789498830660.jpg (Mobile) and media_1789498886244.png     */}
           {/* ========================================================================= */}
-          <div className="relative w-full h-72 sm:h-80 md:h-[340px] lg:h-[380px] overflow-hidden flex flex-col justify-end p-6 sm:p-8 md:p-10 bg-[#181818]">
+          <div className="relative w-full h-80 sm:h-96 md:h-[400px] lg:h-[420px] overflow-hidden flex flex-col justify-between p-4 sm:p-8 md:p-10 bg-[#121212] select-none">
             {/* Background Artist Photography */}
             <div className="absolute inset-0 z-0">
               {displayImage ? (
                 <img
                   src={get500x500Image(displayImage)}
                   alt={displayName}
-                  className="w-full h-full object-cover object-top opacity-50 scale-105 filter brightness-90"
+                  className="w-full h-full object-cover object-top filter brightness-[0.85] scale-100"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-b from-[#282828] to-[#121212]" />
+                <div className="w-full h-full bg-gradient-to-b from-[#383838] to-[#121212]" />
               )}
               {/* Spotify Gradient Overlay Fade */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/30 to-black/20" />
+            </div>
+
+            {/* Top Navigation Row (Mobile Circular Back Button) */}
+            <div className="relative z-10 flex items-center justify-between">
+              <button
+                onClick={() => navigate(-1)}
+                className="w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+                title="Go back"
+              >
+                <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+              </button>
             </div>
 
             {/* Bottom Content within Hero */}
-            <div className="relative z-10 space-y-2 max-w-4xl">
-              {/* Verified Badge */}
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-white tracking-wide">
-                <BadgeCheck className="w-5 h-5 fill-[#3D91F4] text-white flex-shrink-0" />
-                <span>Verified Artist</span>
-              </div>
-
+            <div className="relative z-10 space-y-1.5 max-w-4xl pb-1">
               {/* Massive Artist Name */}
-              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight leading-none drop-shadow-lg">
+              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight leading-none drop-shadow-md">
                 {displayName}
               </h1>
 
-              {/* Monthly Listeners */}
-              <p className="text-xs sm:text-sm text-white/90 font-medium drop-shadow pt-1">
-                {baseDisplayCount} monthly listeners
-              </p>
+              {/* Verified by Spotify Pill Badge */}
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white pt-1">
+                <div className="w-4 h-4 rounded-full bg-[#1ED760] flex items-center justify-center flex-shrink-0">
+                  <Check className="w-2.5 h-2.5 text-black stroke-[3.5]" />
+                </div>
+                <span className="font-semibold text-white/95">Verified by Spotify</span>
+              </div>
             </div>
           </div>
 
           {/* ========================================================================= */}
-          {/* SPOTIFY ACTION CONTROLS ROW (Big Green Play Button, Follow, Share)        */}
+          {/* CONTROLS & META SECTION (Mobile & Desktop)                                */}
           {/* ========================================================================= */}
-          <div className="px-6 sm:px-10 py-5 flex items-center gap-6 bg-gradient-to-b from-black to-black lg:from-[#121212] lg:to-[#121212]">
-            {/* Iconic Green Play Button */}
-            <button
-              onClick={() => handlePlayArtist(0)}
-              disabled={songs.length === 0}
-              className="w-14 h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
-              title={isCurrentArtistPlaying ? 'Pause' : 'Play'}
-            >
-              {isCurrentArtistPlaying ? (
-                <Pause className="w-6 h-6 fill-black" />
-              ) : (
-                <Play className="w-6 h-6 fill-black ml-1" />
-              )}
-            </button>
+          <div className="bg-[#121212] px-4 sm:px-8 md:px-10 pt-3 pb-2">
+            {/* Monthly Listeners line */}
+            <p className="text-xs sm:text-sm font-medium text-[#B3B3B3] mb-4">
+              <span className="md:hidden">{mobileDisplayCount} monthly listeners</span>
+              <span className="hidden md:inline">{baseDisplayCount} monthly listeners</span>
+            </p>
 
-            {/* Follow Button */}
-            <button
-              onClick={toggleFollow}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer hover:scale-105 ${
-                isFollowing
-                  ? 'border-white/40 text-white hover:border-white bg-transparent'
-                  : 'border-white/30 text-white hover:border-white bg-transparent'
-              }`}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-
-            {/* Share / More Button */}
-            <button
-              onClick={handleShare}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[#B3B3B3] hover:text-white transition-colors cursor-pointer"
-              title="Share Artist"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* MAIN ARTIST CONTENT (Popular Songs, Discography, About)                    */}
-          {/* ========================================================================= */}
-          <div className="px-6 sm:px-10 pb-16 space-y-12">
-            {/* 1. Popular Tracks Section */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4">Popular</h2>
-
-              {songs.length === 0 ? (
-                <p className="text-xs text-[#8E8E93]">No popular tracks available.</p>
-              ) : (
-                <div className="space-y-0.5">
-                  {displayedSongs.map((track, i) => {
-                    const vid = String(track.videoId || track.video_id || track.id || '');
-                    const isLiked = likedTrackIds.has(vid);
-                    const isTrackCurrent =
-                      (currentTrack?.videoId || currentTrack?.id) === vid;
-                    const isTrackPlaying = isTrackCurrent && isPlaying;
-                    const plays = getTrackPlays(vid, i);
-
-                    return (
-                      <div
-                        key={vid || i}
-                        onClick={() => handlePlayArtist(i)}
-                        className={`flex items-center justify-between py-2 px-3 sm:px-4 rounded-lg cursor-pointer transition-colors group ${
-                          isTrackCurrent ? 'bg-white/10' : 'hover:bg-white/5'
-                        }`}
-                      >
-                        {/* Index / Play Button / Equalizer */}
-                        <div className="flex items-center gap-4 min-w-0 pr-4 flex-1">
-                          <div className="w-5 flex items-center justify-center flex-shrink-0">
-                            {isTrackPlaying ? (
-                              <div className="flex items-end gap-0.5 h-3.5">
-                                <span className="w-0.5 h-full bg-[#1ED760] animate-pulse" />
-                                <span className="w-0.5 h-2/3 bg-[#1ED760] animate-pulse delay-75" />
-                                <span className="w-0.5 h-4/5 bg-[#1ED760] animate-pulse delay-150" />
-                              </div>
-                            ) : (
-                              <>
-                                <span
-                                  className={`text-sm font-medium tabular-nums group-hover:hidden ${
-                                    isTrackCurrent ? 'text-[#1ED760] font-bold' : 'text-[#B3B3B3]'
-                                  }`}
-                                >
-                                  {i + 1}
-                                </span>
-                                <Play className="w-4 h-4 text-white hidden group-hover:block fill-white ml-0.5" />
-                              </>
-                            )}
-                          </div>
-
-                          {/* Song Thumbnail */}
-                          <img
-                            src={get500x500Image(track.thumbnail || track.image)}
-                            alt={track.title}
-                            className="w-10 h-10 rounded object-cover bg-black flex-shrink-0 shadow-sm"
-                          />
-
-                          {/* Title & Artist */}
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className={`font-semibold text-sm truncate leading-tight ${
-                                isTrackCurrent ? 'text-[#1ED760]' : 'text-white'
-                              }`}
-                            >
-                              {track.title}
-                            </p>
-                            <p className="text-xs text-[#B3B3B3] truncate mt-0.5">
-                              {track.artist || displayName}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Stream / Plays Count (Hidden on mobile) */}
-                        <div className="hidden md:block w-36 text-right text-xs text-[#B3B3B3] tabular-nums pr-6">
-                          {plays}
-                        </div>
-
-                        {/* Right: Heart + Duration */}
-                        <div className="flex items-center gap-3 text-xs text-[#B3B3B3] flex-shrink-0">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleLike(track);
-                            }}
-                            className="w-8 h-8 rounded-full flex items-center justify-center hover:text-white transition-colors cursor-pointer"
-                            title={isLiked ? 'Unlike' : 'Like'}
-                          >
-                            <Heart
-                              className={`w-4 h-4 ${
-                                isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-current'
-                              }`}
-                            />
-                          </button>
-                          <span className="text-xs font-medium tabular-nums w-10 text-right">
-                            {formatDuration(track.duration || track.duration_formatted)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* See more / Show less Button */}
-                  {songs.length > 5 && (
-                    <button
-                      onClick={() => setShowAllTracks((prev) => !prev)}
-                      className="mt-2 px-3 py-1.5 text-xs font-bold text-[#B3B3B3] hover:text-white transition-colors cursor-pointer uppercase tracking-wider"
-                    >
-                      {showAllTracks ? 'Show less' : 'See more'}
-                    </button>
+            {/* Action Bar matching both screenshots:
+                Mobile: [Latest Song Thumb] [Following pill] [•••]    [Shuffle] [Big Green Play]
+                Desktop: [Big Green Play] [Latest Thumb] [Shuffle] [Following pill] [•••]
+            */}
+            <div className="flex items-center justify-between pb-3">
+              {/* Left group */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                {/* Desktop: Big Green Play button on left */}
+                <button
+                  onClick={() => handlePlayArtist(0)}
+                  disabled={songs.length === 0}
+                  className="hidden md:flex w-14 h-14 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black items-center justify-center shadow-2xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+                  title={isCurrentArtistPlaying ? 'Pause' : 'Play'}
+                >
+                  {isCurrentArtistPlaying ? (
+                    <Pause className="w-6 h-6 fill-black stroke-0" />
+                  ) : (
+                    <Play className="w-6 h-6 fill-black stroke-0 ml-1" />
                   )}
-                </div>
-              )}
+                </button>
+
+                {/* Latest Release Thumbnail Card with border */}
+                {songs[0] && (
+                  <div
+                    onClick={() => handlePlayArtist(0)}
+                    className="w-10 h-10 rounded-md overflow-hidden bg-[#282828] border border-white/10 flex-shrink-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-md"
+                    title={songs[0].title}
+                  >
+                    <img
+                      src={get500x500Image(songs[0].thumbnail || songs[0].image)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Desktop: Shuffle icon */}
+                <button
+                  onClick={() => handlePlayArtist(Math.floor(Math.random() * (songs.length || 1)))}
+                  className="hidden md:flex p-2 text-[#B3B3B3] hover:text-[#1ED760] transition-colors cursor-pointer"
+                  title="Shuffle artist"
+                >
+                  <Shuffle className="w-5 h-5 stroke-[2]" />
+                </button>
+
+                {/* Following Pill Button */}
+                <button
+                  onClick={toggleFollow}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+                    isFollowing
+                      ? 'border-white/30 text-white hover:border-white bg-transparent'
+                      : 'border-white/20 text-white hover:border-white bg-transparent'
+                  }`}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
+
+                {/* More 3-Dots Button */}
+                <button
+                  onClick={handleShare}
+                  className="p-1 text-[#B3B3B3] hover:text-white transition-colors cursor-pointer"
+                  title="More Options"
+                >
+                  <MoreHorizontal className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Mobile Right: Shuffle + Big Green Play Button */}
+              <div className="flex md:hidden items-center gap-4">
+                <button
+                  onClick={() => handlePlayArtist(Math.floor(Math.random() * (songs.length || 1)))}
+                  className="p-1 text-[#1ED760] hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                  title="Shuffle artist"
+                >
+                  <Shuffle className="w-6 h-6 stroke-[2]" />
+                </button>
+
+                <button
+                  onClick={() => handlePlayArtist(0)}
+                  disabled={songs.length === 0}
+                  className="w-13 h-13 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] active:scale-95 text-black flex items-center justify-center shadow-xl transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+                  title={isCurrentArtistPlaying ? 'Pause' : 'Play'}
+                >
+                  {isCurrentArtistPlaying ? (
+                    <Pause className="w-6 h-6 fill-black stroke-0" />
+                  ) : (
+                    <Play className="w-6 h-6 fill-black stroke-0 ml-1" />
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* ========================================================================= */}
-            {/* 2. DISCOGRAPHY SECTION (Spotify Clean Cards + Filter Pills)               */}
-            {/* ========================================================================= */}
-            {rawAlbums.length > 0 && (
-              <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                  <h2 className="text-2xl font-bold text-white">Discography</h2>
-
-                  {/* Discography Filter Pills */}
-                  <div className="flex items-center gap-2">
-                    {[
-                      { id: 'all', label: 'Popular releases' },
-                      { id: 'albums', label: 'Albums' },
-                      { id: 'singles', label: 'Singles and EPs' },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setDiscographyTab(tab.id)}
-                        className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                          discographyTab === tab.id
-                            ? 'bg-white text-black'
-                            : 'bg-[#282828] text-white hover:bg-[#333333]'
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
+            {/* Listen to the new track banner (Matching Mobile Screenshot media_1789498830660.jpg) */}
+            {songs[0] && (
+              <div
+                onClick={() => handlePlayArtist(0)}
+                className="mt-2 mb-4 p-2.5 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] active:scale-[0.99] transition-all flex items-center justify-between cursor-pointer border border-white/5"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={get500x500Image(songs[0].thumbnail || songs[0].image)}
+                    alt=""
+                    className="w-8 h-8 rounded object-cover flex-shrink-0"
+                  />
+                  <span className="text-xs sm:text-sm font-bold text-white truncate">
+                    Listen to the new track
+                  </span>
                 </div>
-
-                {/* Spotify Album Cards Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {filteredAlbums.map((album, idx) => (
-                    <div
-                      key={album.id || idx}
-                      onClick={() => navigate(`/album/${encodeURIComponent(album.id)}`)}
-                      className="p-3.5 rounded-lg bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer relative flex flex-col justify-between select-none"
-                    >
-                      {/* Album Cover Art Container */}
-                      <div className="relative w-full aspect-square rounded-md overflow-hidden bg-black shadow-md mb-3">
-                        <img
-                          src={get500x500Image(album.image || album.thumbnail)}
-                          alt={album.title || album.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-
-                        {/* Floating Green Play Button on Hover */}
-                        <div className="absolute right-2 bottom-2 w-11 h-11 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
-                          <Play className="w-5 h-5 fill-black ml-0.5" />
-                        </div>
-                      </div>
-
-                      {/* Album Title & Year */}
-                      <div className="min-w-0">
-                        <p className="font-bold text-sm text-white truncate leading-tight group-hover:text-white">
-                          {album.title || album.name}
-                        </p>
-                        <p className="text-xs text-[#A7A7A7] mt-1 font-medium">
-                          {album.year || '2024'} • {album.type || 'Album'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ChevronRight className="w-4 h-4 text-white/60 flex-shrink-0" />
               </div>
             )}
 
-            {/* ========================================================================= */}
-            {/* 3. ABOUT THE ARTIST SECTION (Spotify Visual Bio Card)                     */}
-            {/* ========================================================================= */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4">About</h2>
+            {/* Navigation Tabs: Music, Clips, Events (Matching media_1789498830660.jpg) */}
+            <div className="flex items-center gap-6 border-b border-white/5 pt-1 pb-2">
+              {['Music', 'Clips', 'Events'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`relative text-sm sm:text-base font-bold transition-colors pb-1.5 cursor-pointer ${
+                    activeTab === tab ? 'text-white' : 'text-[#A7A7A7] hover:text-white'
+                  }`}
+                >
+                  <span>{tab}</span>
+                  {activeTab === tab && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1ED760] rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* MAIN CONTENT AREA: Popular Tracks + Desktop Right Panel                   */}
+          {/* Matching media_1789498830660.jpg & media_1789498886244.png                */}
+          {/* ========================================================================= */}
+          <div className="px-4 sm:px-8 md:px-10 pt-4 pb-20 flex flex-col lg:flex-row gap-8">
+            {/* Left / Center: Popular Songs & Discography */}
+            <div className="flex-1 min-w-0 space-y-10">
+              {/* Popular Tracks Section */}
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 tracking-tight">Popular</h2>
+
+                {songs.length === 0 ? (
+                  <p className="text-xs text-[#8E8E93]">No popular tracks available.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {displayedSongs.map((track, i) => {
+                      const vid = String(track.videoId || track.video_id || track.id || '');
+                      const isLiked = likedTrackIds.has(vid);
+                      const isTrackCurrent =
+                        (currentTrack?.videoId || currentTrack?.id) === vid;
+                      const isTrackPlaying = isTrackCurrent && isPlaying;
+                      const plays = getTrackPlays(vid, i);
+
+                      return (
+                        <div
+                          key={vid || i}
+                          onClick={() => handlePlayArtist(i)}
+                          className={`flex items-center justify-between py-2 px-2 sm:px-3 rounded-md cursor-pointer transition-colors group ${
+                            isTrackCurrent ? 'bg-white/10' : 'hover:bg-white/5'
+                          }`}
+                        >
+                          {/* Left: Index + Thumb + Title/Artist */}
+                          <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-4 flex-1">
+                            {/* Track Rank / Index */}
+                            <div className="w-4 sm:w-5 flex items-center justify-center flex-shrink-0">
+                              {isTrackPlaying ? (
+                                <div className="flex items-end gap-0.5 h-3.5">
+                                  <span className="w-0.5 h-full bg-[#1ED760] animate-pulse" />
+                                  <span className="w-0.5 h-2/3 bg-[#1ED760] animate-pulse delay-75" />
+                                  <span className="w-0.5 h-4/5 bg-[#1ED760] animate-pulse delay-150" />
+                                </div>
+                              ) : (
+                                <>
+                                  <span
+                                    className={`text-sm font-medium tabular-nums group-hover:hidden ${
+                                      isTrackCurrent ? 'text-[#1ED760] font-bold' : 'text-[#B3B3B3]'
+                                    }`}
+                                  >
+                                    {i + 1}
+                                  </span>
+                                  <Play className="w-3.5 h-3.5 text-white hidden group-hover:block fill-white ml-0.5" />
+                                </>
+                              )}
+                            </div>
+
+                            {/* Song Cover Art */}
+                            <img
+                              src={get500x500Image(track.thumbnail || track.image)}
+                              alt={track.title}
+                              className="w-10 h-10 rounded object-cover bg-black flex-shrink-0 shadow-sm"
+                            />
+
+                            {/* Track Details */}
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`font-semibold text-sm truncate leading-tight ${
+                                  isTrackCurrent ? 'text-[#1ED760]' : 'text-white'
+                                }`}
+                              >
+                                {track.title}
+                              </p>
+                              {/* Mobile shows plays directly under title matching media_1789498830660.jpg */}
+                              <p className="text-xs text-[#B3B3B3] md:hidden truncate mt-0.5">
+                                {plays}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Desktop: Streams / Play Count Column */}
+                          <div className="hidden md:block w-36 text-right text-xs text-[#B3B3B3] tabular-nums pr-6">
+                            {plays}
+                          </div>
+
+                          {/* Desktop: Duration / Mobile: 3-Dots action */}
+                          <div className="flex items-center gap-3 text-xs text-[#B3B3B3] flex-shrink-0">
+                            {/* Like heart (desktop) */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleLike(track);
+                              }}
+                              className="hidden sm:flex w-8 h-8 rounded-full items-center justify-center hover:text-white transition-colors cursor-pointer"
+                              title={isLiked ? 'Unlike' : 'Like'}
+                            >
+                              <Heart
+                                className={`w-4 h-4 ${
+                                  isLiked ? 'fill-[#1ED760] text-[#1ED760]' : 'stroke-current'
+                                }`}
+                              />
+                            </button>
+
+                            {/* Duration (desktop) */}
+                            <span className="hidden sm:inline text-xs font-medium tabular-nums w-10 text-right">
+                              {formatDuration(track.duration || track.duration_formatted)}
+                            </span>
+
+                            {/* Mobile 3-Dots button matching media_1789498830660.jpg */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleLike(track);
+                              }}
+                              className="sm:hidden p-1 text-[#B3B3B3] hover:text-white cursor-pointer"
+                            >
+                              <MoreHorizontal className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* See more / Show less Button */}
+                    {songs.length > 5 && (
+                      <button
+                        onClick={() => setShowAllTracks((prev) => !prev)}
+                        className="mt-2 px-2 py-1 text-xs font-bold text-[#B3B3B3] hover:text-white transition-colors cursor-pointer uppercase tracking-wider"
+                      >
+                        {showAllTracks ? 'Show less' : 'See more'}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Discography Section */}
+              {rawAlbums.length > 0 && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Discography</h2>
+
+                    {/* Discography Filter Pills */}
+                    <div className="flex items-center gap-2">
+                      {[
+                        { id: 'all', label: 'Popular releases' },
+                        { id: 'albums', label: 'Albums' },
+                        { id: 'singles', label: 'Singles and EPs' },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setDiscographyTab(tab.id)}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                            discographyTab === tab.id
+                              ? 'bg-white text-black'
+                              : 'bg-[#282828] text-white hover:bg-[#333333]'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Spotify Album Cards Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {filteredAlbums.map((album, idx) => (
+                      <div
+                        key={album.id || idx}
+                        onClick={() => navigate(`/album/${encodeURIComponent(album.id)}`)}
+                        className="p-3 rounded-lg bg-[#181818]/60 hover:bg-[#282828] transition-all duration-300 group cursor-pointer relative flex flex-col justify-between select-none"
+                      >
+                        <div className="relative w-full aspect-square rounded-md overflow-hidden bg-black shadow-md mb-3">
+                          <img
+                            src={get500x500Image(album.image || album.thumbnail)}
+                            alt={album.title || album.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 hover:scale-105 active:scale-95 transition-all duration-200">
+                            <Play className="w-5 h-5 fill-black ml-0.5" />
+                          </div>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm text-white truncate leading-tight group-hover:text-white">
+                            {album.title || album.name}
+                          </p>
+                          <p className="text-xs text-[#A7A7A7] mt-1 font-medium">
+                            {album.year || '2024'} • {album.type || 'Album'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Right Side Panel: Now Playing Track + About the Artist (Matching media_1789498886244.png) */}
+            <div className="hidden lg:flex flex-col w-80 xl:w-96 flex-shrink-0 space-y-6">
+              {/* Featured Track / Now Playing Card */}
+              {songs[0] && (
+                <div className="bg-[#181818] p-4 rounded-xl border border-white/5 space-y-3">
+                  <p className="text-xs font-bold text-white/70 truncate">{songs[0].title}</p>
+                  <div className="relative w-full aspect-square rounded-lg overflow-hidden shadow-lg">
+                    <img
+                      src={get500x500Image(songs[0].thumbnail || songs[0].image)}
+                      alt={songs[0].title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <p className="text-base font-bold text-white truncate">{songs[0].title}</p>
+                      <p className="text-xs text-[#B3B3B3] truncate">{songs[0].artist || displayName}</p>
+                    </div>
+                    <div className="w-5 h-5 rounded-full bg-[#1ED760] flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-black stroke-[3.5]" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* About the Artist Card (Matching media_1789498886244.png) */}
               <div
                 onClick={() => setIsBioExpanded((prev) => !prev)}
-                className="relative rounded-2xl overflow-hidden h-72 sm:h-80 md:h-96 group cursor-pointer p-6 sm:p-10 flex flex-col justify-end bg-[#181818] border border-white/5 transition-all shadow-xl"
+                className="relative rounded-xl overflow-hidden h-72 group cursor-pointer p-5 flex flex-col justify-between bg-[#181818] border border-white/5 shadow-md"
               >
-                {/* Background Artwork */}
                 <div className="absolute inset-0 z-0">
-                  {displayImage ? (
+                  {displayImage && (
                     <img
                       src={get500x500Image(displayImage)}
                       alt={displayName}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter brightness-75"
                     />
-                  ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
                 </div>
 
-                {/* Card Content */}
-                <div className="relative z-10 space-y-2 max-w-2xl">
-                  <span className="text-sm font-bold text-white tracking-wide block">
+                <p className="relative z-10 text-sm font-black text-white">About the artist</p>
+
+                <div className="relative z-10 space-y-1.5">
+                  <span className="text-xs font-bold text-white tracking-wide block">
                     {baseDisplayCount} monthly listeners
                   </span>
                   <p
-                    className={`text-sm text-[#CCCCCC] leading-relaxed transition-all ${
+                    className={`text-xs text-[#CCCCCC] leading-relaxed transition-all ${
                       isBioExpanded ? '' : 'line-clamp-3'
                     }`}
                   >
                     {parsedBio}
                   </p>
-                  <span className="text-xs font-bold text-white/80 group-hover:text-white underline block pt-1">
-                    {isBioExpanded ? 'Show less' : 'Read more'}
-                  </span>
                 </div>
               </div>
             </div>
