@@ -212,8 +212,8 @@ export default function BlendPage() {
   if (!isDetailMode || !blend) {
     return (
       <div className="w-full min-h-full bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        {/* Header — hidden on mobile (AppShell already displays "Blend" in the top bar) */}
+        <div className="hidden lg:flex items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -230,16 +230,30 @@ export default function BlendPage() {
 
           <button
             onClick={handleOpenInviteModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-lg flex-shrink-0 self-start sm:self-auto"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-lg flex-shrink-0"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Create Blend</span>
           </button>
         </div>
 
+        {/* Mobile top action bar when active blends exist */}
+        {allBlends.length > 0 && (
+          <div className="flex lg:hidden items-center justify-between gap-3 mb-4">
+            <span className="text-xs text-[#8E8E93] font-medium">Your Shared Blends</span>
+            <button
+              onClick={handleOpenInviteModal}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-gray-200 active:scale-95 transition-all cursor-pointer shadow-md"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Create</span>
+            </button>
+          </div>
+        )}
+
         {/* Content: Empty State or Active Blends Grid */}
         {allBlends.length === 0 ? (
-          <div className="space-y-8 sm:space-y-10">
+          <div>
             {/* Full-Width Gradient Hero Card */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900/40 via-[#18181B] to-purple-950/40 border border-white/10 p-6 sm:p-10 shadow-2xl">
               {/* Radial glow textures */}
@@ -249,11 +263,6 @@ export default function BlendPage() {
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 {/* Left: Value Proposition */}
                 <div className="lg:col-span-7 space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Personalized Sound Blend</span>
-                  </div>
-
                   <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
                     Music sounds better <br className="hidden sm:block" />
                     <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
@@ -305,8 +314,8 @@ export default function BlendPage() {
                       </div>
 
                       <div className="flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-xl ring-4 ring-purple-500/40">
-                          🎧
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-xl ring-4 ring-purple-500/40">
+                          <Users className="w-5 h-5 text-white" />
                         </div>
                         <span className="text-[10px] font-bold text-white mt-1.5 max-w-[70px] truncate">
                           Friend
@@ -324,59 +333,15 @@ export default function BlendPage() {
                     </div>
 
                     {/* Tags */}
-                    <div className="flex items-center justify-center gap-1.5 mt-3.5 flex-wrap">
-                      <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[#B3B3B3]">
-                        🔥 Shared Favorites
+                    <div className="flex items-center justify-center gap-2 mt-3.5 flex-wrap">
+                      <span className="text-[10px] font-medium bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-[#B3B3B3]">
+                        Shared Favorites
                       </span>
-                      <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[#B3B3B3]">
-                        ✨ New Discoveries
+                      <span className="text-[10px] font-medium bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-[#B3B3B3]">
+                        New Discoveries
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* "How Blend Works" Feature Cards Grid */}
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-4">
-                How Blend Works
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                <div className="bg-[#18181B]/80 hover:bg-[#1F1F23] border border-white/5 rounded-2xl p-5 sm:p-6 transition-colors shadow-md">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3.5">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1">
-                    1. Invite a friend
-                  </h4>
-                  <p className="text-xs text-[#8E8E93] leading-relaxed">
-                    Create a unique invite link and share it on WhatsApp, Telegram, Instagram, or anywhere.
-                  </p>
-                </div>
-
-                <div className="bg-[#18181B]/80 hover:bg-[#1F1F23] border border-white/5 rounded-2xl p-5 sm:p-6 transition-colors shadow-md">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-3.5">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1">
-                    2. Blend your tastes
-                  </h4>
-                  <p className="text-xs text-[#8E8E93] leading-relaxed">
-                    Our smart algorithm merges top genres, favorite artists, and recent discoveries with a match score.
-                  </p>
-                </div>
-
-                <div className="bg-[#18181B]/80 hover:bg-[#1F1F23] border border-white/5 rounded-2xl p-5 sm:p-6 transition-colors shadow-md">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3.5">
-                    <RefreshCw className="w-5 h-5" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1">
-                    3. Fresh every day
-                  </h4>
-                  <p className="text-xs text-[#8E8E93] leading-relaxed">
-                    Your Blend playlist refreshes automatically every morning based on what you both listen to.
-                  </p>
                 </div>
               </div>
             </div>
