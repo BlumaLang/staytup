@@ -122,7 +122,7 @@ export default function AlbumPage() {
   };
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
 
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center text-[#8E8E93]">

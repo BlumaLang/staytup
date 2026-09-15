@@ -98,7 +98,7 @@ export default function UserProfilePage() {
   const isMe = currentUser?.id === id;
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
       {/* Toast */}
       {copiedToast && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-[#22C55E] text-black font-bold text-xs px-4 py-2 rounded-full shadow-2xl flex items-center gap-2">

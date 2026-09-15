@@ -326,7 +326,7 @@ export default function LibraryPage() {
   };
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
       {/* Header & Tabs */}
       <div className="sticky top-0 z-20 px-4 sm:px-8 py-2.5 sm:pt-5 sm:pb-3 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">

@@ -155,7 +155,7 @@ export default function BlendPage() {
     const inviter = blend?.members?.[0] || { name: 'A friend', username: 'listener' };
 
     return (
-      <div className="w-full min-h-full bg-[#121212] text-white px-4 py-12 flex flex-col items-center justify-center select-none">
+      <div className="w-full min-h-full bg-black lg:bg-[#121212] text-white px-4 py-12 flex flex-col items-center justify-center select-none">
         <div className="w-full max-w-sm bg-[#141417] border border-white/10 rounded-3xl p-6 text-center shadow-2xl flex flex-col items-center">
           {/* Member Avatars Side by Side */}
           <div className="flex items-center justify-center gap-3 my-4">
@@ -211,7 +211,7 @@ export default function BlendPage() {
   // ==========================================
   if (!isDetailMode || !blend) {
     return (
-      <div className="w-full min-h-full bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
+      <div className="w-full min-h-full bg-black lg:bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
         {/* Header — hidden on mobile (AppShell already displays "Blend" in the top bar) */}
         <div className="hidden lg:flex items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
@@ -491,7 +491,7 @@ export default function BlendPage() {
   };
 
   return (
-    <div className="w-full min-h-full bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
+    <div className="w-full min-h-full bg-black lg:bg-[#121212] text-white px-4 sm:px-8 py-6 select-none">
       {/* Top Back Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button

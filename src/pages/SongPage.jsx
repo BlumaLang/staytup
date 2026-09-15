@@ -146,7 +146,7 @@ export default function SongPage() {
   // 1. Loading State (Polished Skeleton)
   if (isLoading) {
     return (
-      <div className="w-full min-h-full flex flex-col text-white select-none px-4 sm:px-8 py-6 space-y-8">
+      <div className="w-full min-h-full flex flex-col text-white select-none px-4 sm:px-8 py-6 space-y-8 bg-black lg:bg-transparent">
         <div className="w-24 h-8 bg-white/10 rounded-full animate-pulse" />
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 pb-8 border-b border-white/5">
           <div className="w-48 h-48 sm:w-60 sm:h-60 rounded-3xl bg-white/10 animate-pulse flex-shrink-0" />
@@ -196,7 +196,7 @@ export default function SongPage() {
   const artwork = get500x500Image(track.image || track.thumbnail || track.artwork_url);
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
 
       {/* Hero Section with Immersive Artwork Backdrop */}
       <div className="relative w-full overflow-hidden px-4 sm:px-8 py-8 sm:py-12 bg-gradient-to-b from-[#1E1E26] via-[#121216] to-black border-b border-white/5">

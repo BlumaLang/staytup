@@ -285,7 +285,7 @@ export default function ArtistPage() {
   const displayedSongs = showAllTracks ? songs.slice(0, 30) : songs.slice(0, 5);
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-[#121212]">
 
       {isLoading ? (
         <div className="py-32 flex flex-col items-center justify-center text-[#8E8E93]">
@@ -336,7 +336,7 @@ export default function ArtistPage() {
           {/* ========================================================================= */}
           {/* SPOTIFY ACTION CONTROLS ROW (Big Green Play Button, Follow, Share)        */}
           {/* ========================================================================= */}
-          <div className="px-6 sm:px-10 py-5 flex items-center gap-6 bg-gradient-to-b from-[#121212] to-[#121212]">
+          <div className="px-6 sm:px-10 py-5 flex items-center gap-6 bg-gradient-to-b from-black to-black lg:from-[#121212] lg:to-[#121212]">
             {/* Iconic Green Play Button */}
             <button
               onClick={() => handlePlayArtist(0)}

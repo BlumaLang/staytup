@@ -143,7 +143,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-[#121212]">
       {/* Main Content View (Full Width) */}
       <div className="flex-1 px-3 sm:px-8 py-4 sm:py-6 w-full space-y-7 sm:space-y-10">
         {/* ========================================================================= */}

@@ -301,7 +301,7 @@ export const AppShell = () => {
 
         {/* Routed Page Content Area (Center Pane) */}
         <main
-          className={`flex-1 w-full h-full relative overflow-y-auto lg:rounded-xl lg:bg-[#121212] lg:border lg:border-white/[0.06] shadow-2xl min-w-0 ${
+          className={`flex-1 w-full h-full relative overflow-y-auto bg-black lg:rounded-xl lg:bg-[#121212] lg:border lg:border-white/[0.06] shadow-2xl min-w-0 ${
             hasTrack ? 'pb-32 sm:pb-36 lg:pb-6 no-scrollbar' : 'pb-20 lg:pb-6 no-scrollbar'
           }`}
         >

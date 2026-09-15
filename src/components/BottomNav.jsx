@@ -10,7 +10,7 @@ export const BottomNav = ({ activeView, setActiveView }) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#121214] border-t border-white/[0.08] px-4 select-none flex items-center justify-center lg:hidden h-[calc(56px+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-md border-t border-white/10 px-4 select-none flex items-center justify-center lg:hidden h-[calc(56px+env(safe-area-inset-bottom,0px))] pb-[env(safe-area-inset-bottom,0px)]">
       <div className="w-full max-w-md flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;

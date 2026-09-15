@@ -107,7 +107,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
       {/* Header — desktop only; mobile already shows "Settings" in AppShell top bar */}
       <div className="hidden lg:flex sticky top-0 z-20 px-4 sm:px-6 py-4 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E] items-center gap-3">
         <button

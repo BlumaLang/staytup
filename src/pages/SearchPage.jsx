@@ -405,7 +405,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
       {/* Mobile-Only Spotify Sticky Search Header (< 1024px) */}
       <div className="lg:hidden sticky top-0 z-30 bg-black/95 backdrop-blur-xl px-4 pt-3 pb-2.5 border-b border-white/5">
         {/* Top Header Row: "Search" Title + Blend and Profile buttons (Matching media_1789481603346.png) */}

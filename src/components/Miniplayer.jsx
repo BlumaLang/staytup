@@ -116,7 +116,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
       {/* ========================================================================= */}
       <div
         onClick={onExpand}
-        className="lg:hidden fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-50 bg-[#121214] border-t border-white/[0.08] cursor-pointer select-none shadow-xl"
+        className="lg:hidden fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10 cursor-pointer select-none shadow-xl"
       >
         <div className="flex items-center justify-between px-3.5 pt-2 pb-2 gap-3 max-w-md mx-auto">
           {/* Left: Artwork + Title & Artist */}

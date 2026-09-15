@@ -188,7 +188,7 @@ export default function ProfilePage() {
     : null;
 
   return (
-    <div className="w-full min-h-full flex flex-col text-white select-none">
+    <div className="w-full min-h-full flex flex-col text-white select-none bg-black lg:bg-transparent">
       {/* Hero Header */}
       <div className="relative px-4 sm:px-8 pt-8 pb-6 bg-gradient-to-b from-[#1a1a1f] to-black border-b border-[#1C1C1E]">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center sm:items-end gap-5">
