@@ -83,22 +83,22 @@ export const AppShell = () => {
   const videoId = String(currentTrack?.videoId || currentTrack?.video_id || currentTrack?.id || '');
   const isLiked = likedTrackIds.has(videoId);
 
+  const hideMobileHeader =
+    location.pathname.startsWith('/search') ||
+    location.pathname.startsWith('/playlist') ||
+    location.pathname.startsWith('/album') ||
+    location.pathname.startsWith('/artist') ||
+    location.pathname.startsWith('/song') ||
+    location.pathname.startsWith('/track') ||
+    location.pathname.startsWith('/user') ||
+    location.pathname.startsWith('/settings') ||
+    location.pathname.includes('/invite');
+
   return (
     <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex flex-col font-sans select-none">
-      {/* Mobile Top Header (< 1024px) — Clean Header with Profile Button */}
-      <header className="flex lg:hidden items-center justify-between px-4 py-2.5 bg-black border-b border-white/5 z-40 flex-shrink-0 select-none">
-        {location.pathname.startsWith('/settings') ? (
-          /* Settings: back button + title */
-          <div className="flex items-center gap-2 select-none">
-            <button
-              onClick={() => navigate('/profile')}
-              className="w-8 h-8 rounded-full bg-[#121214] border border-[#222226] flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer flex-shrink-0"
-            >
-              <ChevronLeft className="w-4.5 h-4.5 stroke-[2.5]" />
-            </button>
-            <span className="font-black text-xl tracking-tight text-white">Settings</span>
-          </div>
-        ) : (
+      {/* Mobile Top Header (< 1024px) — Only shown on root views that do not have their own header */}
+      {!hideMobileHeader && (
+        <header className="flex lg:hidden items-center justify-between px-4 py-2.5 bg-black border-b border-white/5 z-40 flex-shrink-0 select-none">
           <div
             className="flex items-center cursor-pointer select-none"
             onClick={() => navigate('/')}
@@ -106,8 +106,6 @@ export const AppShell = () => {
             <span className="font-black text-xl tracking-tight text-white">
               {location.pathname.startsWith('/library')
                 ? 'My Library'
-                : location.pathname.startsWith('/search')
-                ? 'Search'
                 : location.pathname.startsWith('/blend')
                 ? 'Blend'
                 : location.pathname.startsWith('/profile')
@@ -115,35 +113,35 @@ export const AppShell = () => {
                 : 'Staytup'}
             </span>
           </div>
-        )}
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/blend')}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-              location.pathname.startsWith('/blend')
-                ? 'bg-white/15 text-white'
-                : 'text-[#8E8E93] hover:text-white'
-            }`}
-            title="Blend"
-          >
-            <Disc3 className="w-4.5 h-4.5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/blend')}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                location.pathname.startsWith('/blend')
+                  ? 'bg-white/15 text-white'
+                  : 'text-[#8E8E93] hover:text-white'
+              }`}
+              title="Blend"
+            >
+              <Disc3 className="w-4.5 h-4.5" />
+            </button>
 
-          {/* Mobile Header Profile Button */}
-          <button
-            onClick={() => navigate('/profile')}
-            className={`flex items-center justify-center rounded-full p-0.5 transition-all cursor-pointer ${
-              location.pathname === '/profile'
-                ? 'ring-2 ring-emerald-400 scale-105'
-                : 'ring-1 ring-white/20 hover:ring-white/50'
-            }`}
-            title="Profile"
-          >
-            <UserAvatar user={user} size="xs" className="w-7 h-7 text-[10px]" />
-          </button>
-        </div>
-      </header>
+            {/* Mobile Header Profile Button */}
+            <button
+              onClick={() => navigate('/profile')}
+              className={`flex items-center justify-center rounded-full p-0.5 transition-all cursor-pointer ${
+                location.pathname === '/profile'
+                  ? 'ring-2 ring-emerald-400 scale-105'
+                  : 'ring-1 ring-white/20 hover:ring-white/50'
+              }`}
+              title="Profile"
+            >
+              <UserAvatar user={user} size="xs" className="w-7 h-7 text-[10px]" />
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Top Application Bar (Desktop ≥ 1024px) — Spotify Navigation Header */}
       <header className="hidden lg:flex items-center justify-between px-5 py-2.5 bg-black z-40 flex-shrink-0">

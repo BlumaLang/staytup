@@ -115,7 +115,7 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-between bg-black text-white select-none overflow-hidden animate-in slide-in-from-bottom duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl text-white select-none overflow-hidden animate-in fade-in duration-200 lg:p-6">
       {/* Dynamic Blurred Artwork Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <img
@@ -128,68 +128,70 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/90" />
       </div>
 
-      {/* Top Bar (Collapse chevron, title, options) */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-4 sm:pt-6 pb-2">
-        <button
-          onClick={onClose}
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
-          title="Collapse Player"
-        >
-          <ChevronDown className="w-6 h-6" />
-        </button>
-
-        <div className="flex-1 text-center px-4 min-w-0">
-          <p className="text-[11px] uppercase tracking-wider font-semibold text-[#8E8E93]">Playing From</p>
-          <p className="text-xs sm:text-sm font-bold text-white truncate">
-            {currentTrack.album || currentTrack.playlist || 'Staytup Feed'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Sleep Timer badge */}
+      {/* Main Player Card Container (Fills screen on mobile, elegant centered card on desktop) */}
+      <div className="relative z-10 w-full h-full lg:max-w-2xl lg:max-h-[86vh] lg:rounded-3xl lg:border lg:border-white/10 lg:shadow-2xl lg:bg-[#121214]/90 lg:backdrop-blur-2xl flex flex-col justify-between overflow-hidden">
+        {/* Top Bar (Collapse chevron, title, options) */}
+        <div className="relative z-10 flex items-center justify-between px-5 pt-4 sm:pt-6 pb-2">
           <button
-            onClick={() => setIsSleepTimerModalOpen(true)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-              sleepTimerMode
-                ? 'bg-indigo-600 text-white animate-pulse'
-                : 'bg-white/10 hover:bg-white/20 text-[#8E8E93] hover:text-white'
-            }`}
-            title="Sleep Timer"
-          >
-            <Moon className={`w-4.5 h-4.5 ${sleepTimerMode ? 'fill-current' : ''}`} />
-          </button>
-
-          {/* Details / Options */}
-          <button
-            onClick={() => setShowDetailsModal(true)}
+            onClick={onClose}
             className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
-            title="More Options"
+            title="Collapse Player"
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <ChevronDown className="w-6 h-6" />
           </button>
-        </div>
-      </div>
 
-      {/* Center Section: Large Artwork */}
-      <div className="relative z-10 flex-1 w-full max-w-sm sm:max-w-md mx-auto px-6 py-4 flex items-center justify-center my-auto">
-        <div className="relative w-full aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121212] shadow-2xl border border-white/10 group">
-          <img
-            src={highResImage}
-            alt={currentTrack.title}
-            onError={(e) => {
-              e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
-            }}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              isLoadingStream ? 'opacity-40' : 'opacity-100'
-            }`}
-          />
-          {isLoadingStream && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 border-3 border-white border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
+          <div className="flex-1 text-center px-4 min-w-0">
+            <p className="text-[11px] uppercase tracking-wider font-semibold text-[#8E8E93]">Playing From</p>
+            <p className="text-xs sm:text-sm font-bold text-white truncate">
+              {currentTrack.album || currentTrack.playlist || 'Staytup Feed'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Sleep Timer badge */}
+            <button
+              onClick={() => setIsSleepTimerModalOpen(true)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                sleepTimerMode
+                  ? 'bg-indigo-600 text-white animate-pulse'
+                  : 'bg-white/10 hover:bg-white/20 text-[#8E8E93] hover:text-white'
+              }`}
+              title="Sleep Timer"
+            >
+              <Moon className={`w-4.5 h-4.5 ${sleepTimerMode ? 'fill-current' : ''}`} />
+            </button>
+
+            {/* Details / Options */}
+            <button
+              onClick={() => setShowDetailsModal(true)}
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+              title="More Options"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      </div>
+
+        {/* Center Section: Large Artwork */}
+        <div className="relative z-10 flex-1 w-full max-w-sm sm:max-w-md lg:max-w-xs xl:max-w-sm mx-auto px-6 py-2 flex items-center justify-center my-auto">
+          <div className="relative w-full aspect-square max-h-[360px] rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121212] shadow-2xl border border-white/10 group">
+            <img
+              src={highResImage}
+              alt={currentTrack.title}
+              onError={(e) => {
+                e.target.src = './assets/staytup_logo.32975537674b053888ade6460fa37f97.png';
+              }}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                isLoadingStream ? 'opacity-40' : 'opacity-100'
+              }`}
+            />
+            {isLoadingStream && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 border-3 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+        </div>
 
       {/* Bottom Controls Area */}
       <div className="relative z-10 w-full max-w-xl mx-auto px-6 sm:px-8 pb-8 pt-2">
@@ -324,6 +326,7 @@ export const FullPlayerView = ({ isOpen, onClose }) => {
             <span>Queue</span>
           </button>
         </div>
+      </div>
       </div>
 
       {/* Options & Sheet Modals */}

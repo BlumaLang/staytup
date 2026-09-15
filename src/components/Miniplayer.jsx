@@ -113,7 +113,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
       {/* ========================================================================= */}
       <div
         onClick={onExpand}
-        className="lg:hidden fixed bottom-[58px] sm:bottom-[60px] left-0 right-0 z-40 bg-[#121214] border-t border-white/[0.08] cursor-pointer select-none"
+        className="lg:hidden fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-50 bg-[#121214] border-t border-white/[0.08] cursor-pointer select-none shadow-xl"
       >
         <div className="flex items-center justify-between px-3.5 pt-2 pb-2 gap-3 max-w-md mx-auto">
           {/* Left: Artwork + Title & Artist */}
@@ -154,7 +154,7 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
               <Heart
                 className={`w-5 h-5 transition-transform duration-200 ${
                   isLiked
-                    ? 'fill-[#22C55E] text-[#22C55E] stroke-[#22C55E] scale-110'
+                    ? 'fill-[#1ED760] text-[#1ED760] stroke-[#1ED760] scale-110'
                     : 'stroke-white/80 hover:stroke-white'
                 }`}
               />
@@ -179,10 +179,10 @@ export const Miniplayer = ({ onExpand, showNowPlayingSide, onToggleNowPlayingSid
           </div>
         </div>
 
-        {/* Bottom Progress Line (Positioned at the BOTTOM of the miniplayer) */}
-        <div className="w-full h-[2.5px] bg-white/[0.08] relative overflow-hidden">
+        {/* Bottom Progress Line (Prominently visible above BottomNav across all mobile heights) */}
+        <div className="w-full h-[3px] bg-white/20 relative overflow-hidden">
           <div
-            className="h-full bg-[#22C55E] transition-all duration-150"
+            className="h-full bg-[#1ED760] transition-all duration-150 shadow-[0_0_6px_rgba(30,215,96,0.6)]"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

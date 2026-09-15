@@ -372,6 +372,32 @@ export default function SearchPage() {
   const topResult = matchedArtist ? matchedArtist : (results?.tracks?.[0] || null);
   const otherTracks = isArtistTop ? (results?.tracks || []) : (results?.tracks?.slice(1) || []);
 
+  const isPlayingArtist =
+    isPlaying &&
+    currentTrack &&
+    results?.tracks?.some(
+      (t) => String(t.videoId || t.id) === String(currentTrack.videoId || currentTrack.id)
+    );
+
+  const handlePlayArtist = async (e, artist) => {
+    e.stopPropagation();
+    const aName = artist?.name || artist?.title;
+    if (results?.tracks && results.tracks.length > 0) {
+      playTrack(results.tracks[0], results.tracks);
+      return;
+    }
+    if (aName) {
+      try {
+        const res = await api.getArtist(aName);
+        if (res?.tracks && res.tracks.length > 0) {
+          playTrack(res.tracks[0], res.tracks);
+        }
+      } catch (err) {
+        console.warn('Play artist error:', err);
+      }
+    }
+  };
+
   const isCurrentPlaying = (item) => {
     const activeId = currentTrack?.videoId || currentTrack?.id;
     const itemId = item?.videoId || item?.id;
@@ -380,33 +406,85 @@ export default function SearchPage() {
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none">
-      {/* Mobile-Only Search Input Bar (Hidden on desktop since Desktop Header handles search) */}
-      <div className="lg:hidden sticky top-0 z-20 px-4 py-3 bg-black/90 backdrop-blur-xl border-b border-[#1C1C1E]">
-        <div className="relative flex items-center w-full">
+      {/* Mobile-Only Spotify Sticky Search Header (< 1024px) */}
+      <div className="lg:hidden sticky top-0 z-30 bg-black/95 backdrop-blur-xl px-4 pt-3 pb-2.5 border-b border-white/5">
+        {/* Top Header Row: "Search" Title + Blend and Profile buttons (Matching media_1789481603346.png) */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-black tracking-tight text-white">Search</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/blend')}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[#8E8E93] hover:text-white transition-colors cursor-pointer"
+              title="Blend"
+            >
+              <Disc3 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center justify-center rounded-full p-0.5 ring-1 ring-white/20 hover:ring-white/50 transition-all cursor-pointer"
+              title="Profile"
+            >
+              <UserAvatar user={user} size="xs" className="w-7 h-7 text-[10px]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Search Input Bar (Rounded Spotify dark pill bg-[#242424]) */}
+        <div className="relative flex items-center w-full mt-3">
           <Search className="absolute left-3.5 w-4 h-4 text-[#8E8E93]" />
           <input
             type="text"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
             placeholder="What do you want to play?"
-            className="w-full pl-10 pr-9 py-2.5 bg-[#18181B] border border-[#27272A] rounded-full text-sm text-white placeholder-[#8E8E93] focus:outline-none focus:border-white/40"
+            className="w-full pl-10 pr-9 py-2.5 bg-[#242424] hover:bg-[#2b2b2b] focus:bg-[#242424] rounded-full text-sm text-white placeholder-[#8E8E93] focus:outline-none focus:ring-1 focus:ring-white/30 border-0 transition-colors"
           />
           {query && (
             <button
               onClick={() => handleQueryChange('')}
-              className="absolute right-3 text-[#8E8E93] hover:text-white p-1"
+              className="absolute right-3 text-[#8E8E93] hover:text-white p-1 cursor-pointer"
+              title="Clear search"
             >
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
+
+        {/* Sticky Filter Chips directly under search bar on Mobile (Matching media_1789481603346.png) */}
+        {query.trim().length > 0 && results && (
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-0.5">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'songs', label: `Songs (${results?.tracks?.length || 0})` },
+              { id: 'artists', label: `Artists (${artists.length})` },
+              { id: 'albums', label: `Albums (${albums.length})` },
+              { id: 'playlists', label: `Playlists (${playlists.length})` },
+              { id: 'people', label: `People (${people.length})` },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? 'bg-white text-black shadow-md'
+                      : 'bg-[#242424] text-white hover:bg-[#2d2d2d]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 px-4 sm:px-8 py-6 w-full max-w-7xl mx-auto">
-        {/* Filter Tabs (When results or search query is active) */}
+        {/* Desktop Filter Tabs (Only visible on desktop) */}
         {query.trim().length > 0 && results && (
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
+          <div className="hidden lg:flex items-center gap-2 overflow-x-auto no-scrollbar pb-4 mb-2">
             {[
               { id: 'all', label: 'All' },
               { id: 'songs', label: `Songs (${results?.tracks?.length || 0})` },
@@ -526,20 +604,28 @@ export default function SearchPage() {
                           </div>
 
                           <div className="mt-4 pr-16">
-                            <h3 className="text-2xl font-extrabold text-white line-clamp-1 tracking-tight">
+                            <h3 className="text-2xl sm:text-3xl font-extrabold text-white line-clamp-1 tracking-tight">
                               {topResult.name || topResult.title}
                             </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="px-2.5 py-1 rounded-full bg-[#121212] text-[#1ED760] text-[11px] font-bold uppercase tracking-wider">
                                 Artist
                               </span>
                             </div>
                           </div>
 
-                          {/* Action Button */}
-                          <div className="w-12 h-12 rounded-full bg-[#1ED760] text-black flex items-center justify-center shadow-2xl transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 absolute bottom-5 right-5 flex-shrink-0">
-                            <Play className="w-5 h-5 fill-black ml-0.5" />
-                          </div>
+                          {/* Action Button (Spotify Circular Green Play/Pause Button) */}
+                          <button
+                            onClick={(e) => handlePlayArtist(e, topResult)}
+                            className="w-12 h-12 rounded-full bg-[#1ED760] hover:bg-[#1fdf64] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-2xl transition-all absolute bottom-5 right-5 flex-shrink-0 cursor-pointer"
+                            title="Play"
+                          >
+                            {isPlayingArtist ? (
+                              <Pause className="w-5 h-5 fill-black" />
+                            ) : (
+                              <Play className="w-5 h-5 fill-black ml-0.5" />
+                            )}
+                          </button>
                         </div>
                       ) : (
                         <div
