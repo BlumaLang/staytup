@@ -83,8 +83,9 @@ export const AppShell = () => {
   const videoId = String(currentTrack?.videoId || currentTrack?.video_id || currentTrack?.id || '');
   const isLiked = likedTrackIds.has(videoId);
 
-  const hideMobileHeader =
-    location.pathname.startsWith('/search') ||
+  const hideMobileHeader = location.pathname.startsWith('/search');
+
+  const isSubpage =
     location.pathname.startsWith('/playlist') ||
     location.pathname.startsWith('/album') ||
     location.pathname.startsWith('/artist') ||
@@ -96,23 +97,43 @@ export const AppShell = () => {
 
   return (
     <div className="relative w-full h-[100dvh] bg-black text-white overflow-hidden flex flex-col font-sans select-none">
-      {/* Mobile Top Header (< 1024px) — Only shown on root views that do not have their own header */}
+      {/* Mobile Top Header (< 1024px) */}
       {!hideMobileHeader && (
         <header className="flex lg:hidden items-center justify-between px-4 py-2.5 bg-black border-b border-white/5 z-40 flex-shrink-0 select-none">
-          <div
-            className="flex items-center cursor-pointer select-none"
-            onClick={() => navigate('/')}
-          >
-            <span className="font-black text-xl tracking-tight text-white">
-              {location.pathname.startsWith('/library')
-                ? 'My Library'
-                : location.pathname.startsWith('/blend')
-                ? 'Blend'
-                : location.pathname.startsWith('/profile')
-                ? 'Profile'
-                : 'Staytup'}
-            </span>
-          </div>
+          {isSubpage ? (
+            <div className="flex items-center gap-2.5 select-none">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="w-8 h-8 rounded-full bg-[#141416] hover:bg-[#222226] border border-white/15 flex items-center justify-center text-white transition-all cursor-pointer active:scale-95 flex-shrink-0 shadow-sm"
+                title="Go back"
+                aria-label="Go back"
+              >
+                <ChevronLeft className="w-4.5 h-4.5 stroke-[2.4]" />
+              </button>
+              <span
+                className="font-black text-xl tracking-tight text-white cursor-pointer"
+                onClick={() => navigate('/')}
+              >
+                Staytup
+              </span>
+            </div>
+          ) : (
+            <div
+              className="flex items-center cursor-pointer select-none"
+              onClick={() => navigate('/')}
+            >
+              <span className="font-black text-xl tracking-tight text-white">
+                {location.pathname.startsWith('/library')
+                  ? 'My Library'
+                  : location.pathname.startsWith('/blend')
+                  ? 'Blend'
+                  : location.pathname.startsWith('/profile')
+                  ? 'Profile'
+                  : 'Staytup'}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <button

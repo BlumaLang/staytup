@@ -120,20 +120,6 @@ export default function PlaylistPage() {
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none">
-      {/* Top Bar with Back Button */}
-      <div className="sticky top-0 z-20 px-4 sm:px-8 py-3 bg-black/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-        <span className="text-sm font-bold truncate max-w-[200px] sm:max-w-md">
-          {playlistTitle}
-        </span>
-        <div className="w-16" />
-      </div>
 
       {isLoading ? (
         <div className="py-24 flex flex-col items-center justify-center text-[#8E8E93]">

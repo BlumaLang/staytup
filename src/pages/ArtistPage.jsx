@@ -294,14 +294,6 @@ export default function ArtistPage() {
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none bg-[#121212]">
-      {/* Mobile-Only Floating Back Button (Desktop has global top-bar buttons) */}
-      <button
-        onClick={() => navigate(-1)}
-        className="lg:hidden absolute top-4 left-4 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95 shadow-lg"
-        title="Go back"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </button>
 
       {isLoading ? (
         <div className="py-32 flex flex-col items-center justify-center text-[#8E8E93]">

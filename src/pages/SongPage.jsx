@@ -197,27 +197,6 @@ export default function SongPage() {
 
   return (
     <div className="w-full min-h-full flex flex-col text-white select-none">
-      {/* Top Header Bar with Back Button */}
-      <div className="sticky top-0 z-20 px-4 sm:px-8 py-3 bg-black/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-        <span className="text-xs sm:text-sm font-bold truncate max-w-[200px] sm:max-w-md">
-          {track.title}
-        </span>
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
-          title="Share song"
-        >
-          <Share2 className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Share</span>
-        </button>
-      </div>
 
       {/* Hero Section with Immersive Artwork Backdrop */}
       <div className="relative w-full overflow-hidden px-4 sm:px-8 py-8 sm:py-12 bg-gradient-to-b from-[#1E1E26] via-[#121216] to-black border-b border-white/5">
