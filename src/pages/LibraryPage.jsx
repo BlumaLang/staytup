@@ -372,21 +372,21 @@ export default function LibraryPage() {
             {/* TAB: FAVORITES */}
             {activeTab === 'favorites' && (
               <div className="space-y-4 sm:space-y-6">
-                {/* Liked Songs Hero Banner (Flat & Compact on mobile, Rich on desktop) */}
-                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-[#141418] sm:bg-gradient-to-br sm:from-[#4f22b3] sm:via-[#2d1264] sm:to-[#121214] p-3.5 sm:p-8 flex flex-row items-center sm:items-end gap-3.5 sm:gap-7 border border-white/[0.08] group select-none">
+                {/* Liked Songs Hero Banner (Compact & Sleek on desktop and mobile) */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4f22b3]/50 via-[#2d1264]/35 to-[#18181B] p-3.5 sm:p-5 flex flex-row items-center gap-3.5 sm:gap-5 border border-white/10 shadow-lg group select-none">
                   {/* Heart Icon Tile */}
-                  <div className="w-16 h-16 sm:w-48 sm:h-48 md:w-52 md:h-52 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#4f22b3] via-[#7d48ff] to-[#b395ff] flex items-center justify-center shadow-md sm:shadow-2xl shadow-indigo-950/80 flex-shrink-0 border border-white/15 transition-transform duration-300 group-hover:scale-[1.02]">
-                    <Heart className="w-8 h-8 sm:w-24 sm:h-24 text-white fill-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]" />
+                  <div className="w-14 h-14 sm:w-28 sm:h-28 rounded-xl bg-gradient-to-br from-[#450af5] via-[#6e3aff] to-[#9b72cf] flex items-center justify-center shadow-lg shadow-indigo-950/60 flex-shrink-0 border border-white/15 transition-transform duration-300 group-hover:scale-[1.02]">
+                    <Heart className="w-7 h-7 sm:w-14 sm:h-14 text-white fill-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
                   </div>
 
                   <div className="flex-1 min-w-0 text-left">
-                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider sm:tracking-widest text-indigo-300">
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-300">
                       Playlist
                     </span>
-                    <h1 className="text-xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mt-0.5 mb-1 sm:mt-1 sm:mb-3 truncate">
+                    <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mt-0.5 mb-1 truncate">
                       Liked Songs
                     </h1>
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-neutral-400 sm:text-neutral-300 flex-wrap font-medium">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-400 sm:text-neutral-300 flex-wrap font-medium">
                       <span className="font-semibold text-white">
                         {user?.displayName || user?.username || 'Staytup Listener'}
                       </span>

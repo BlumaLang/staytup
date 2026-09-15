@@ -75,6 +75,12 @@ export default defineConfig({
   base: './',
   server: {
     port: 5173,
+    host: true,
+    cors: true,
+    allowedHosts: true,
+    hmr: {
+      clientPort: 5173,
+    },
     proxy: {
       '/api': {
         target: 'http://localhost/staytup',

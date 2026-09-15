@@ -104,3 +104,14 @@ export const shareContent = async ({ title, text, url }) => {
     return { success: false, error: err };
   }
 };
+
+export default {
+  getAppBaseUrl,
+  getSongUrl,
+  getAlbumUrl,
+  getArtistUrl,
+  getPlaylistUrl,
+  getUserUrl,
+  getBlendUrl,
+  shareContent,
+};

@@ -5,7 +5,8 @@ import { usePlayer } from '../context/PlayerContext';
 import { api } from '../api/endpoints';
 import { UserAvatar } from '../components/UserAvatar';
 import { createOrGetBlend } from '../services/blendService';
-import { getUserUrl, shareContent } from '../utils/canonicalUrl';
+import canonicalUrl, { getUserUrl as getCanonUserUrl, shareContent } from '../utils/canonicalUrl';
+const getUserUrl = getCanonUserUrl || canonicalUrl?.getUserUrl || ((u) => `/user/${encodeURIComponent(typeof u === 'string' ? u : u?.id || u?.username || '')}`);
 import { get500x500Image } from '../utils/media';
 import {
   ArrowLeft,
